@@ -1,8 +1,9 @@
 using Microsoft.EntityFrameworkCore;
+using Backend.Models;
 
 namespace Backend.Models
 {
-    class ApplicationDBContext : DbContext
+    public class ApplicationDBContext : DbContext
     {
         public ApplicationDBContext(DbContextOptions options)
             : base(options)
@@ -36,5 +37,6 @@ namespace Backend.Models
         public DbSet<EmailAddress> EmailAddresses { get; set; }
         public DbSet<Attachment> Attachments { get; set; }
         public DbSet<UserData> UserDatas { get; set; }
+        public DbSet<Backend.Models.Folder> Folder { get; set; } = default!;
     }
 }
