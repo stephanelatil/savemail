@@ -15,7 +15,7 @@ namespace Backend.Models
         public DateTimeOffset DateReceived { get; set; } = DateTimeOffset.Now;
         public long MailBoxId { get; set; }
         [Required]
-        public MailBox MailBox { get; set; }
+        public MailBox? OwnerMailBox { get; set; } = null;
         public long FolderId { get; set; }
         public Folder? Folder { get; set; } = null;
     }
