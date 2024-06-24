@@ -186,6 +186,7 @@ TestResults/
 ######################
 *.log
 *.sqlite
+*.Development.json
 # OS generated files #
 ######################
 .DS_Store?
