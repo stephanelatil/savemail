@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Models
@@ -9,7 +10,10 @@ namespace Backend.Models
         public EmailAddress? Address { get; set; }
         public string ImapDomain { get; set; } = string.Empty;
         public short ImapPort { get; set; }
+        [Required]
         private UserData User { get; set; }
         //need additional data/tokens etc?
+        public List<Mail> Mails { get;set; } = [];
+        public List<Folder> Folders { get; set;} = [];
     }
 }

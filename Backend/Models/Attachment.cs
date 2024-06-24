@@ -3,7 +3,9 @@ namespace Backend.Models
     public class Attachment
     {
         public long Id { get; set; }
+        public Mail? Mail { get; set; }
         public string FileName { get; set; } = string.Empty;
-        // public FileObject? { get; set; }
+        public long FileSize { get; set; } = 0;
+        public string FilePath { get; set; } = string.Empty;
     }
 }
