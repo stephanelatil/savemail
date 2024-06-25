@@ -24,14 +24,14 @@ namespace Backend.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Attachment>>> GetAttachments()
         {
-            return await _context.Attachments.ToListAsync();
+            return await _context.Attachment.ToListAsync();
         }
 
         // GET: api/Attachment/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Attachment>> GetAttachment(long id)
         {
-            var attachment = await _context.Attachments.FindAsync(id);
+            var attachment = await _context.Attachment.FindAsync(id);
 
             if (attachment == null)
             {
@@ -77,7 +77,7 @@ namespace Backend.Controllers
         [HttpPost]
         public async Task<ActionResult<Attachment>> PostAttachment(Attachment attachment)
         {
-            _context.Attachments.Add(attachment);
+            _context.Attachment.Add(attachment);
             await _context.SaveChangesAsync();
 
             return CreatedAtAction("GetAttachment", new { id = attachment.Id }, attachment);
@@ -87,13 +87,13 @@ namespace Backend.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteAttachment(long id)
         {
-            var attachment = await _context.Attachments.FindAsync(id);
+            var attachment = await _context.Attachment.FindAsync(id);
             if (attachment == null)
             {
                 return NotFound();
             }
 
-            _context.Attachments.Remove(attachment);
+            _context.Attachment.Remove(attachment);
             await _context.SaveChangesAsync();
 
             return NoContent();
@@ -101,7 +101,7 @@ namespace Backend.Controllers
 
         private bool AttachmentExists(long id)
         {
-            return _context.Attachments.Any(e => e.Id == id);
+            return _context.Attachment.Any(e => e.Id == id);
         }
     }
 }

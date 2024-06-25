@@ -1,6 +1,8 @@
+using Microsoft.AspNetCore.Identity;
+
 namespace Backend.Models
 {
-    public class UserData
+    public class AppUser : IdentityUser
     {
         public long Id { get; set;}
         public string FirstName { get; set; } = string.Empty;

@@ -24,14 +24,14 @@ namespace Backend.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<EmailAddress>>> GetEmailAddresses()
         {
-            return await _context.EmailAddresses.ToListAsync();
+            return await _context.EmailAddress.ToListAsync();
         }
 
         // GET: api/EmailAddress/5
         [HttpGet("{id}")]
         public async Task<ActionResult<EmailAddress>> GetEmailAddress(long id)
         {
-            var emailAddress = await _context.EmailAddresses.FindAsync(id);
+            var emailAddress = await _context.EmailAddress.FindAsync(id);
 
             if (emailAddress == null)
             {
@@ -77,7 +77,7 @@ namespace Backend.Controllers
         [HttpPost]
         public async Task<ActionResult<EmailAddress>> PostEmailAddress(EmailAddress emailAddress)
         {
-            _context.EmailAddresses.Add(emailAddress);
+            _context.EmailAddress.Add(emailAddress);
             await _context.SaveChangesAsync();
 
             return CreatedAtAction("GetEmailAddress", new { id = emailAddress.Id }, emailAddress);
@@ -87,13 +87,13 @@ namespace Backend.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteEmailAddress(long id)
         {
-            var emailAddress = await _context.EmailAddresses.FindAsync(id);
+            var emailAddress = await _context.EmailAddress.FindAsync(id);
             if (emailAddress == null)
             {
                 return NotFound();
             }
 
-            _context.EmailAddresses.Remove(emailAddress);
+            _context.EmailAddress.Remove(emailAddress);
             await _context.SaveChangesAsync();
 
             return NoContent();
@@ -101,7 +101,7 @@ namespace Backend.Controllers
 
         private bool EmailAddressExists(long id)
         {
-            return _context.EmailAddresses.Any(e => e.Id == id);
+            return _context.EmailAddress.Any(e => e.Id == id);
         }
     }
 }

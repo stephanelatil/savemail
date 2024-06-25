@@ -11,7 +11,7 @@ namespace Backend.Models
         public string ImapDomain { get; set; } = string.Empty;
         public short ImapPort { get; set; }
         [Required]
-        private UserData User { get; set; }
+        private AppUser User { get; set; }
         public List<Secret> Secrets { get; set; } = [];
         public List<Mail> Mails { get;set; } = [];
         public List<Folder> Folders { get; set;} = [];

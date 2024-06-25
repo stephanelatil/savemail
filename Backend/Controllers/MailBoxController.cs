@@ -24,14 +24,14 @@ namespace Backend.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<MailBox>>> GetMailBoxes()
         {
-            return await _context.MailBoxes.ToListAsync();
+            return await _context.MailBox.ToListAsync();
         }
 
         // GET: api/MailBox/5
         [HttpGet("{id}")]
         public async Task<ActionResult<MailBox>> GetMailBox(long id)
         {
-            var mailBox = await _context.MailBoxes.FindAsync(id);
+            var mailBox = await _context.MailBox.FindAsync(id);
 
             if (mailBox == null)
             {
@@ -77,7 +77,7 @@ namespace Backend.Controllers
         [HttpPost]
         public async Task<ActionResult<MailBox>> PostMailBox(MailBox mailBox)
         {
-            _context.MailBoxes.Add(mailBox);
+            _context.MailBox.Add(mailBox);
             await _context.SaveChangesAsync();
 
             return CreatedAtAction("GetMailBox", new { id = mailBox.Id }, mailBox);
@@ -87,13 +87,13 @@ namespace Backend.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteMailBox(long id)
         {
-            var mailBox = await _context.MailBoxes.FindAsync(id);
+            var mailBox = await _context.MailBox.FindAsync(id);
             if (mailBox == null)
             {
                 return NotFound();
             }
 
-            _context.MailBoxes.Remove(mailBox);
+            _context.MailBox.Remove(mailBox);
             await _context.SaveChangesAsync();
 
             return NoContent();
@@ -101,7 +101,7 @@ namespace Backend.Controllers
 
         private bool MailBoxExists(long id)
         {
-            return _context.MailBoxes.Any(e => e.Id == id);
+            return _context.MailBox.Any(e => e.Id == id);
         }
     }
 }

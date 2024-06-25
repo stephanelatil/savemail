@@ -1,11 +1,11 @@
 using Microsoft.EntityFrameworkCore;
-using Backend.Models;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
 namespace Backend.Models
 {
-    public class ApplicationDBContext : DbContext
+    public class ApplicationDBContext : IdentityDbContext<AppUser>
     {
-        public ApplicationDBContext(DbContextOptions options)
+        public ApplicationDBContext(DbContextOptions<ApplicationDBContext> options)
             : base(options)
         { }
 
@@ -36,8 +36,7 @@ namespace Backend.Models
         public DbSet<EmailAddress> EmailAddress { get; set; }
         public DbSet<Folder> Folder { get; set; }
         public DbSet<Mail> Mail { get; set; }
-        public DbSet<MailBox> MailBoxes { get; set; }
+        public DbSet<MailBox> MailBox { get; set; }
         public DbSet<Secret> Secret { get; set; }
-        public DbSet<UserData> UserData { get; set; }
     }
 }

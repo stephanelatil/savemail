@@ -24,14 +24,14 @@ namespace Backend.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Mail>>> GetMails()
         {
-            return await _context.Mails.ToListAsync();
+            return await _context.Mail.ToListAsync();
         }
 
         // GET: api/Mail/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Mail>> GetMail(long id)
         {
-            var mail = await _context.Mails.FindAsync(id);
+            var mail = await _context.Mail.FindAsync(id);
 
             if (mail == null)
             {
@@ -77,7 +77,7 @@ namespace Backend.Controllers
         [HttpPost]
         public async Task<ActionResult<Mail>> PostMail(Mail mail)
         {
-            _context.Mails.Add(mail);
+            _context.Mail.Add(mail);
             await _context.SaveChangesAsync();
 
             return CreatedAtAction("GetMail", new { id = mail.Id }, mail);
@@ -87,13 +87,13 @@ namespace Backend.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteMail(long id)
         {
-            var mail = await _context.Mails.FindAsync(id);
+            var mail = await _context.Mail.FindAsync(id);
             if (mail == null)
             {
                 return NotFound();
             }
 
-            _context.Mails.Remove(mail);
+            _context.Mail.Remove(mail);
             await _context.SaveChangesAsync();
 
             return NoContent();
@@ -101,7 +101,7 @@ namespace Backend.Controllers
 
         private bool MailExists(long id)
         {
-            return _context.Mails.Any(e => e.Id == id);
+            return _context.Mail.Any(e => e.Id == id);
         }
     }
 }
