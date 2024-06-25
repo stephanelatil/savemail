@@ -32,11 +32,12 @@ namespace Backend.Models
                 .IsCreatedConcurrently();
         }
 
+        public DbSet<Attachment> Attachment { get; set; }
+        public DbSet<EmailAddress> EmailAddress { get; set; }
+        public DbSet<Folder> Folder { get; set; }
+        public DbSet<Mail> Mail { get; set; }
         public DbSet<MailBox> MailBoxes { get; set; }
-        public DbSet<Mail> Mails { get; set; }
-        public DbSet<EmailAddress> EmailAddresses { get; set; }
-        public DbSet<Attachment> Attachments { get; set; }
-        public DbSet<UserData> UserDatas { get; set; }
-        public DbSet<Backend.Models.Folder> Folder { get; set; } = default!;
+        public DbSet<Secret> Secret { get; set; }
+        public DbSet<UserData> UserData { get; set; }
     }
 }
