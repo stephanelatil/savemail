@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace Backend.Models
 {
@@ -13,10 +14,9 @@ namespace Backend.Models
         public string Body { get; set; } = string.Empty; 
         public List<Attachment> Attachments { get; set; } = [];
         public DateTimeOffset DateReceived { get; set; } = DateTimeOffset.Now;
-        public long MailBoxId { get; set; }
         [Required]
+        [JsonIgnore]
         public MailBox? OwnerMailBox { get; set; } = null;
-        public long FolderId { get; set; }
         public Folder? Folder { get; set; } = null;
     }
 }
