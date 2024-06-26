@@ -6,6 +6,11 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Backend.Models;
+using Backend.Models.DTO;
+using Backend.Models.Serializers;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Backend.Services;
 
 namespace Backend.Controllers
 {
@@ -14,10 +19,16 @@ namespace Backend.Controllers
     public class AppUserController : ControllerBase
     {
         private readonly ApplicationDBContext _context;
+        private readonly UserManager<AppUser> _userManager;
+        private readonly IUserService _userService;
 
-        public AppUserController(ApplicationDBContext context)
+        public AppUserController(ApplicationDBContext context,
+                                 UserManager<AppUser> userManager,
+                                 IUserService userService)
         {
             _context = context;
+            _userManager = userManager;
+            _userService = userService;
         }
 
         // GET: api/AppUser
@@ -27,11 +38,23 @@ namespace Backend.Controllers
             return await _context.Users.ToListAsync();
         }
 
+        // GET: api/AppUser/me
+        [Authorize]
+        [HttpGet("me")]
+        public async Task<ActionResult<AppUser>> GetMe()
+        {
+            AppUser? self = await this._userManager.GetUserAsync(this.User);
+            if (self == null)
+                return Forbid();
+            else
+                return self;
+        }
+
         // GET: api/AppUser/5
         [HttpGet("{id}")]
         public async Task<ActionResult<AppUser>> GetAppUser(string id)
         {
-            var appUser = await _context.Users.FindAsync(id);
+            var appUser = await _userService.GetUserByIdAsync(id);
 
             if (appUser == null)
             {
@@ -41,81 +64,40 @@ namespace Backend.Controllers
             return appUser;
         }
 
-        // PUT: api/AppUser/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutAppUser(string id, AppUser appUser)
+        [HttpPatch("{id}")]
+        [Authorize]
+        public async Task<IActionResult> PatchUser(string id, [FromBody] UpdateAppUser updateUserDto)
         {
-            if (id != appUser.Id)
+            if (updateUserDto == null)
             {
                 return BadRequest();
             }
 
-            _context.Entry(appUser).State = EntityState.Modified;
+            if (await _userService.UpdateUserAsync(id, updateUserDto))
+                return NoContent();
 
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!AppUserExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
-        }
-
-        // POST: api/AppUser
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
-        public async Task<ActionResult<AppUser>> PostAppUser(AppUser appUser)
-        {
-            _context.Users.Add(appUser);
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateException)
-            {
-                if (AppUserExists(appUser.Id))
-                {
-                    return Conflict();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return CreatedAtAction("GetAppUser", new { id = appUser.Id }, appUser);
+            return Problem();
         }
 
         // DELETE: api/AppUser/5
+        [Authorize]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteAppUser(string id)
         {
-            var appUser = await _context.Users.FindAsync(id);
+            var appUser = await _userService.GetUserByIdAsync(id);
             if (appUser == null)
             {
                 return NotFound();
             }
 
-            _context.Users.Remove(appUser);
-            await _context.SaveChangesAsync();
+            if (await _userManager.GetUserAsync(User) != appUser)
+                Forbid();
 
-            return NoContent();
-        }
+            string? result = await _userService.DeleteUserAsync(id);
+            if (result is null)
+                return NoContent();
 
-        private bool AppUserExists(string id)
-        {
-            return _context.Users.Any(e => e.Id == id);
+            return this.Problem(result);
         }
     }
 }

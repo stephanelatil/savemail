@@ -1,4 +1,6 @@
+using System.Text.Json.Serialization;
 using Backend.Models;
+using Backend.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,7 +10,17 @@ builder.Services.AddAuthorization();
 
 // Add services to the container.
 
-builder.Services.AddControllers();
+builder.Services.AddControllers().AddJsonOptions(opt => {
+    opt.AllowInputFormatterExceptionMessages = true;
+    opt.JsonSerializerOptions.AllowTrailingCommas = false;
+    opt.JsonSerializerOptions.Encoder = null;
+    opt.JsonSerializerOptions.IgnoreReadOnlyFields = false;
+    opt.JsonSerializerOptions.IgnoreReadOnlyProperties = false;
+    opt.JsonSerializerOptions.MaxDepth = 4;
+    opt.JsonSerializerOptions.NumberHandling = JsonNumberHandling.AllowReadingFromString;
+    opt.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+    opt.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+});
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -45,9 +57,10 @@ builder.Services.AddIdentityApiEndpoints<AppUser>()
 builder.Services.Configure<IdentityOptions>(options =>
 {
     options.User.RequireUniqueEmail = true;
+    // basically disable lockout
     options.Lockout.AllowedForNewUsers=false;
-    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromSeconds(20);
-    options.Lockout.MaxFailedAccessAttempts = 5;
+    options.Lockout.MaxFailedAccessAttempts = 99999999;
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMilliseconds(1);
     options.SignIn.RequireConfirmedEmail = false;
 });
 
@@ -63,6 +76,10 @@ builder.Services.ConfigureApplicationCookie(options =>
     // Ensure Cookie is auto-renewed if any authenticated call is made 5-10 days after last refresh
     options.SlidingExpiration = true;
 });
+
+//Add Services to edit elements in the database
+builder.Services.AddScoped<IUserService, UserService>();
+
 
 var app = builder.Build();
 
