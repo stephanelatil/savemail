@@ -70,7 +70,7 @@ var app = builder.Build();
 app.UseAuthorization();
 
 // Map user model
-app.MapIdentityApi<AppUser>();
+app.MapGroup("/api/auth").MapIdentityApi<AppUser>();
 
 //In case of 4xx error so it doesn't leak info
 app.UseStatusCodePages(async context =>
@@ -86,7 +86,8 @@ if (app.Environment.IsDevelopment())
     app.UseDeveloperExceptionPage();
     app.UseSwagger();
     app.UseSwaggerUI();
-}else
+}
+else
 {
     // in case of 5xx error to avoid leaking info
     app.UseExceptionHandler(errorApp =>
