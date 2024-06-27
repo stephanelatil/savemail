@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Backend.Models;
 using Backend.Models.DTO;
-using Backend.Models.Serializers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Backend.Services;
@@ -33,36 +32,52 @@ namespace Backend.Controllers
 
         // GET: api/AppUser
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<AppUser>>> GetUsers()
+        public IQueryable<AppUserDto> GetUsers()
         {
-            return await _context.Users.ToListAsync();
+            return from u in _context.Users
+                        select new AppUserDto(u);
+        }
+        
+        // GET: api/AppUser/5
+        [HttpGet("{id}")]
+        public async Task<ActionResult<AppUserDto>> GetUser(string id)
+        {
+            var user = await _context.Users.Select(u =>
+                new AppUserDto(u)).FirstOrDefaultAsync(u => u.Id == id);
+
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(user);
         }
 
         // GET: api/AppUser/me
         [Authorize]
         [HttpGet("me")]
-        public async Task<ActionResult<AppUser>> GetMe()
+        public async Task<ActionResult<AppUserDto>> GetMe()
         {
             AppUser? self = await this._userManager.GetUserAsync(this.User);
             if (self == null)
                 return Forbid();
             else
-                return self;
+                return new AppUserDto(self);
         }
 
-        // GET: api/AppUser/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<AppUser>> GetAppUser(string id)
-        {
-            var appUser = await _userService.GetUserByIdAsync(id);
+        // // GET: api/AppUser/5
+        // [HttpGet("{id}")]
+        // public async Task<ActionResult<AppUser>> GetAppUser(string id)
+        // {
+        //     var appUser = await _userService.GetUserByIdAsync(id);
 
-            if (appUser == null)
-            {
-                return NotFound();
-            }
+        //     if (appUser == null)
+        //     {
+        //         return NotFound();
+        //     }
 
-            return appUser;
-        }
+        //     return appUser;
+        // }
 
         [HttpPatch("{id}")]
         [Authorize]
