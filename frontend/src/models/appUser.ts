@@ -9,4 +9,10 @@ interface AppUser {
   lastName?: string
 }
 
+interface EditAppUser{
+  id: string,
+  firstName: string|null,
+  lastName: string|null
+}
+
 export default AppUser
