@@ -25,16 +25,16 @@ namespace Backend.Controllers
                                  UserManager<AppUser> userManager,
                                  IUserService userService)
         {
-            _context = context;
-            _userManager = userManager;
-            _userService = userService;
+            this._context = context;
+            this._userManager = userManager;
+            this._userService = userService;
         }
 
         // GET: api/AppUser
         [HttpGet]
         public IQueryable<AppUserDto> GetUsers()
         {
-            return from u in _context.Users
+            return from u in this._context.Users
                         select new AppUserDto(u);
         }
         
@@ -42,15 +42,15 @@ namespace Backend.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<AppUserDto>> GetUser(string id)
         {
-            var user = await _context.Users.Select(u =>
+            var user = await this._context.Users.Select(u =>
                 new AppUserDto(u)).FirstOrDefaultAsync(u => u.Id == id);
 
             if (user == null)
             {
-                return NotFound();
+                return this.NotFound();
             }
 
-            return Ok(user);
+            return this.Ok(user);
         }
 
         // GET: api/AppUser/me
@@ -60,7 +60,7 @@ namespace Backend.Controllers
         {
             AppUser? self = await this._userManager.GetUserAsync(this.User);
             if (self == null)
-                return Forbid();
+                return this.Forbid();
             else
                 return new AppUserDto(self);
         }
@@ -85,13 +85,13 @@ namespace Backend.Controllers
         {
             if (updateUserDto == null)
             {
-                return BadRequest();
+                return this.BadRequest();
             }
 
-            if (await _userService.UpdateUserAsync(id, updateUserDto))
-                return NoContent();
+            if (await this._userService.UpdateUserAsync(id, updateUserDto))
+                return this.NoContent();
 
-            return Problem();
+            return this.Problem();
         }
 
         // DELETE: api/AppUser/5
@@ -99,18 +99,18 @@ namespace Backend.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteAppUser(string id)
         {
-            var appUser = await _userService.GetUserByIdAsync(id);
+            var appUser = await this._userService.GetUserByIdAsync(id);
             if (appUser == null)
             {
-                return NotFound();
+                return this.NotFound();
             }
 
-            if (await _userManager.GetUserAsync(User) != appUser)
-                Forbid();
+            if (await this._userManager.GetUserAsync(this.User) != appUser)
+                this.Forbid();
 
-            string? result = await _userService.DeleteUserAsync(id);
+            string? result = await this._userService.DeleteUserAsync(id);
             if (result is null)
-                return NoContent();
+                return this.NoContent();
 
             return this.Problem(result);
         }

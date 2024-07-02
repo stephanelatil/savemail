@@ -6,6 +6,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Backend.Models;
+using Backend.Services;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 
 namespace Backend.Controllers
 {
@@ -14,28 +17,31 @@ namespace Backend.Controllers
     public class MailBoxController : ControllerBase
     {
         private readonly ApplicationDBContext _context;
+        private readonly UserManager<AppUser> _userManager;
 
-        public MailBoxController(ApplicationDBContext context)
+        public MailBoxController(ApplicationDBContext context,
+                                 UserManager<AppUser> userManager)
         {
-            _context = context;
+            this._context = context;
+            this._userManager = userManager;
         }
 
         // GET: api/MailBox
         [HttpGet]
         public async Task<ActionResult<IEnumerable<MailBox>>> GetMailBoxes()
         {
-            return await _context.MailBox.ToListAsync();
+            return await this._context.MailBox.ToListAsync();
         }
 
         // GET: api/MailBox/5
         [HttpGet("{id}")]
         public async Task<ActionResult<MailBox>> GetMailBox(long id)
         {
-            var mailBox = await _context.MailBox.FindAsync(id);
+            var mailBox = await this._context.MailBox.FindAsync(id);
 
             if (mailBox == null)
             {
-                return NotFound();
+                return this.NotFound();
             }
 
             return mailBox;
@@ -48,20 +54,20 @@ namespace Backend.Controllers
         {
             if (id != mailBox.Id)
             {
-                return BadRequest();
+                return this.BadRequest();
             }
 
-            _context.Entry(mailBox).State = EntityState.Modified;
+            this._context.Entry(mailBox).State = EntityState.Modified;
 
             try
             {
-                await _context.SaveChangesAsync();
+                await this._context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!MailBoxExists(id))
+                if (!this.MailBoxExists(id))
                 {
-                    return NotFound();
+                    return this.NotFound();
                 }
                 else
                 {
@@ -69,39 +75,41 @@ namespace Backend.Controllers
                 }
             }
 
-            return NoContent();
+            return this.NoContent();
         }
 
         // POST: api/MailBox
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [Authorize]
         [HttpPost]
         public async Task<ActionResult<MailBox>> PostMailBox(MailBox mailBox)
         {
-            _context.MailBox.Add(mailBox);
-            await _context.SaveChangesAsync();
+            mailBox.Owner = await this._userManager.GetUserAsync(this.User);
+            this._context.MailBox.Add(mailBox);
+            await this._context.SaveChangesAsync();
 
-            return CreatedAtAction("GetMailBox", new { id = mailBox.Id }, mailBox);
+            return this.CreatedAtAction("GetMailBox", new { id = mailBox.Id }, mailBox);
         }
 
         // DELETE: api/MailBox/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteMailBox(long id)
         {
-            var mailBox = await _context.MailBox.FindAsync(id);
+            var mailBox = await this._context.MailBox.FindAsync(id);
             if (mailBox == null)
             {
-                return NotFound();
+                return this.NotFound();
             }
 
-            _context.MailBox.Remove(mailBox);
-            await _context.SaveChangesAsync();
+            this._context.MailBox.Remove(mailBox);
+            await this._context.SaveChangesAsync();
 
-            return NoContent();
+            return this.NoContent();
         }
 
         private bool MailBoxExists(long id)
         {
-            return _context.MailBox.Any(e => e.Id == id);
+            return this._context.MailBox.Any(e => e.Id == id);
         }
     }
 }

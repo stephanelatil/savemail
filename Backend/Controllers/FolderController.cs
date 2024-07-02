@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Backend.Models;
+using Microsoft.AspNetCore.Identity;
 
 namespace Backend.Controllers
 {
@@ -14,28 +15,31 @@ namespace Backend.Controllers
     public class FolderController : ControllerBase
     {
         private readonly ApplicationDBContext _context;
+        private readonly UserManager<AppUser> _userManager;
 
-        public FolderController(ApplicationDBContext context)
+        public FolderController(ApplicationDBContext context,
+                                UserManager<AppUser> userManager)
         {
-            _context = context;
+            this._context = context;
+            this._userManager = userManager;
         }
 
         // GET: api/Folder
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Folder>>> GetFolder()
         {
-            return await _context.Folder.ToListAsync();
+            return await this._context.Folder.ToListAsync();
         }
 
         // GET: api/Folder/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Folder>> GetFolder(long id)
         {
-            var folder = await _context.Folder.FindAsync(id);
+            var folder = await this._context.Folder.FindAsync(id);
 
             if (folder == null)
             {
-                return NotFound();
+                return this.NotFound();
             }
 
             return folder;
@@ -48,20 +52,20 @@ namespace Backend.Controllers
         {
             if (id != folder.Id)
             {
-                return BadRequest();
+                return this.BadRequest();
             }
 
-            _context.Entry(folder).State = EntityState.Modified;
+            this._context.Entry(folder).State = EntityState.Modified;
 
             try
             {
-                await _context.SaveChangesAsync();
+                await this._context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!FolderExists(id))
+                if (!this.FolderExists(id))
                 {
-                    return NotFound();
+                    return this.NotFound();
                 }
                 else
                 {
@@ -69,7 +73,7 @@ namespace Backend.Controllers
                 }
             }
 
-            return NoContent();
+            return this.NoContent();
         }
 
         // POST: api/Folder
@@ -77,31 +81,31 @@ namespace Backend.Controllers
         [HttpPost]
         public async Task<ActionResult<Folder>> PostFolder(Folder folder)
         {
-            _context.Folder.Add(folder);
-            await _context.SaveChangesAsync();
+            this._context.Folder.Add(folder);
+            await this._context.SaveChangesAsync();
 
-            return CreatedAtAction("GetFolder", new { id = folder.Id }, folder);
+            return this.CreatedAtAction("GetFolder", new { id = folder.Id }, folder);
         }
 
         // DELETE: api/Folder/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteFolder(long id)
         {
-            var folder = await _context.Folder.FindAsync(id);
+            var folder = await this._context.Folder.FindAsync(id);
             if (folder == null)
             {
-                return NotFound();
+                return this.NotFound();
             }
 
-            _context.Folder.Remove(folder);
-            await _context.SaveChangesAsync();
+            this._context.Folder.Remove(folder);
+            await this._context.SaveChangesAsync();
 
-            return NoContent();
+            return this.NoContent();
         }
 
         private bool FolderExists(long id)
         {
-            return _context.Folder.Any(e => e.Id == id);
+            return this._context.Folder.Any(e => e.Id == id);
         }
     }
 }

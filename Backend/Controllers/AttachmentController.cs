@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Backend.Models;
+using Microsoft.AspNetCore.Identity;
 
 namespace Backend.Controllers
 {
@@ -14,28 +15,31 @@ namespace Backend.Controllers
     public class AttachmentController : ControllerBase
     {
         private readonly ApplicationDBContext _context;
+        private readonly UserManager<AppUser> _userManager;
 
-        public AttachmentController(ApplicationDBContext context)
+        public AttachmentController(ApplicationDBContext context,
+                                    UserManager<AppUser> userManager)
         {
-            _context = context;
+            this._context = context;
+            this._userManager = userManager;
         }
 
         // GET: api/Attachment
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Attachment>>> GetAttachments()
         {
-            return await _context.Attachment.ToListAsync();
+            return await this._context.Attachment.ToListAsync();
         }
 
         // GET: api/Attachment/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Attachment>> GetAttachment(long id)
         {
-            var attachment = await _context.Attachment.FindAsync(id);
+            var attachment = await this._context.Attachment.FindAsync(id);
 
             if (attachment == null)
             {
-                return NotFound();
+                return this.NotFound();
             }
 
             return attachment;
@@ -48,20 +52,20 @@ namespace Backend.Controllers
         {
             if (id != attachment.Id)
             {
-                return BadRequest();
+                return this.BadRequest();
             }
 
-            _context.Entry(attachment).State = EntityState.Modified;
+            this._context.Entry(attachment).State = EntityState.Modified;
 
             try
             {
-                await _context.SaveChangesAsync();
+                await this._context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!AttachmentExists(id))
+                if (!this.AttachmentExists(id))
                 {
-                    return NotFound();
+                    return this.NotFound();
                 }
                 else
                 {
@@ -69,7 +73,7 @@ namespace Backend.Controllers
                 }
             }
 
-            return NoContent();
+            return this.NoContent();
         }
 
         // POST: api/Attachment
@@ -77,31 +81,31 @@ namespace Backend.Controllers
         [HttpPost]
         public async Task<ActionResult<Attachment>> PostAttachment(Attachment attachment)
         {
-            _context.Attachment.Add(attachment);
-            await _context.SaveChangesAsync();
+            this._context.Attachment.Add(attachment);
+            await this._context.SaveChangesAsync();
 
-            return CreatedAtAction("GetAttachment", new { id = attachment.Id }, attachment);
+            return this.CreatedAtAction("GetAttachment", new { id = attachment.Id }, attachment);
         }
 
         // DELETE: api/Attachment/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteAttachment(long id)
         {
-            var attachment = await _context.Attachment.FindAsync(id);
+            var attachment = await this._context.Attachment.FindAsync(id);
             if (attachment == null)
             {
-                return NotFound();
+                return this.NotFound();
             }
 
-            _context.Attachment.Remove(attachment);
-            await _context.SaveChangesAsync();
+            this._context.Attachment.Remove(attachment);
+            await this._context.SaveChangesAsync();
 
-            return NoContent();
+            return this.NoContent();
         }
 
         private bool AttachmentExists(long id)
         {
-            return _context.Attachment.Any(e => e.Id == id);
+            return this._context.Attachment.Any(e => e.Id == id);
         }
     }
 }
