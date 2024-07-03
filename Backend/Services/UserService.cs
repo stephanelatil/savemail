@@ -18,12 +18,12 @@ namespace Backend.Services
 
         public UserService(ApplicationDBContext context)
         {
-            _context = context;
+            this._context = context;
         }
 
         public async Task<AppUser?> GetUserByIdAsync(string id)
         {
-            return await _context.Users.FindAsync(id);
+            return await this._context.Users.FindAsync(id);
         }
 
         /// <summary>
@@ -36,7 +36,7 @@ namespace Backend.Services
         {
             if (updateUserDto is null)
                 return false;
-            AppUser? user = await GetUserByIdAsync(id);
+            AppUser? user = await this.GetUserByIdAsync(id);
             if (user is null)
                 return false;
             
@@ -44,19 +44,19 @@ namespace Backend.Services
             user.FirstName = updateUserDto.FirstName ?? user.FirstName;
             user.LastName = updateUserDto.LastName ?? user.LastName;
 
-            return await _context.SaveChangesAsync() > 0;
+            return await this._context.SaveChangesAsync() > 0;
         }
 
         public async Task<string?> DeleteUserAsync(string id)
         {
-            var user = await GetUserByIdAsync(id);
+            var user = await this.GetUserByIdAsync(id);
             if (user is null)
                 return "User not found";
 
-            _context.Users.Remove(user);
+            this._context.Users.Remove(user);
             try
             {
-                if (await _context.SaveChangesAsync() > 0)
+                if (await this._context.SaveChangesAsync() > 0)
                     return null;
             }
             catch (DbUpdateException e)
