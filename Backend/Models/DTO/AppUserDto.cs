@@ -19,4 +19,10 @@ namespace Backend.Models.DTO
             this.LastName = u.LastName;
         }
     }
+    public class UpdateAppUser
+    {
+        public bool? TwoFactorEnabled { get; set; }
+        public string? FirstName { get; set; }
+        public string? LastName { get; set; }
+    }
 }
