@@ -18,7 +18,7 @@ namespace Backend.Models
         public string Username {get ; set;} = string.Empty;
         [DataType(DataType.Password)]
         public string Password { get; set; } = string.Empty;
-        private ImapProvider Provider { get; set; } = ImapProvider.Simple;
+        public ImapProvider Provider { get; set; } = ImapProvider.Simple;
         [JsonIgnore]
         public List<Mail> Mails { get;set; } = [];
         public List<Folder> Folders { get; set;} = [];

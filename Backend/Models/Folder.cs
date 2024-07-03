@@ -11,6 +11,9 @@ namespace Backend.Models
     {
         [Key]
         public int Id { get; set; }
+        public string Name => this.Path.Split('/', StringSplitOptions.RemoveEmptyEntries
+                                                  |StringSplitOptions.TrimEntries)
+                                            .Last();
         public string Path { get; set; } = string.Empty;
         public Folder? Parent { get; set; } = null;
         public List<Folder> Children { get; set; } = [];
