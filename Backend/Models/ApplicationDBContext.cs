@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages.Manage;
 
 namespace Backend.Models
 {
@@ -16,22 +17,14 @@ namespace Backend.Models
             modelBuilder.Entity<Mail>().HasOne(m => m.Sender).WithMany(em => em.MailsSent);
             modelBuilder.Entity<Mail>().HasMany(m => m.Recipients).WithMany(em => em.MailsReceived);
             modelBuilder.Entity<Mail>().HasMany(m => m.RecipientsCc).WithMany(em => em.MailsCCed);
-            modelBuilder.Entity<Mail>().HasMany(m => m.RecipientsBcc).WithMany(em => em.MailsBCCed);
 
             // Create composite GIN index on Mails
             modelBuilder.Entity<Mail>()
-                .HasIndex(p => new { p.Subject, p.Body })
-                .HasMethod("GIN")
-                .HasOperators("gin_trgm_ops")
-                .IsCreatedConcurrently();
-            // Create composite GIN index on Mails
-            modelBuilder.Entity<EmailAddress>()
-                .HasIndex(p => new { p.FullName, p.FullAddress })
+                .HasIndex(m => new { m.Subject, m.Body })
                 .HasMethod("GIN")
                 .HasOperators("gin_trgm_ops")
                 .IsCreatedConcurrently();
         }
-
         public DbSet<Attachment> Attachment { get; set; }
         public DbSet<EmailAddress> EmailAddress { get; set; }
         public DbSet<Folder> Folder { get; set; }
