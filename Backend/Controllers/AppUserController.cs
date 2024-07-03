@@ -65,31 +65,21 @@ namespace Backend.Controllers
                 return new AppUserDto(self);
         }
 
-        // // GET: api/AppUser/5
-        // [HttpGet("{id}")]
-        // public async Task<ActionResult<AppUser>> GetAppUser(string id)
-        // {
-        //     var appUser = await _userService.GetUserByIdAsync(id);
-
-        //     if (appUser == null)
-        //     {
-        //         return NotFound();
-        //     }
-
-        //     return appUser;
-        // }
-
         [HttpPatch("{id}")]
         [Authorize]
-        public async Task<IActionResult> PatchUser(string id, [FromBody] UpdateAppUser updateUserDto)
+        public async Task<IActionResult> PatchUser(string id, [FromBody] UpdateAppUser updateAppUser)
         {
-            if (updateUserDto == null)
+            if (updateAppUser == null || updateAppUser.Id != id)
             {
                 return this.BadRequest();
             }
-
-            if (await this._userService.UpdateUserAsync(id, updateUserDto))
-                return this.NoContent();
+            try
+            {
+                if (await this._userService.UpdateUserAsync(id, updateAppUser))
+                    return this.NoContent();
+            }
+            catch
+            {}
 
             return this.Problem();
         }
