@@ -42,15 +42,15 @@ namespace Backend.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<AppUserDto>> GetUser(string id)
         {
-            var user = await this._context.Users.Select(u =>
-                new AppUserDto(u)).FirstOrDefaultAsync(u => u.Id == id);
+            var user = await this._context.Users
+                                .FirstOrDefaultAsync(u => u.Id == id);
 
             if (user == null)
             {
                 return this.NotFound();
             }
 
-            return this.Ok(user);
+            return this.Ok(new AppUserDto(user));
         }
 
         // GET: api/AppUser/me
@@ -75,19 +75,22 @@ namespace Backend.Controllers
             }
             try
             {
-                if (await this._userService.UpdateUserAsync(id, updateAppUser))
-                    return this.NoContent();
+                await this._userService.UpdateUserAsync(updateAppUser);
             }
-            catch
-            {}
+            catch(ArgumentNullException)
+            {return this.BadRequest();}
+            catch(KeyNotFoundException)
+            {return this.NotFound();}
+            catch(DbUpdateException)
+            {return this.Problem("Database saving issue: Please try again.");}
 
-            return this.Problem();
+            return this.NoContent();
         }
 
         // DELETE: api/AppUser/5
         [Authorize]
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteAppUser(string id)
+        public async Task<ActionResult> DeleteAppUser(string id)
         {
             var appUser = await this._userService.GetUserByIdAsync(id);
             if (appUser == null)
@@ -98,11 +101,13 @@ namespace Backend.Controllers
             if (await this._userManager.GetUserAsync(this.User) != appUser)
                 this.Forbid();
 
-            string? result = await this._userService.DeleteUserAsync(id);
-            if (result is null)
-                return this.NoContent();
-
-            return this.Problem(result);
+            try
+            {
+                await this._userService.DeleteUserAsync(appUser);
+            }
+            catch(DbUpdateException)
+            {return this.Problem("Database saving issue: Please try again.");}
+            return this.NoContent();
         }
     }
 }
