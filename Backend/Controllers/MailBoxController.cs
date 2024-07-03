@@ -27,9 +27,13 @@ namespace Backend.Controllers
 
         // GET: api/MailBox/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<MailBoxDto>> GetMailBox(long id)
+        [Authorize]
+        public async Task<ActionResult<MailBoxDto>> GetMailBox(int id)
         {
-            var mailBox = await this._context.MailBox.FindAsync(id);
+            AppUser? self = await this._userManager.GetUserAsync(this.User);
+            if (self is null || !self.MailBoxes.Any(x => x.Id == id))
+                return this.Forbid();
+            MailBox? mailBox = await this._context.MailBox.FindAsync(id);
 
             if (mailBox == null)
             {
@@ -41,8 +45,12 @@ namespace Backend.Controllers
 
         // Patch: api/MailBox/5
         [HttpPatch("{id}")]
+        [Authorize]
         public async Task<IActionResult> PutMailBox(int id, UpdateMailBox mailBox)
         {
+            AppUser? self = await this._userManager.GetUserAsync(this.User);
+            if (self is null || !self.MailBoxes.Any(x => x.Id == id))
+                return this.Forbid();
             if (id != mailBox.Id)
             {
                 return this.BadRequest();
@@ -62,8 +70,8 @@ namespace Backend.Controllers
         }
 
         // POST: api/MailBox
-        [Authorize]
         [HttpPost]
+        [Authorize]
         public async Task<ActionResult<MailBoxDto?>> PostMailBox(UpdateMailBox updateMailBox)
         {
             AppUser? self = await this._userManager.GetUserAsync(this.User);
@@ -75,8 +83,13 @@ namespace Backend.Controllers
 
         // DELETE: api/MailBox/5
         [HttpGet("{id}/Folders")]
+        [Authorize]
         public async Task<ActionResult<List<FolderDto>>> ListFoldersMailBox(int id)
         {
+            AppUser? self = await this._userManager.GetUserAsync(this.User);
+            if (self is null || !self.MailBoxes.Any(x => x.Id == id))
+                return this.Forbid();
+
             MailBox? mailbox = await this._mailBoxService.GetMailboxByIdAsync(id);
             if (mailbox is null)
                 return this.NotFound();
@@ -88,8 +101,13 @@ namespace Backend.Controllers
 
         // DELETE: api/MailBox/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteMailBox(long id)
+        [Authorize]
+        public async Task<IActionResult> DeleteMailBox(int id)
         {
+            AppUser? self = await this._userManager.GetUserAsync(this.User);
+            if (self is null || !self.MailBoxes.Any(x => x.Id == id))
+                return this.Forbid();
+
             var mailBox = await this._context.MailBox.FindAsync(id);
             if (mailBox == null)
             {
