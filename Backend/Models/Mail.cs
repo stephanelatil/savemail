@@ -56,13 +56,13 @@ namespace Backend.Models
             this.DateReceived = msg.Date;
 
             MailboxAddress? from = (MailboxAddress?) msg.From.FirstOrDefault((MailboxAddress?)null);
-            this.Sender = new EmailAddress(){FullName=from?.Name, FullAddress=from?.Address ?? "UNKNOWN"};
+            this.Sender = new EmailAddress(){FullName=from?.Name, Address=from?.Address ?? "UNKNOWN"};
 
             this.Recipients = [];
             foreach (MailboxAddress recipient in msg.To.Cast<MailboxAddress>())
-                this.Recipients.Add(new EmailAddress(){FullAddress = recipient.Address, FullName = recipient.Name});
+                this.Recipients.Add(new EmailAddress(){Address = recipient.Address, FullName = recipient.Name});
             foreach (MailboxAddress recipient in msg.Cc.Cast<MailboxAddress>())
-                this.RecipientsCc.Add(new EmailAddress(){FullAddress = recipient.Address, FullName = recipient.Name});
+                this.RecipientsCc.Add(new EmailAddress(){Address = recipient.Address, FullName = recipient.Name});
         }
     }
 }

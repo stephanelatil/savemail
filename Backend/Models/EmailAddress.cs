@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Models
 {
-    [Index(nameof(FullAddress), IsUnique = true)]
+    [Index(nameof(Address), IsUnique = true)]
     public class EmailAddress
     {
         [Key]
@@ -13,7 +13,7 @@ namespace Backend.Models
         [EmailAddress]
         [DataType(DataType.EmailAddress)]
         [ReadOnly(true)]
-        public string FullAddress { get; set; } = string.Empty;
+        public string Address { get; set; } = string.Empty;
         [MaxLength(128)]
         public string? FullName { get; set; } = null;
         [JsonIgnore]

@@ -1,11 +1,7 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Backend.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Backend.Controllers
 {
@@ -17,91 +13,22 @@ namespace Backend.Controllers
 
         public EmailAddressController(ApplicationDBContext context)
         {
-            _context = context;
-        }
-
-        // GET: api/EmailAddress
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<EmailAddress>>> GetEmailAddresses()
-        {
-            return await _context.EmailAddress.ToListAsync();
+            this._context = context;
         }
 
         // GET: api/EmailAddress/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<EmailAddress>> GetEmailAddress(long id)
+        [Authorize]
+        public async Task<ActionResult<EmailAddress>> GetEmailAddress(string id)
         {
-            var emailAddress = await _context.EmailAddress.FindAsync(id);
+            var emailAddress = await this._context.EmailAddress.FindAsync(id);
 
             if (emailAddress == null)
             {
-                return NotFound();
+                return this.NotFound();
             }
 
             return emailAddress;
-        }
-
-        // PUT: api/EmailAddress/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutEmailAddress(long id, EmailAddress emailAddress)
-        {
-            if (id != emailAddress.Id)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(emailAddress).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!EmailAddressExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
-        }
-
-        // POST: api/EmailAddress
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
-        public async Task<ActionResult<EmailAddress>> PostEmailAddress(EmailAddress emailAddress)
-        {
-            _context.EmailAddress.Add(emailAddress);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetEmailAddress", new { id = emailAddress.Id }, emailAddress);
-        }
-
-        // DELETE: api/EmailAddress/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteEmailAddress(long id)
-        {
-            var emailAddress = await _context.EmailAddress.FindAsync(id);
-            if (emailAddress == null)
-            {
-                return NotFound();
-            }
-
-            _context.EmailAddress.Remove(emailAddress);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
-        }
-
-        private bool EmailAddressExists(long id)
-        {
-            return _context.EmailAddress.Any(e => e.Id == id);
         }
     }
 }
