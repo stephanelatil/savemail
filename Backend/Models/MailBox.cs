@@ -15,8 +15,13 @@ namespace Backend.Models
         private AppUser? User { get; set; } = null;
 
         [JsonIgnore]
-        public List<Secret> Secrets { get; set; } = [];
-
+        public string OwnerId { get; set; } = string.Empty;
+        [JsonIgnore]
+        public AppUser? Owner { get; set; } = null;
+        public string Username {get ; set;} = string.Empty;
+        [DataType(DataType.Password)]
+        public string Password { get; set; } = string.Empty;
+        private ImapProvider Provider { get; set; } = ImapProvider.NONE;
         [JsonIgnore]
         public List<Mail> Mails { get;set; } = [];
         public List<Folder> Folders { get; set;} = [];

@@ -37,6 +37,5 @@ namespace Backend.Models
         public DbSet<Folder> Folder { get; set; }
         public DbSet<Mail> Mail { get; set; }
         public DbSet<MailBox> MailBox { get; set; }
-        public DbSet<Secret> Secret { get; set; }
     }
 }
