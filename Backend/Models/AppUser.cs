@@ -9,6 +9,6 @@ namespace Backend.Models
         public string LastName { get; set; } = string.Empty;
 
         [JsonIgnore]
-        public List<MailBox> MailBoxes { get; set; } = [];
+        public ICollection<MailBox> MailBoxes { get; set; } = [];
     }
 }

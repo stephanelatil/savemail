@@ -19,18 +19,20 @@ namespace Backend.Models
         public string? ImapReplyFromId { get; } = null;
         [JsonIgnore]
         public Mail? RepliedFrom { get; set; } = null;
+        [JsonIgnore]
+        public ICollection<Mail> Replies { get; set; } = [];
         [ReadOnly(true)]
         public EmailAddress? Sender {get; set; } = null;
         [ReadOnly(true)]
-        public List<EmailAddress> Recipients { get; set; } = [];
+        public ICollection<EmailAddress> Recipients { get; set; } = [];
         [ReadOnly(true)]
-        public List<EmailAddress> RecipientsCc { get; set; } = [];
+        public ICollection<EmailAddress> RecipientsCc { get; set; } = [];
         [ReadOnly(true)]
         public string Subject { get; set; } = string.Empty;
         [ReadOnly(true)]
         public string Body { get; set; } = string.Empty;
         [ReadOnly(true)]
-        public List<Attachment> Attachments { get; set; } = [];
+        public ICollection<Attachment> Attachments { get; set; } = [];
         [DataType(DataType.DateTime)]
         [ReadOnly(true)]
         public DateTimeOffset DateReceived { get; set; } = DateTimeOffset.Now;
@@ -63,6 +65,25 @@ namespace Backend.Models
                 this.Recipients.Add(new EmailAddress(){Address = recipient.Address, FullName = recipient.Name});
             foreach (MailboxAddress recipient in msg.Cc.Cast<MailboxAddress>())
                 this.RecipientsCc.Add(new EmailAddress(){Address = recipient.Address, FullName = recipient.Name});
+        }
+
+        public override int GetHashCode()
+        {
+            if (this.Id > 0)
+                return (int) this.Id;
+            return base.GetHashCode();
+        }
+
+        public override bool Equals(object? obj)
+        {
+            if (obj is not Mail)
+                return false;
+            Mail? mailObj = obj as Mail;
+            if (mailObj is null)
+                return this is null;
+            if (mailObj.Id > 0 && mailObj.Id == this.Id)
+                return true;
+            return base.Equals(obj);
         }
     }
 }

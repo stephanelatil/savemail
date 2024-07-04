@@ -17,10 +17,10 @@ namespace Backend.Models
         [MaxLength(128)]
         public string? FullName { get; set; } = null;
         [JsonIgnore]
-        public List<Mail> MailsSent { get; set; } = [];
+        public ICollection<Mail> MailsSent { get; set; } = [];
         [JsonIgnore]
-        public List<Mail> MailsReceived { get; set; } = [];
+        public ICollection<Mail> MailsReceived { get; set; } = [];
         [JsonIgnore]
-        public List<Mail> MailsCCed { get; set; } = [];
+        public ICollection<Mail> MailsCCed { get; set; } = [];
     }
 }

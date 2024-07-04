@@ -1,6 +1,8 @@
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Org.BouncyCastle.Crypto.Generators;
 
 namespace Backend.Models
 {
@@ -20,8 +22,8 @@ namespace Backend.Models
         public string Password { get; set; } = string.Empty;
         public ImapProvider Provider { get; set; } = ImapProvider.Simple;
         [JsonIgnore]
-        public List<Mail> Mails { get;set; } = [];
-        public List<Folder> Folders { get; set;} = [];
+        public ICollection<Mail> Mails { get;set; } = [];
+        public ICollection<Folder> Folders { get; set;} = [];
     }
 
     public enum ImapProvider

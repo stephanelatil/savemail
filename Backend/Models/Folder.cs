@@ -16,14 +16,14 @@ namespace Backend.Models
                                             .Last();
         public string Path { get; set; } = string.Empty;
         public Folder? Parent { get; set; } = null;
-        public List<Folder> Children { get; set; } = [];
+        public ICollection<Folder> Children { get; set; } = [];
         [ReadOnly(true)]
         public int MailBoxId { get; set; }
         [ReadOnly(true)]
         [JsonIgnore]
         public MailBox? MailBox { get; set; } = null;
         [JsonIgnore]
-        public List<Mail> Mails { get; set; } = [];
+        public ICollection<Mail> Mails { get; set; } = [];
 
         public Folder(){}
         public Folder(IMailFolder folder){
