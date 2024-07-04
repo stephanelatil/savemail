@@ -14,7 +14,7 @@ namespace Backend.Models.DTO
         public string Password { private get; set; } = string.Empty;
         private ImapProvider Provider { get; set; } = ImapProvider.Simple;
         [ReadOnly(true)]
-        public List<FolderDto> Folders { get; set;} = [];
+        public ICollection<FolderDto> Folders { get; set;} = [];
 
         public MailBoxDto(){}
 

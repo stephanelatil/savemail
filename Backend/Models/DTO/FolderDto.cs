@@ -5,7 +5,7 @@ namespace Backend.Models.DTO
         public int Id { get; set; }
         public string Name { get; private set;} = string.Empty;
         public string Path { get; set; } = string.Empty;
-        public List<Folder> Children { get; set; } = [];
+        public ICollection<Folder> Children { get; set; } = [];
 
         public FolderDto(){}
         
