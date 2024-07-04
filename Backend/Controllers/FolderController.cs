@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Backend.Models;
 using Microsoft.AspNetCore.Identity;
+using Backend.Services;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Backend.Controllers
 {
@@ -16,23 +18,20 @@ namespace Backend.Controllers
     {
         private readonly ApplicationDBContext _context;
         private readonly UserManager<AppUser> _userManager;
+        private readonly IFolderService _folderService;
 
         public FolderController(ApplicationDBContext context,
-                                UserManager<AppUser> userManager)
+                                UserManager<AppUser> userManager,
+                                IFolderService folderService)
         {
             this._context = context;
             this._userManager = userManager;
-        }
-
-        // GET: api/Folder
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Folder>>> GetFolder()
-        {
-            return await this._context.Folder.ToListAsync();
+            this._folderService = folderService;
         }
 
         // GET: api/Folder/5
         [HttpGet("{id}")]
+        [Authorize]
         public async Task<ActionResult<Folder>> GetFolder(long id)
         {
             var folder = await this._context.Folder.FindAsync(id);
@@ -41,54 +40,17 @@ namespace Backend.Controllers
             {
                 return this.NotFound();
             }
+            
+            var self = await this._userManager.GetUserAsync(this.User);
+            if (self is null || folder?.MailBox?.Owner != self)
+                return this.Forbid();
 
             return folder;
         }
 
-        // PUT: api/Folder/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutFolder(long id, Folder folder)
-        {
-            if (id != folder.Id)
-            {
-                return this.BadRequest();
-            }
-
-            this._context.Entry(folder).State = EntityState.Modified;
-
-            try
-            {
-                await this._context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!this.FolderExists(id))
-                {
-                    return this.NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return this.NoContent();
-        }
-
-        // POST: api/Folder
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
-        public async Task<ActionResult<Folder>> PostFolder(Folder folder)
-        {
-            this._context.Folder.Add(folder);
-            await this._context.SaveChangesAsync();
-
-            return this.CreatedAtAction("GetFolder", new { id = folder.Id }, folder);
-        }
-
         // DELETE: api/Folder/5
         [HttpDelete("{id}")]
+        [Authorize]
         public async Task<IActionResult> DeleteFolder(long id)
         {
             var folder = await this._context.Folder.FindAsync(id);
@@ -97,15 +59,14 @@ namespace Backend.Controllers
                 return this.NotFound();
             }
 
+            var self = await this._userManager.GetUserAsync(this.User);
+            if (self is null || folder?.MailBox?.Owner != self)
+                return this.Forbid();
+
             this._context.Folder.Remove(folder);
             await this._context.SaveChangesAsync();
 
             return this.NoContent();
-        }
-
-        private bool FolderExists(long id)
-        {
-            return this._context.Folder.Any(e => e.Id == id);
         }
     }
 }
