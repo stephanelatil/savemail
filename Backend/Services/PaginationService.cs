@@ -1,5 +1,4 @@
 using Backend.Models;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 namespace Backend.Services
 {
@@ -10,6 +9,14 @@ namespace Backend.Services
 
     public class QueryParamTakeSkipPaginationService<T, U> : IPaginationService<T, U> where T : DbSet<U> where U : class
     {
+        /// <summary>
+        /// Returns a PaginatedList gotten from the given queryset. 
+        /// </summary>
+        /// <param name="querySet">The queryset to paginate. NOTE: it should already be ordered-by whatever key you require.</param>
+        /// <param name="route">The query URL (without query params)</param>
+        /// <param name="page">The page number</param>
+        /// <param name="pageSize">The max number of element of the list</param>
+        /// <returns>A PaginatedList object</returns>
         public async Task<PaginatedList<U>> GetPageAsync(T querySet, string route, int page, int pageSize)
         {
             // gets one extra element just to make sure that there are more after
@@ -21,7 +28,6 @@ namespace Backend.Services
             bool hasNext = data.Count > pageSize;
             //Remove extra element
             if (hasNext) data.RemoveAt(pageSize);
-
 
             return new PaginatedList<U>(data, page, route, hasNext);
         }
