@@ -2,12 +2,12 @@ using Backend.Models;
 using Microsoft.EntityFrameworkCore;
 namespace Backend.Services
 {
-    public interface IPaginationService<T,U> where T : DbSet<U> where U : class
+    public interface IPaginationService<T,U> where T : IOrderedQueryable<U> where U : class
     {
         public Task<PaginatedList<U>> GetPageAsync(T querySet, string route, int page, int pageSize);
     }
 
-    public class QueryParamTakeSkipPaginationService<T, U> : IPaginationService<T, U> where T : DbSet<U> where U : class
+    public class QueryParamTakeSkipPaginationService<T, U> : IPaginationService<T, U> where T : IOrderedQueryable<U> where U : class
     {
         /// <summary>
         /// Returns a PaginatedList gotten from the given queryset. 
