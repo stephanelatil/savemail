@@ -1,8 +1,6 @@
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Org.BouncyCastle.Crypto.Generators;
 
 namespace Backend.Models
 {
