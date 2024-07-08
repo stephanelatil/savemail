@@ -37,7 +37,7 @@ namespace Backend.Models
         public ICollection<Attachment> Attachments { get; set; } = [];
         [DataType(DataType.DateTime)]
         [ReadOnly(true)]
-        public DateTimeOffset DateReceived { get; set; } = DateTimeOffset.MinValue;
+        public DateTimeOffset DateSent { get; set; } = DateTimeOffset.MinValue;
         [Required]
         [JsonIgnore]
         [ReadOnly(true)]
@@ -57,7 +57,7 @@ namespace Backend.Models
             this.Body = msg.HtmlBody;
             this.Folder = folder;
             this.OwnerMailBox = folder.MailBox;
-            this.DateReceived = msg.Date;
+            this.DateSent = msg.Date;
 
             MailboxAddress? from = (MailboxAddress?) msg.From.FirstOrDefault((MailboxAddress?)null);
             this.Sender = new EmailAddress(){FullName=from?.Name, Address=from?.Address ?? "UNKNOWN"};
@@ -76,7 +76,7 @@ namespace Backend.Models
 
                 xxHash.Append(Encoding.UTF8.GetBytes(this.Subject));
                 xxHash.Append(Encoding.UTF8.GetBytes(this.Body));
-                xxHash.Append(BitConverter.GetBytes(this.DateReceived.UtcTicks));
+                xxHash.Append(BitConverter.GetBytes(this.DateSent.UtcTicks));
                 if (this.Sender is not null)
                     xxHash.Append(Encoding.UTF8.GetBytes(this.Sender.Address));
 

@@ -13,7 +13,7 @@ namespace Backend.Models
         public string Subject { get; set; } = string.Empty;
         public string Body { get; set; } = string.Empty;
         public ICollection<AttachmentDto> Attachments { get; set; } = [];
-        public DateTimeOffset DateReceived { get; set; } = DateTimeOffset.Now;
+        public DateTimeOffset DateSent { get; set; } = DateTimeOffset.Now;
 
         public MailDto(){}
 
@@ -28,7 +28,7 @@ namespace Backend.Models
             this.Subject = mail.Subject;
             this.Body = mail.Body;
             this.Attachments = mail.Attachments.Select(a => new AttachmentDto(a)).ToList();
-            this.DateReceived = mail.DateReceived;
+            this.DateSent = mail.DateSent;
         }
     }
 }

@@ -63,7 +63,7 @@ namespace Backend.Controllers
                 return this.Forbid();
 
             return await this._paginatorService.GetPageAsync(
-                            (IOrderedQueryable<Mail>)folder.Mails.OrderByDescending(m =>m.DateReceived),
+                            (IOrderedQueryable<Mail>)folder.Mails.OrderByDescending(m =>m.DateSent),
                             this.Request.Path.Value ?? "",
                             paginationQueryParameters.PageNumber,
                             paginationQueryParameters.PageSize);
