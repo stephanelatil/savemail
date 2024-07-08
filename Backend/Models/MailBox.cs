@@ -1,6 +1,8 @@
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
+using MailKit.Net.Imap;
+using MailKit.Security;
 
 namespace Backend.Models
 {
@@ -9,6 +11,7 @@ namespace Backend.Models
         public int Id { get; set; }
         public string ImapDomain { get; set; } = string.Empty;
         public short ImapPort { get; set; }
+        public SecureSocketOptions SecureSocketOptions { get; set; } = SecureSocketOptions.Auto;
         [JsonIgnore]
         [ReadOnly(true)]
         public string OwnerId { get; set; } = string.Empty;
@@ -22,6 +25,15 @@ namespace Backend.Models
         [JsonIgnore]
         public ICollection<Mail> Mails { get;set; } = [];
         public ICollection<Folder> Folders { get; set;} = [];
+
+        public SaslMechanism GetSaslMechanism()
+        {
+            return this.Provider switch
+            {
+                ImapProvider.Gmail => new SaslMechanismOAuth2(this.Username, this.Password),
+                _ => new SaslMechanismLogin(this.Username, this.Password),
+            };
+        }
     }
 
     public enum ImapProvider
