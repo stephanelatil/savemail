@@ -1,6 +1,8 @@
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.IO.Hashing;
+using System.Text;
 using System.Text.Json.Serialization;
 using MailKit;
 using MimeKit;
@@ -11,7 +13,7 @@ namespace Backend.Models
     {
         [Key]
         public long Id { get; set; }
-        public UniqueId ImapMailUID{ get; set; }
+        public UniqueId ImapMailUID { get; set; }
         [JsonIgnore]
         public string ImapMailId { get; set; }= string.Empty;
         [NotMapped]
@@ -35,7 +37,7 @@ namespace Backend.Models
         public ICollection<Attachment> Attachments { get; set; } = [];
         [DataType(DataType.DateTime)]
         [ReadOnly(true)]
-        public DateTimeOffset DateReceived { get; set; } = DateTimeOffset.Now;
+        public DateTimeOffset DateReceived { get; set; } = DateTimeOffset.MinValue;
         [Required]
         [JsonIgnore]
         [ReadOnly(true)]
@@ -66,24 +68,20 @@ namespace Backend.Models
             foreach (MailboxAddress recipient in msg.Cc.Cast<MailboxAddress>())
                 this.RecipientsCc.Add(new EmailAddress(){Address = recipient.Address, FullName = recipient.Name});
         }
+        
+        public ulong UniqueHash
+        { get 
+            {
+                XxHash3 xxHash= new();
 
-        public override int GetHashCode()
-        {
-            if (this.Id > 0)
-                return (int) this.Id;
-            return base.GetHashCode();
-        }
+                xxHash.Append(Encoding.UTF8.GetBytes(this.Subject));
+                xxHash.Append(Encoding.UTF8.GetBytes(this.Body));
+                xxHash.Append(BitConverter.GetBytes(this.DateReceived.UtcTicks));
+                if (this.Sender is not null)
+                    xxHash.Append(Encoding.UTF8.GetBytes(this.Sender.Address));
 
-        public override bool Equals(object? obj)
-        {
-            if (obj is not Mail)
-                return false;
-            Mail? mailObj = obj as Mail;
-            if (mailObj is null)
-                return this is null;
-            if (mailObj.Id > 0 && mailObj.Id == this.Id)
-                return true;
-            return base.Equals(obj);
+                return xxHash.GetCurrentHashAsUInt64();
+            }
         }
     }
 }
