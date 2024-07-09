@@ -1,15 +1,20 @@
 using System.Data;
 using Backend.Models;
-using Backend.Models.DTO;
 using Microsoft.EntityFrameworkCore;
+using MailKit;
 
 namespace Backend.Services
 {
     public interface IFolderService
     {
-        public Task<Folder?> GetFolderByIdAsync(int id);
-        public Task<Folder> CreateFolderAsync(Folder folder, AppUser owner);
-        public Task DeleteFolderAsync(Folder folder);
+        public Task<Folder?> GetFolderByIdAsync(int id,
+                                            CancellationToken cancellationToken=default));
+        public Task<Folder> CreateFolderAsync(Folder folder, MailBox mailbox,
+                                            CancellationToken cancellationToken=default));
+        public Task UpdateLastPullDataAsync(Folder folder, UniqueId lastMailUid, DateTimeOffset lastMailDate,
+                                            CancellationToken cancellationToken=default);
+        public Task DeleteFolderAsync(Folder folder,
+                                            CancellationToken cancellationToken=default));
     }
 
     public class FolderService : IFolderService
@@ -21,16 +26,19 @@ namespace Backend.Services
             this._context = context;
         }
 
-        public async Task<Folder?> GetFolderByIdAsync(int id)
+        public async Task<Folder?> GetFolderByIdAsync(int id, CancellationToken cancellationToken=default)
         {
-            return await this._context.Folder.FindAsync(id);
+            return await this._context.Folder.FindAsync(id, cancellationToken);
         }
 
-        private async Task<Folder> CreateFolderAsync(Folder folder, MailBox mailbox, bool save)
+        private async Task<Folder> CreateFolderAsync(Folder folder, MailBox mailbox, bool save,
+                                            CancellationToken cancellationToken=default)
         {
             ArgumentNullException.ThrowIfNull(folder);
             ArgumentNullException.ThrowIfNull(folder.Path);
             ArgumentNullException.ThrowIfNull(mailbox);
+            if (cancellationToken.IsCancellationRequested)
+                return folder;
             Folder? existing = mailbox.Folders.Where(f => f.Path == folder.Path).FirstOrDefault();
             if (existing is not null)
                 return existing;
@@ -42,15 +50,17 @@ namespace Backend.Services
                 parent = await this.CreateFolderAsync(new Folder(){
                     Path = parentPath,
                     MailBox = mailbox
-                }, mailbox, false); //do not save yet wait to add all elements in the tree
+                }, mailbox, false, cancellationToken); //do not save yet wait to add all elements in the tree
             }
 
             folder.Parent = parent;
             var newFolder = this._context.Folder.Add(folder);
             newFolder.State = EntityState.Added;
 
+            if (cancellationToken.IsCancellationRequested)
+                return folder;
             if (save)
-                if (await this._context.SaveChangesAsync() == 0) 
+                if (await this._context.SaveChangesAsync(cancellationToken) == 0) 
                     throw new DbUpdateException();
             return newFolder.Entity;
         }
@@ -63,17 +73,19 @@ namespace Backend.Services
         /// <returns>The added folder with </returns>
         /// <exception cref="DbUpdateException">If saving to the database fails</exception>
         /// <exception cref="DbUpdateConcurrencyException">If saving to the database fails due to a concurrent save</exception>
-        public async Task<Folder> CreateFolderAsync(Folder folder, MailBox mailbox)
+        public async Task<Folder> CreateFolderAsync(Folder folder, MailBox mailbox,
+                                            CancellationToken cancellationToken=default)
         {
-            return await this.CreateFolderAsync(folder, mailbox, true);
+            return await this.CreateFolderAsync(folder, mailbox, true, cancellationToken);
         }
 
-        public async Task DeleteFolderAsync(Folder folder)
+        public async Task DeleteFolderAsync(Folder folder,
+                                            CancellationToken cancellationToken=default)
         {
             ArgumentNullException.ThrowIfNull(folder);
 
             this._context.Folder.Remove(folder);
-            if (await this._context.SaveChangesAsync() == 0)
+            if (await this._context.SaveChangesAsync(cancellationToken) == 0)
                 throw new DbUpdateException();
         }
 
