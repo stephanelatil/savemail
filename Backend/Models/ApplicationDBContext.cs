@@ -25,6 +25,12 @@ namespace Backend.Models
                 .HasMethod("GIN")
                 .HasOperators("gin_trgm_ops")
                 .IsCreatedConcurrently();
+
+            // Ensure hash is calculated and stored
+            modelBuilder
+                .Entity<Mail>()
+                .Property(e => e.UniqueHash)
+                .UsePropertyAccessMode(PropertyAccessMode.PreferProperty);
         }
         public DbSet<Attachment> Attachment { get; set; }
         public DbSet<EmailAddress> EmailAddress { get; set; }

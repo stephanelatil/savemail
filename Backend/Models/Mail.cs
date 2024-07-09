@@ -5,10 +5,13 @@ using System.IO.Hashing;
 using System.Text;
 using System.Text.Json.Serialization;
 using MailKit;
+using Microsoft.EntityFrameworkCore;
 using MimeKit;
 
 namespace Backend.Models
 {
+    [Index(nameof(UniqueHash), IsUnique = true)]
+    [Index(nameof(FolderId), IsUnique = false)]
     public class Mail
     {
         [Key]
@@ -44,6 +47,23 @@ namespace Backend.Models
         public MailBox? OwnerMailBox { get; set; } = null;
         [JsonIgnore]
         public Folder? Folder { get; set; } = null;
+        [JsonIgnore]
+        public int FolderId { get; set; }
+        
+        public ulong UniqueHash
+        { get 
+            {
+                XxHash3 xxHash= new();
+
+                xxHash.Append(Encoding.UTF8.GetBytes(this.Subject));
+                xxHash.Append(Encoding.UTF8.GetBytes(this.Body));
+                xxHash.Append(BitConverter.GetBytes(this.DateSent.UtcTicks));
+                if (this.Sender is not null)
+                    xxHash.Append(Encoding.UTF8.GetBytes(this.Sender.Address));
+
+                return xxHash.GetCurrentHashAsUInt64();
+            }
+        }
 
         public Mail(){}
 
@@ -67,21 +87,6 @@ namespace Backend.Models
                 this.Recipients.Add(new EmailAddress(){Address = recipient.Address, FullName = recipient.Name});
             foreach (MailboxAddress recipient in msg.Cc.Cast<MailboxAddress>())
                 this.RecipientsCc.Add(new EmailAddress(){Address = recipient.Address, FullName = recipient.Name});
-        }
-        
-        public ulong UniqueHash
-        { get 
-            {
-                XxHash3 xxHash= new();
-
-                xxHash.Append(Encoding.UTF8.GetBytes(this.Subject));
-                xxHash.Append(Encoding.UTF8.GetBytes(this.Body));
-                xxHash.Append(BitConverter.GetBytes(this.DateSent.UtcTicks));
-                if (this.Sender is not null)
-                    xxHash.Append(Encoding.UTF8.GetBytes(this.Sender.Address));
-
-                return xxHash.GetCurrentHashAsUInt64();
-            }
         }
     }
 }
