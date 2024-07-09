@@ -18,7 +18,7 @@ namespace Backend.Models
         public string ImapMailId { get; set; }= string.Empty;
         [NotMapped]
         [JsonIgnore]
-        public string? ImapReplyFromId { get; } = null;
+        public readonly string? ImapReplyFromId;
         [JsonIgnore]
         public Mail? RepliedFrom { get; set; } = null;
         [JsonIgnore]
