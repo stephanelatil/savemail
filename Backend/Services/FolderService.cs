@@ -76,5 +76,20 @@ namespace Backend.Services
             if (await this._context.SaveChangesAsync() == 0)
                 throw new DbUpdateException();
         }
+
+        public async Task UpdateLastPullDataAsync(Folder folder,
+                                            UniqueId lastMailUid,
+                                            DateTimeOffset lastMailDate,
+                                            CancellationToken cancellationToken=default)
+        {
+            var entry = this._context.Folder.Entry(folder);
+            entry.State = EntityState.Modified;
+            if (folder.LastPulledUid < lastMailUid)
+                entry.Entity.LastPulledUid = lastMailUid;
+            if (folder.LastPulledUid < lastMailUid)
+                entry.Entity.LastPulledUid = lastMailUid;
+
+            await this._context.SaveChangesAsync(cancellationToken);
+        }
     }
 }
