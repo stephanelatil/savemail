@@ -76,8 +76,18 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.SlidingExpiration = true;
 });
 
+//Add services for background tasks
+builder.Services.AddScoped<ITaskManager, TaskManager>();
+builder.Services.AddHostedService<DailyScheduleService>();
+builder.Services.AddTransient<IImapFetchTaskService, ImapFetchTaskService>();
+builder.Services.AddScoped<IAsyncEnumerable<List<Mail>>, ImapMailFetchService>();
+builder.Services.AddScoped<IImapFolderFetchService, ImapFolderFetchService>();
+
 //Add Services to edit elements in the database
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IFolderService, FolderService>();
+builder.Services.AddScoped<IMailBoxService, MailBoxService>();
+builder.Services.AddScoped<IMailService, MailService>();
 
 
 var app = builder.Build();
