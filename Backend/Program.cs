@@ -80,7 +80,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 builder.Services.AddScoped<ITaskManager, TaskManager>();
 builder.Services.AddHostedService<DailyScheduleService>();
 builder.Services.AddTransient<IImapFetchTaskService, ImapFetchTaskService>();
-builder.Services.AddScoped<IAsyncEnumerable<List<Mail>>, ImapMailFetchService>();
+builder.Services.AddScoped<IImapMailFetchService, ImapMailFetchService>();
 builder.Services.AddScoped<IImapFolderFetchService, ImapFolderFetchService>();
 
 //Add Services to edit elements in the database

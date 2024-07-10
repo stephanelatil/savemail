@@ -76,106 +76,106 @@ namespace Backend.Services
         }
     }
 
-    public class ImapMailFetchService : IDisposable, IAsyncEnumerable<List<Mail>>
+    public interface IImapMailFetchService : IDisposable
     {
-        private ImapClient imapClient;
-        private MailBox _mailbox;
-        private Folder _folder;
+        public Task Prepare(MailBox mailbox, Folder folder, CancellationToken cancellationToken = default);
+        public Task<List<Mail>> GetNextMails(int maxFetchPerLoop=20, CancellationToken cancellationToken = default);
+    }
+
+    public class ImapMailFetchService : IImapMailFetchService
+    {
+        private readonly ImapClient imapClient = new();
+        private Folder? _folder;
+        private IMailFolder? _imapFolder;
+        private Queue<UniqueId>? _uids = null;        
         private bool _disposed = false;
-        private bool _connected = false;
-        public int MaxFetchPerLoop { get; } = 20;
+        private bool _prepared = false;
 
-        public ImapMailFetchService(MailBox mailbox, Folder folder, int maxFetchPerLoop=20)
-        {
-            this._mailbox = mailbox;
-            this._folder =  folder;
-            this.imapClient = new();
-            this.MaxFetchPerLoop = maxFetchPerLoop;
-        }
+        public ImapMailFetchService() {}
 
-        public ImapMailFetchService(Folder folder, int maxFetchPerLoop=20)
-        {
-            this._folder =  folder;
-            ArgumentNullException.ThrowIfNull(folder.MailBox);
-            this._mailbox = folder.MailBox;
-            this.imapClient = new();
-            this.MaxFetchPerLoop = maxFetchPerLoop;
-        }
-
-        private async Task<IList<UniqueId>> GetUidsToFetchAsync(IMailFolder folder, UniqueId? lastUid, DateTimeOffset lastDate,
+        private async Task<Queue<UniqueId>> GetUidsToFetchAsync(UniqueId? lastUid, DateTimeOffset lastDate,
                                                                 CancellationToken cancellationToken = default)
         {
+            ArgumentNullException.ThrowIfNull(this._imapFolder);
             UniqueId? start = null;
             //Gets the latest mails starting at the 
-            if (lastUid.HasValue && folder.UidValidity == lastUid.Value.Validity)
+            if (lastUid.HasValue && this._imapFolder.UidValidity == lastUid.Value.Validity)
                 start = lastUid.Value;
             else if (lastDate == DateTimeOffset.MinValue)
             {
-                var result = await folder.SearchAsync(
-                    MailKit.Search.SearchOptions.Min,
-                    MailKit.Search.SearchQuery.DeliveredAfter(lastDate.DateTime),
-                    cancellationToken
-                );
+                MailKit.Search.SearchResults result = await this._imapFolder.SearchAsync(
+                            MailKit.Search.SearchOptions.Min,
+                            MailKit.Search.SearchQuery.DeliveredAfter(lastDate.DateTime),
+                            cancellationToken);
                 start = result.Min;
             }
             if (!start.HasValue)
                 start = UniqueId.MinValue;
 
             UniqueIdRange range = new(start.Value, UniqueId.MaxValue);
-            return await folder.SearchAsync(range, MailKit.Search.SearchQuery.NotDraft, cancellationToken);
+            return new Queue<UniqueId>(
+                            await this._imapFolder.SearchAsync(
+                                    range, MailKit.Search.SearchQuery.NotDraft, cancellationToken));
         }
 
-        public async IAsyncEnumerator<List<Mail>> GetAsyncEnumerator(CancellationToken cancellationToken = default)
+        public async Task Prepare(MailBox mailbox, Folder folder, CancellationToken cancellationToken = default)
         {
-            if (this._connected)
+            if (this._prepared)
                 throw new Exception("ImapClient is already connected");
             ObjectDisposedException.ThrowIf(this._disposed, this);
             this.Disconnect(); //Ensure not already connected
             
-            await this.imapClient.ConnectAsync(this._mailbox.ImapDomain,
-                                    this._mailbox.ImapPort,
-                                    this._mailbox.SecureSocketOptions,
+            await this.imapClient.ConnectAsync(mailbox.ImapDomain,
+                                    mailbox.ImapPort,
+                                    mailbox.SecureSocketOptions,
                                     cancellationToken);
-            this._connected = true;
-            await this.imapClient.AuthenticateAsync(this._mailbox.GetSaslMechanism(),
+            await this.imapClient.AuthenticateAsync(mailbox.GetSaslMechanism(),
                                     cancellationToken);
 
-            IMailFolder imapFolder = await this.imapClient.GetFolderAsync(this._folder.Path, cancellationToken);
-            await imapFolder.OpenAsync(MailKit.FolderAccess.ReadOnly, cancellationToken);
+            this._imapFolder = await this.imapClient.GetFolderAsync(folder.Path, cancellationToken);
+            await this._imapFolder.OpenAsync(FolderAccess.ReadOnly, cancellationToken);
             // MAIN LOOP HERE
             // Make sure to only get new emails
             // TODO return N emails gotten from the mailbox
-            IList<UniqueId> uids = await this.GetUidsToFetchAsync(imapFolder,
-                                                                  this._folder.LastPulledUid,
-                                                                  this._folder.LastPulledInternalDate,
-                                                                  cancellationToken);
-            List<Mail> newMails = [];
-            foreach (UniqueId mailUid in uids)
+            this._uids = await this.GetUidsToFetchAsync(folder.LastPulledUid,
+                                                        folder.LastPulledInternalDate,
+                                                        cancellationToken);
+            this._prepared = true;
+        }
+
+        public async Task<List<Mail>> GetNextMails(int maxFetchPerLoop=20, CancellationToken cancellationToken = default)
+        {
+            ArgumentOutOfRangeException.ThrowIfLessThan(maxFetchPerLoop, 1);
+            
+            ArgumentNullException.ThrowIfNull(this._imapFolder, nameof(this._imapFolder));
+            ArgumentNullException.ThrowIfNull(this._folder, nameof(this._folder));
+            if (!this._prepared)
+                throw new ArgumentException(nameof(this._prepared), "Must prepare the service before getting emails");
+            if (this._uids is null || this._uids.Count == 0) //queue should not be empty
+                throw new InvalidOperationException("Now more UIDs available");
+
+            List<Mail> mails = new(maxFetchPerLoop);
+            for (int i = 0; i < maxFetchPerLoop; ++i)
             {
-                while (newMails.Count < this.MaxFetchPerLoop)
-                {
-                    if (cancellationToken.IsCancellationRequested || !this._connected)
-                        break;
-                    
-                    Mail mail = new(await imapFolder.GetMessageAsync(mailUid, cancellationToken),
-                                        mailUid, this._folder);
-                    newMails.Add(mail);
-                }
-                if (cancellationToken.IsCancellationRequested || !this._connected)
-                    break;
-                yield return newMails;
-                newMails.Clear();
+                if (!this._uids.TryDequeue(out UniqueId uid))
+                    break; //done if end of queue reached
+                
+                mails.Add(new Mail(await this._imapFolder.GetMessageAsync(uid),
+                                    uid,
+                                    this._folder));
             }
 
-            await imapFolder.CloseAsync(false, CancellationToken.None);
-            this.Disconnect();
-            yield break;
+            return mails;
         }
 
         private void Disconnect(){
-            if (this._connected)
+            this._prepared = false;
+            if (this._prepared)
             {
-                this._connected = false;
+                this._imapFolder?.Close();
+                this._imapFolder = null;
+                this._uids = null;
+                this._folder = null;
                 this.imapClient.Disconnect(true);
             }
         }

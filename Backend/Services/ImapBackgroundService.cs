@@ -5,6 +5,7 @@ namespace Backend.Services
 {
     public interface ITaskManager
     {
+        // Task AddTaskToQueue(int mailboxId);
         Task RunDailyTasks(CancellationToken cancellationToken);
     }
 
@@ -139,13 +140,13 @@ namespace Backend.Services
         private readonly IFolderService _folderService;
         private readonly IMailService _mailService;
         private readonly IImapFolderFetchService _imapFolderFetchService;
-        private readonly IAsyncEnumerable<List<Mail>> _imapMailFetchService;
+        private readonly IImapMailFetchService _imapMailFetchService;
 
         public ImapFetchTaskService(ApplicationDBContext context,
                                     IFolderService folderService,
                                     IMailService mailService,
                                     IImapFolderFetchService imapFolderFetchService,
-                                    IAsyncEnumerable<List<Mail>> imapMailFetchService)
+                                    IImapMailFetchService imapMailFetchService)
         {
             this._context = context;
             this._folderService = folderService;
