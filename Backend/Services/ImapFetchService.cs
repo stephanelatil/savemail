@@ -4,17 +4,20 @@ using MailKit.Net.Imap;
 
 namespace Backend.Services
 {
-    public class ImapFolderFetchService : IDisposable
+    public interface IImapFolderFetchService
+    {
+        public Task<List<Folder>> GetNewFolders(MailBox mailbox, CancellationToken cancellationToken = default);
+    }
+
+    public class ImapFolderFetchService : IDisposable, IImapFolderFetchService
     {
         private ImapClient imapClient;
-        private MailBox _mailbox;
         private bool _disposed = false;
         private bool _connected = false;
 
 
         public ImapFolderFetchService(MailBox mailbox)
         {
-            this._mailbox = mailbox;
             this.imapClient = new();
         }
 
@@ -23,24 +26,24 @@ namespace Backend.Services
         /// </summary>
         /// <param name="cancellationToken"></param>
         /// <returns>A list of Folder instances. They should still be added to the database with the FolderService!</returns>
-        public async Task<List<Folder>> GetNewFolders(CancellationToken cancellationToken = default)
+        public async Task<List<Folder>> GetNewFolders(MailBox mailbox, CancellationToken cancellationToken = default)
         {
             ObjectDisposedException.ThrowIf(this._disposed, this);
             List<Folder> folders = [];
             this.Disconnect(); //Ensure not already connected
             
-            await this.imapClient.ConnectAsync(this._mailbox.ImapDomain,
-                                    this._mailbox.ImapPort,
-                                    this._mailbox.SecureSocketOptions,
+            await this.imapClient.ConnectAsync(mailbox.ImapDomain,
+                                    mailbox.ImapPort,
+                                    mailbox.SecureSocketOptions,
                                     cancellationToken);
-            await this.imapClient.AuthenticateAsync(this._mailbox.GetSaslMechanism(),
+            await this.imapClient.AuthenticateAsync(mailbox.GetSaslMechanism(),
                                     cancellationToken);
 
             foreach (var imapFolder in await this.imapClient.GetFoldersAsync(this.imapClient.PersonalNamespaces[0],
                                                                             false,
                                                                             cancellationToken))
             {
-                if (!this._mailbox.Folders.Any(f => f.Path == imapFolder.FullName))
+                if (!mailbox.Folders.Any(f => f.Path == imapFolder.FullName))
                     folders.Add(new Folder(imapFolder));
             }
 
@@ -72,6 +75,7 @@ namespace Backend.Services
             GC.SuppressFinalize(this);
         }
     }
+
     public class ImapMailFetchService : IDisposable, IAsyncEnumerable<List<Mail>>
     {
         private ImapClient imapClient;
