@@ -50,19 +50,24 @@ namespace Backend.Models
         [JsonIgnore]
         public int FolderId { get; set; }
         
+        private ulong _uniqueHash = 0;
         public ulong UniqueHash
         { get 
             {
-                XxHash3 xxHash= new();
+                if (this._uniqueHash == 0){
+                    XxHash3 xxHash= new();
 
-                xxHash.Append(Encoding.UTF8.GetBytes(this.Subject));
-                xxHash.Append(Encoding.UTF8.GetBytes(this.Body));
-                xxHash.Append(BitConverter.GetBytes(this.DateSent.UtcTicks));
-                if (this.Sender is not null)
-                    xxHash.Append(Encoding.UTF8.GetBytes(this.Sender.Address));
+                    xxHash.Append(Encoding.UTF8.GetBytes(this.Subject));
+                    xxHash.Append(Encoding.UTF8.GetBytes(this.Body));
+                    xxHash.Append(BitConverter.GetBytes(this.DateSent.UtcTicks));
+                    if (this.Sender is not null)
+                        xxHash.Append(Encoding.UTF8.GetBytes(this.Sender.Address));
 
-                return xxHash.GetCurrentHashAsUInt64();
+                    this._uniqueHash = xxHash.GetCurrentHashAsUInt64();
+                }
+                return this._uniqueHash;
             }
+            private set { _ = value; }
         }
 
         public Mail(){}

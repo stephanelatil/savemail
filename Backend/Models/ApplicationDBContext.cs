@@ -30,7 +30,7 @@ namespace Backend.Models
             modelBuilder
                 .Entity<Mail>()
                 .Property(e => e.UniqueHash)
-                .UsePropertyAccessMode(PropertyAccessMode.PreferProperty);
+                .UsePropertyAccessMode(PropertyAccessMode.PreferFieldDuringConstruction);
         }
         public DbSet<Attachment> Attachment { get; set; }
         public DbSet<EmailAddress> EmailAddress { get; set; }
