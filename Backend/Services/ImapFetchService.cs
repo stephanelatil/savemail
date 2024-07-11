@@ -16,7 +16,7 @@ namespace Backend.Services
         private bool _connected = false;
 
 
-        public ImapFolderFetchService(MailBox mailbox)
+        public ImapFolderFetchService()
         {
             this.imapClient = new();
         }

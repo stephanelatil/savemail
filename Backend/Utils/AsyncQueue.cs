@@ -21,7 +21,9 @@ namespace Backend.Utils
         public async Task<T> DequeueAsync(CancellationToken cancellationToken = default)
         {
             await this._queueSem.WaitAsync(cancellationToken);
-            return this._queue.Dequeue();
+
+            var obj = this._queue.Dequeue();
+            return obj;
         }
 
         public bool Contains(T obj)

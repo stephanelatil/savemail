@@ -77,7 +77,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 });
 
 //Add services for background tasks
-builder.Services.AddScoped<ITaskManager, TaskManager>();
+builder.Services.AddSingleton<ITaskManager, TaskManager>();
 builder.Services.AddHostedService<DailyScheduleService>();
 builder.Services.AddTransient<IImapFetchTaskService, ImapFetchTaskService>();
 builder.Services.AddScoped<IImapMailFetchService, ImapMailFetchService>();
@@ -102,7 +102,7 @@ app.MapGroup("/api/auth").MapIdentityApi<AppUser>();
 app.UseStatusCodePages(async context =>
 {
     context.HttpContext.Response.ContentType = "application/json";
-    var result = $"{{'message':'{context.HttpContext.Response.StatusCode}'}}";
+    var result = $"{{\"message\":\"{context.HttpContext.Response.StatusCode}\"}}";
     await context.HttpContext.Response.WriteAsync(result);
 });
 
