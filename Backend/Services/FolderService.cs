@@ -8,9 +8,9 @@ namespace Backend.Services
     public interface IFolderService
     {
         public Task<Folder?> GetFolderByIdAsync(int id,
-                                            CancellationToken cancellationToken=default));
+                                            CancellationToken cancellationToken=default);
         public Task<Folder> CreateFolderAsync(Folder folder, MailBox mailbox,
-                                            CancellationToken cancellationToken=default));
+                                            CancellationToken cancellationToken=default);
         public Task UpdateLastPullDataAsync(Folder folder, UniqueId lastMailUid, DateTimeOffset lastMailDate,
                                             CancellationToken cancellationToken=default);
         public Task DeleteFolderAsync(Folder folder,
