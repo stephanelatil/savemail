@@ -14,7 +14,7 @@ namespace Backend.Services
         public Task UpdateLastPullDataAsync(Folder folder, UniqueId lastMailUid, DateTimeOffset lastMailDate,
                                             CancellationToken cancellationToken=default);
         public Task DeleteFolderAsync(Folder folder,
-                                            CancellationToken cancellationToken=default));
+                                            CancellationToken cancellationToken=default);
     }
 
     public class FolderService : IFolderService
