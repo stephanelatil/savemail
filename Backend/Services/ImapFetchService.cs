@@ -4,16 +4,15 @@ using MailKit.Net.Imap;
 
 namespace Backend.Services
 {
-    public interface IImapFolderFetchService
+    public interface IImapFolderFetchService : IDisposable
     {
         public Task<List<Folder>> GetNewFolders(MailBox mailbox, CancellationToken cancellationToken = default);
     }
 
-    public class ImapFolderFetchService : IDisposable, IImapFolderFetchService
+    public class ImapFolderFetchService : IImapFolderFetchService
     {
         private ImapClient imapClient;
         private bool _disposed = false;
-        private bool _connected = false;
 
 
         public ImapFolderFetchService()
@@ -30,38 +29,35 @@ namespace Backend.Services
         {
             ObjectDisposedException.ThrowIf(this._disposed, this);
             List<Folder> folders = [];
-            this.Disconnect(); //Ensure not already connected
-            
-            await this.imapClient.ConnectAsync(mailbox.ImapDomain,
-                                    mailbox.ImapPort,
-                                    mailbox.SecureSocketOptions,
-                                    cancellationToken);
-            await this.imapClient.AuthenticateAsync(mailbox.GetSaslMechanism(),
-                                    cancellationToken);
-
-            foreach (var imapFolder in await this.imapClient.GetFoldersAsync(this.imapClient.PersonalNamespaces[0],
-                                                                            false,
-                                                                            cancellationToken))
+            try
             {
-                if (!mailbox.Folders.Any(f => f.Path == imapFolder.FullName))
-                    folders.Add(new Folder(imapFolder));
-            }
+                await this.imapClient.ConnectAsync(mailbox.ImapDomain,
+                                        mailbox.ImapPort,
+                                        mailbox.SecureSocketOptions,
+                                        cancellationToken);
+                await this.imapClient.AuthenticateAsync(mailbox.GetSaslMechanism(),
+                                        cancellationToken);
 
-            this.Disconnect();
+                foreach (var imapFolder in await this.imapClient.GetFoldersAsync(this.imapClient.PersonalNamespaces[0],
+                                                                                false,
+                                                                                cancellationToken))
+                {
+                    if (!mailbox.Folders.Any(f => f.Path == imapFolder.FullName))
+                        folders.Add(new Folder(imapFolder));
+                }
+            }
+            finally
+            {
+                await this.imapClient.DisconnectAsync(true, cancellationToken);
+            }
             return folders;
-        }
-
-        private void Disconnect(){
-            if (this._connected)
-            {
-                this._connected = false;
-                this.imapClient.Disconnect(true);
-            }
         }
 
         protected virtual void Dispose(bool disposing)
         {
-            this.Disconnect();
+            try{
+                this.imapClient.Disconnect(true);
+            }catch{}
             if (disposing)
             {
                 this.imapClient?.Dispose();
@@ -80,6 +76,7 @@ namespace Backend.Services
     {
         public Task Prepare(MailBox mailbox, Folder folder, CancellationToken cancellationToken = default);
         public Task<List<Mail>> GetNextMails(int maxFetchPerLoop=20, CancellationToken cancellationToken = default);
+        public void Disconnect();
     }
 
     public class ImapMailFetchService : IImapMailFetchService
@@ -168,7 +165,7 @@ namespace Backend.Services
             return mails;
         }
 
-        private void Disconnect(){
+        public void Disconnect(){
             this._prepared = false;
             if (this._prepared)
             {
