@@ -35,8 +35,7 @@ namespace Backend.Services
                                         mailbox.ImapPort,
                                         mailbox.SecureSocketOptions,
                                         cancellationToken);
-                await this.imapClient.AuthenticateAsync(mailbox.GetSaslMechanism(),
-                                        cancellationToken);
+                await mailbox.ImapAuthenticateAsync(this.imapClient, cancellationToken);
 
                 foreach (var imapFolder in await this.imapClient.GetFoldersAsync(this.imapClient.PersonalNamespaces[0],
                                                                                 false,
@@ -126,8 +125,7 @@ namespace Backend.Services
                                     mailbox.ImapPort,
                                     mailbox.SecureSocketOptions,
                                     cancellationToken);
-            await this.imapClient.AuthenticateAsync(mailbox.GetSaslMechanism(),
-                                    cancellationToken);
+            await mailbox.ImapAuthenticateAsync(this.imapClient, cancellationToken);
 
             this._imapFolder = await this.imapClient.GetFolderAsync(folder.Path, cancellationToken);
             await this._imapFolder.OpenAsync(FolderAccess.ReadOnly, cancellationToken);

@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
+using MailKit.Security;
 
 namespace Backend.Models.DTO
 {
@@ -12,7 +13,8 @@ namespace Backend.Models.DTO
         public string Username {get ; set;} = string.Empty;
         [DataType(DataType.Password)]
         public string Password { private get; set; } = string.Empty;
-        private ImapProvider Provider { get; set; } = ImapProvider.Simple;
+        public SecureSocketOptions SecureSocketOptions { get; set; } = SecureSocketOptions.Auto;
+        private ImapProvider Provider { get; set; } = ImapProvider.Plain;
         [ReadOnly(true)]
         public ICollection<FolderDto> Folders { get; set;} = [];
 
@@ -26,6 +28,7 @@ namespace Backend.Models.DTO
             this.Username = mailBox.Username;
             this.Password = mailBox.Password;
             this.Provider = mailBox.Provider;
+            this.SecureSocketOptions = mailBox.SecureSocketOptions;
             this.Folders = mailBox.Folders
                                     .Where(f => f.Parent is null)
                                     .Select(f => new FolderDto(f))
@@ -41,6 +44,7 @@ namespace Backend.Models.DTO
         public string? Username {get ; set;} = null;
         [DataType(DataType.Password)]
         public string? Password { get; set; } = null;
+        public SecureSocketOptions SecureSocketOptions { get; set; } = SecureSocketOptions.Auto;
         public ImapProvider? Provider { get; set; } = null;
     }
 }
