@@ -69,7 +69,7 @@ namespace Backend.Services
         /// Recursively creates the folder tree and saves to DB once all folders have been created
         /// </summary>
         /// <param name="folder">The folder with the path to add</param>
-        /// <param name="mailbox">Othe mailbox where the folder resides</param>
+        /// <param name="mailbox">The mailbox where the folder resides</param>
         /// <returns>The added folder with </returns>
         /// <exception cref="DbUpdateException">If saving to the database fails</exception>
         /// <exception cref="DbUpdateConcurrencyException">If saving to the database fails due to a concurrent save</exception>
