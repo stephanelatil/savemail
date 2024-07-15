@@ -15,17 +15,14 @@ namespace Backend.Controllers
         private readonly ApplicationDBContext _context;
         private readonly UserManager<AppUser> _userManager;
         private readonly IFolderService _folderService;
-        private readonly IPaginationService<IOrderedQueryable<Mail>, Mail> _paginatorService;
 
         public FolderController(ApplicationDBContext context,
                                 UserManager<AppUser> userManager,
-                                IFolderService folderService,
-                                IPaginationService<IOrderedQueryable<Mail>, Mail> paginatorService)
+                                IFolderService folderService)
         {
             this._context = context;
             this._userManager = userManager;
             this._folderService = folderService;
-            this._paginatorService = paginatorService;
         }
 
         // GET: api/Folder/5
@@ -54,7 +51,7 @@ namespace Backend.Controllers
         // GET: api/Folder/5
         [HttpGet("{id}/Mails")]
         [Authorize]
-        public async Task<ActionResult<PaginatedList<Mail>>> GetMails(long id, PaginationQueryParameters paginationQueryParameters)
+        public async Task<ActionResult<PaginatedList<MailDto>>> GetMails(int id, PaginationQueryParameters paginationQueryParameters)
         {
             var folder = await this._context.Folder.Where(f => f.Id == id)
                                                     .Include(f=>f.MailBox)
@@ -69,11 +66,14 @@ namespace Backend.Controllers
             if (self is null || folder?.MailBox?.Owner != self)
                 return this.Forbid();
 
-            return await this._paginatorService.GetPageAsync(
-                            (IOrderedQueryable<Mail>)folder.Mails.OrderByDescending(m =>m.DateSent),
-                            this.Request.Path.Value ?? "",
-                            paginationQueryParameters.PageNumber,
-                            paginationQueryParameters.PageSize);
+            return this.Ok(await PaginationService.GetPagedResult(
+                            this._context.Entry(folder).Collection(f=>f.Mails)
+                                                        .Query()
+                                                        .OrderByDescending(m =>m.DateSent),
+                            paginationQueryParameters,
+                            (x)=>new MailDto(x),
+                            this.Request.PathBase+this.Request.Path
+                            ));
         }
 
         // DELETE: api/Folder/5
