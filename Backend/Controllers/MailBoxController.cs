@@ -51,7 +51,9 @@ namespace Backend.Controllers
         [Authorize]
         public async Task<ActionResult<MailBoxDto>> GetMailBox(int id)
         {
-            MailBox? mailbox = await this._context.MailBox.FindAsync(id);
+            MailBox? mailbox = await this._context.MailBox.Where(mb => mb.Id == id)
+                                                            .Include(mb =>mb.Folders)
+                                                            .SingleOrDefaultAsync();
             if (mailbox == null)
             {
                 return this.NotFound();
@@ -95,11 +97,42 @@ namespace Backend.Controllers
         // POST: api/MailBox
         [HttpPost]
         [Authorize]
-        public async Task<ActionResult<MailBoxDto?>> PostMailBox(UpdateMailBox updateMailBox)
+        public async Task<ActionResult<MailBoxDto?>> PostMailBox(UpdateMailBox updateMailBox, CancellationToken cancellationToken = default)
         {
             AppUser? self = await this._userManager.GetUserAsync(this.User);
             if (self is null)
                 return this.Forbid();
+
+            if (updateMailBox.ImapDomain is null)
+                return this.BadRequest("imapDomain Cannot be null");
+            if (!updateMailBox.ImapPort.HasValue)
+                return this.BadRequest("imapPort Cannot be null");
+
+            //Attempt to connect and auth before adding
+            using var client = new ImapClient();
+            try
+            {
+                await client.ConnectAsync(updateMailBox.ImapDomain,
+                                        updateMailBox.ImapPort.Value,
+                                        updateMailBox.SecureSocketOptions,
+                                        cancellationToken);
+                await MailBox.ImapAuthenticateAsync(client, updateMailBox, cancellationToken);
+            }
+            catch(ArgumentException){ return this.BadRequest(); }
+            catch(IOException){ return this.Problem($"Unable to access domain {updateMailBox.ImapDomain}:{updateMailBox.ImapPort}"); }
+            catch(ImapProtocolException){ return this.Problem($"Unable to access domain {updateMailBox.ImapDomain}:{updateMailBox.ImapPort}"); }
+            catch(SaslException){ return this.BadRequest($"Unable to create SaslMechanism with these credentials"); }
+            catch(AuthenticationException){ 
+                List<ImapProvider> validProviders = [];
+                HashSet<string> authMethods = client.AuthenticationMechanisms;
+                foreach (ImapProvider provider in Enum.GetValues(typeof(ImapProvider)))
+                    if (provider.IsValidProvider(authMethods))
+                        validProviders.Add(provider);
+                return this.BadRequest("Unable to Authenticate to imap server. "+
+                    "Check credentials or use one of the providers supported by the server: "+
+                    string.Join(',', validProviders.Select(p => (int)p)));
+            }
+
             MailBox? mailbox = await this._mailBoxService.CreateMailBoxAsync(updateMailBox, self);
             return this.CreatedAtAction("GetMailBox", new { id = mailbox.Id }, new MailBoxDto(mailbox));
         }
