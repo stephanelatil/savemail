@@ -45,6 +45,10 @@ namespace Backend.Models
         [JsonIgnore]
         [ReadOnly(true)]
         public MailBox? OwnerMailBox { get; set; } = null;
+        [Required]
+        [JsonIgnore]
+        [ReadOnly(true)]
+        public int? OwnerMailBoxId { get; set; } = null;
         [JsonIgnore]
         public Folder? Folder { get; set; } = null;
         [JsonIgnore]
