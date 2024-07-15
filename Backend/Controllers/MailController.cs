@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Backend.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Controllers
 {
@@ -24,12 +25,14 @@ namespace Backend.Controllers
         [Authorize]
         public async Task<ActionResult<Mail>> GetMail(long id)
         {
-            Mail? mail = await this._context.Mail.FindAsync(id);
+            Mail? mail = await this._context.Mail.Where(m => m.Id == id)
+                                                .Include(m => m.OwnerMailBox)
+                                                .SingleOrDefaultAsync();
             if (mail is null)
                 return this.NotFound();
 
             var self = await this._userManager.GetUserAsync(this.User);
-            if (self is null || self.Id != mail.OwnerMailBox?.OwnerId)
+            if (self is null || self.Id is null || self.Id != mail.OwnerMailBox?.OwnerId)
                 return this.Forbid();
             return mail;
         }
@@ -39,7 +42,9 @@ namespace Backend.Controllers
         [Authorize]
         public async Task<IActionResult> DeleteMail(long id)
         {
-            var mail = await this._context.Mail.FindAsync(id);
+            Mail? mail = await this._context.Mail.Where(m => m.Id == id)
+                                                .Include(m => m.OwnerMailBox)
+                                                .SingleOrDefaultAsync();
             if (mail == null)
             {
                 return this.NotFound();
