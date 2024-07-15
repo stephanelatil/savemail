@@ -5,6 +5,8 @@ using Backend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Backend.Models.DTO;
+using MailKit.Net.Imap;
+using MailKit.Security;
 
 namespace Backend.Controllers
 {
@@ -138,7 +140,7 @@ namespace Backend.Controllers
         }
 
         // POST: api/MailBox{id}/sync
-        [HttpGet("{id}/sync")]
+        [HttpPost("{id}/sync")]
         [Authorize]
         public async Task<ActionResult> RequestImapSyncMailbox(int id)
         {
@@ -160,7 +162,9 @@ namespace Backend.Controllers
         [Authorize]
         public async Task<ActionResult<List<FolderDto>>> ListFoldersMailBox(int id)
         {
-            MailBox? mailbox = await this._context.MailBox.FindAsync(id);
+            MailBox? mailbox = await this._context.MailBox.Where(mb => mb.Id == id)
+                                                            .Include(mb =>mb.Folders)
+                                                            .SingleOrDefaultAsync();
             if (mailbox == null)
             {
                 return this.NotFound();
