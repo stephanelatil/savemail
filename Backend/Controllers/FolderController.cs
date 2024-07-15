@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using Backend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Backend.Models.DTO;
 
 namespace Backend.Controllers
 {
@@ -30,9 +31,13 @@ namespace Backend.Controllers
         // GET: api/Folder/5
         [HttpGet("{id}")]
         [Authorize]
-        public async Task<ActionResult<Folder>> GetFolder(long id)
+        public async Task<ActionResult<FolderDto>> GetFolder(int id)
         {
-            var folder = await this._context.Folder.FindAsync(id);
+            var folder = await this._context.Folder.Where(f => f.Id == id)
+                                                    .Include(f=>f.MailBox)
+                                                    .Include(f => f.Parent)
+                                                    .Include(f => f.Children)
+                                                    .FirstOrDefaultAsync();
 
             if (folder == null)
             {
@@ -40,10 +45,10 @@ namespace Backend.Controllers
             }
             
             var self = await this._userManager.GetUserAsync(this.User);
-            if (self is null || folder?.MailBox?.Owner != self)
+            if (self is null || self.Id is null || folder?.MailBox?.OwnerId != self.Id)
                 return this.Forbid();
 
-            return folder;
+            return new FolderDto(folder);
         }
 
         // GET: api/Folder/5
@@ -51,7 +56,9 @@ namespace Backend.Controllers
         [Authorize]
         public async Task<ActionResult<PaginatedList<Mail>>> GetMails(long id, PaginationQueryParameters paginationQueryParameters)
         {
-            var folder = await this._context.Folder.FindAsync(id);
+            var folder = await this._context.Folder.Where(f => f.Id == id)
+                                                    .Include(f=>f.MailBox)
+                                                    .SingleOrDefaultAsync();
 
             if (folder == null)
             {
@@ -72,9 +79,11 @@ namespace Backend.Controllers
         // DELETE: api/Folder/5
         [HttpDelete("{id}")]
         [Authorize]
-        public async Task<IActionResult> DeleteFolder(long id)
+        public async Task<IActionResult> DeleteFolder(int id)
         {
-            var folder = await this._context.Folder.FindAsync(id);
+            var folder = await this._context.Folder.Where(f => f.Id == id)
+                                                    .Include(f=>f.MailBox)
+                                                    .SingleOrDefaultAsync();
             if (folder == null)
             {
                 return this.NotFound();
