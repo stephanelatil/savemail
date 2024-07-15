@@ -1,18 +1,19 @@
+using Backend.Models;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration.UserSecrets;
 namespace Backend.Services
 {
     public class PaginationService
     {
         public static async Task<PagedResult<TDto>> GetPagedResult<TEntity, TDto>(
             IOrderedQueryable<TEntity> query,
-            int pageNumber,
-            int pageSize,
+            PaginationQueryParameters paginationQueryParameters,
             Func<TEntity, TDto> mapper,
             string route)
             where TEntity : class
             where TDto : class
         {
+            int pageSize = paginationQueryParameters.PageSize;
+            int pageNumber = paginationQueryParameters.PageNumber;
 
             var items = await query
                 .Skip((pageNumber - 1) * pageSize)
