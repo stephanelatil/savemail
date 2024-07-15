@@ -5,7 +5,7 @@ namespace Backend.Models.DTO
         public int Id { get; set; }
         public string Name { get; private set;} = string.Empty;
         public string Path { get; set; } = string.Empty;
-        public ICollection<Folder> Children { get; set; } = [];
+        public ICollection<FolderDto> Children { get; set; } = [];
 
         public FolderDto(){}
         
@@ -14,7 +14,7 @@ namespace Backend.Models.DTO
             this.Id = folder.Id;
             this.Name = folder.Name;
             this.Path = folder.Path;
-            this.Children = folder.Children;
+            this.Children = folder.Children.Select(f => new FolderDto(f)).ToList();
         }
     }
 }
