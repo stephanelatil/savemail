@@ -16,16 +16,34 @@ namespace Backend.Controllers
         private readonly UserManager<AppUser> _userManager;
         private readonly IMailBoxService _mailBoxService;
         private readonly ITaskManager _taskManager;
+        private readonly ILogger<MailBoxController> _logger;
 
         public MailBoxController(ApplicationDBContext context,
                                  UserManager<AppUser> userManager,
                                  IMailBoxService mailboxService,
-                                 ITaskManager taskManager)
+                                 ITaskManager taskManager,
+                                 ILogger<MailBoxController> logger)
         {
             this._context = context;
             this._userManager = userManager;
             this._mailBoxService = mailboxService;
             this._taskManager = taskManager;
+            this._logger = logger;
+        }
+
+        // GET: api/MailBox/
+        [HttpGet()]
+        [Authorize]
+        public async Task<ActionResult<MailBoxDto[]>> GetMailBoxes()
+        {
+            AppUser? self = await this._userManager.GetUserAsync(this.User);
+            if (self is null)
+                return this.Forbid();
+            
+            return await this._context.MailBox.Where(mb => mb.OwnerId == self.Id)
+                                                .Include(mb => mb.Folders)
+                                                .Select(mb => new MailBoxDto(mb))
+                                                .ToArrayAsync();
         }
 
         // GET: api/MailBox/5
