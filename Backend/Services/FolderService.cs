@@ -2,6 +2,7 @@ using System.Data;
 using Backend.Models;
 using Microsoft.EntityFrameworkCore;
 using MailKit;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace Backend.Services
 {
@@ -20,15 +21,19 @@ namespace Backend.Services
     public class FolderService : IFolderService
     {
         private readonly ApplicationDBContext _context;
+        private readonly ILogger<FolderService> _logger;
 
-        public FolderService(ApplicationDBContext context)
+        public FolderService(ApplicationDBContext context,
+                             ILogger<FolderService> logger)
         {
             this._context = context;
+            this._logger = logger;
         }
 
         public async Task<Folder?> GetFolderByIdAsync(int id, CancellationToken cancellationToken=default)
         {
-            return await this._context.Folder.FindAsync(id, cancellationToken);
+            return await this._context.Folder.Where(f => f.Id == id)
+                                            .SingleOrDefaultAsync(cancellationToken:cancellationToken);
         }
 
         private async Task<Folder> CreateFolderAsync(Folder folder, MailBox mailbox, bool save,
@@ -40,8 +45,12 @@ namespace Backend.Services
             if (cancellationToken.IsCancellationRequested)
                 return folder;
             Folder? existing = mailbox.Folders.Where(f => f.Path == folder.Path).FirstOrDefault();
+
+            this._logger.LogDebug($"Looking for folder '{folder.Path}' im mailbox folders: {string.Join(",", mailbox.Folders.Select(f=> $"{f.Id}: {f.Name}"))}");
             if (existing is not null)
+            {
                 return existing;
+            }
             
             Folder? parent = null;
             if (folder.Path.Contains('/'))
@@ -49,19 +58,24 @@ namespace Backend.Services
                 string parentPath = folder.Path[0..folder.Path.LastIndexOf('/')];
                 parent = await this.CreateFolderAsync(new Folder(){
                     Path = parentPath,
-                    MailBox = mailbox
+                    MailBoxId = mailbox.Id
                 }, mailbox, false, cancellationToken); //do not save yet wait to add all elements in the tree
             }
 
             folder.Parent = parent;
+            folder.MailBoxId = mailbox.Id; //ensure mailbox parent is set
             var newFolder = this._context.Folder.Add(folder);
             newFolder.State = EntityState.Added;
+            this._logger.LogDebug($"Created new folder {newFolder.Entity.Path}");
 
             if (cancellationToken.IsCancellationRequested)
                 return folder;
             if (save)
+            {
                 if (await this._context.SaveChangesAsync(cancellationToken) == 0) 
                     throw new DbUpdateException();
+                this._logger.LogDebug("Folders saved");
+            }
             return newFolder.Entity;
         }
 
@@ -76,6 +90,12 @@ namespace Backend.Services
         public async Task<Folder> CreateFolderAsync(Folder folder, MailBox mailbox,
                                             CancellationToken cancellationToken=default)
         {
+            ArgumentNullException.ThrowIfNull(mailbox);
+            mailbox = await this._context.MailBox
+                                                .Where(mb =>mb.Id == mailbox.Id)
+                                                .Include(mb => mb.Folders)
+                                                .SingleOrDefaultAsync(cancellationToken)
+                                ?? throw new ArgumentNullException(nameof(mailbox));
             return await this.CreateFolderAsync(folder, mailbox, true, cancellationToken);
         }
 

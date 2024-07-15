@@ -80,14 +80,19 @@ namespace Backend.Services
 
     public class ImapMailFetchService : IImapMailFetchService
     {
-        private readonly ImapClient imapClient = new();
+        private ImapClient imapClient = new();
         private Folder? _folder;
         private IMailFolder? _imapFolder;
         private Queue<UniqueId>? _uids = null;        
         private bool _disposed = false;
         private bool _prepared = false;
 
-        public ImapMailFetchService() {}
+        private readonly ILogger<ImapMailFetchService> _logger;
+
+        public ImapMailFetchService(ILogger<ImapMailFetchService> logger) 
+        {
+            this._logger = logger;
+        }
 
         private async Task<Queue<UniqueId>> GetUidsToFetchAsync(UniqueId? lastUid, DateTimeOffset lastDate,
                                                                 CancellationToken cancellationToken = default)
@@ -97,13 +102,16 @@ namespace Backend.Services
             //Gets the latest mails starting at the 
             if (lastUid.HasValue && this._imapFolder.UidValidity == lastUid.Value.Validity)
                 start = lastUid.Value;
-            else if (lastDate == DateTimeOffset.MinValue)
+            else if (lastDate != DateTimeOffset.MinValue)
             {
+                try{
                 MailKit.Search.SearchResults result = await this._imapFolder.SearchAsync(
-                            MailKit.Search.SearchOptions.Min,
+                            MailKit.Search.SearchOptions.All,
                             MailKit.Search.SearchQuery.DeliveredAfter(lastDate.DateTime),
                             cancellationToken);
-                start = result.Min;
+                    return new Queue<UniqueId>(result.UniqueIds);
+                }
+                catch {}//Doesn't support ESEARCH
             }
             if (!start.HasValue)
                 start = UniqueId.MinValue;
@@ -116,11 +124,10 @@ namespace Backend.Services
 
         public async Task Prepare(MailBox mailbox, Folder folder, CancellationToken cancellationToken = default)
         {
-            if (this._prepared)
-                throw new Exception("ImapClient is already connected");
-            ObjectDisposedException.ThrowIf(this._disposed, this);
-            this.Disconnect(); //Ensure not already connected
+            this.Disconnect();
+            this.imapClient = new();
             
+            this._folder = folder;
             await this.imapClient.ConnectAsync(mailbox.ImapDomain,
                                     mailbox.ImapPort,
                                     mailbox.SecureSocketOptions,
@@ -129,12 +136,10 @@ namespace Backend.Services
 
             this._imapFolder = await this.imapClient.GetFolderAsync(folder.Path, cancellationToken);
             await this._imapFolder.OpenAsync(FolderAccess.ReadOnly, cancellationToken);
-            // MAIN LOOP HERE
-            // Make sure to only get new emails
-            // TODO return N emails gotten from the mailbox
             this._uids = await this.GetUidsToFetchAsync(folder.LastPulledUid,
                                                         folder.LastPulledInternalDate,
                                                         cancellationToken);
+            this._logger.LogDebug($"Got {this._uids.Count} mail uids to fetch");
             this._prepared = true;
         }
 
@@ -160,6 +165,7 @@ namespace Backend.Services
                                     this._folder));
             }
 
+            this._logger.LogDebug($"Fetched {mails.Count} mails from folder: {this._folder.Path}");
             return mails;
         }
 
