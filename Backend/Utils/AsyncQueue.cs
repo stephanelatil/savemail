@@ -1,6 +1,8 @@
+using System.Collections;
+
 namespace Backend.Utils
 {
-    public class AsyncQueue<T> 
+    public class AsyncQueue<T> : IAsyncEnumerable<T>
     {
         private readonly Queue<T> _queue;
         private readonly SemaphoreSlim _queueSem;
@@ -30,6 +32,12 @@ namespace Backend.Utils
         public bool Contains(T obj)
         {
             return this._queue.Contains(obj);
+        }
+
+        public async IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellationToken = default)
+        {
+            while (this._queue.Count > 0)
+                yield return await this.DequeueAsync(cancellationToken:cancellationToken);
         }
     }
 }
