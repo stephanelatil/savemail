@@ -51,7 +51,7 @@ namespace Backend.Services
             int? nextId = null;
             ConcurrentDictionary<Task<IntOrObject<IImapFetchTaskService>>, bool> _runningTasks = new();
             {
-                var startupTask = this._mailboxesToFetch.DequeueAsync(cancellationToken);
+                var startupTask = this._mailboxesToFetch.DequeueAsync(cancellationToken:cancellationToken);
                 _runningTasks.TryAdd(startupTask, true);
             }
             try
@@ -68,7 +68,7 @@ namespace Backend.Services
                         int id = result.IntValue;
                         //got mailbox id so request a runner.
                         nextId = id;
-                        _runningTasks.TryAdd(availableRunners.DequeueAsync(cancellationToken), true);
+                        _runningTasks.TryAdd(availableRunners.DequeueAsync(cancellationToken:cancellationToken), true);
                     }
                     // Got new runner because it has finished his task or has been gotten from a queue
                     else if (result.HasObject)
@@ -83,7 +83,7 @@ namespace Backend.Services
                             //start runner and await new mailbox id from queue
                             _runningTasks.TryAdd(runner.ExecuteTask(nextId.Value, cancellationToken), true);
                             nextId = null;
-                            _runningTasks.TryAdd(this._mailboxesToFetch.DequeueAsync(cancellationToken), true);
+                            _runningTasks.TryAdd(this._mailboxesToFetch.DequeueAsync(cancellationToken:cancellationToken), true);
                         }
                     }
                 }

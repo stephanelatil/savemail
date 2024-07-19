@@ -18,9 +18,10 @@ namespace Backend.Utils
             this._queueSem.Release();
         }
 
-        public async Task<T> DequeueAsync(CancellationToken cancellationToken = default)
+        public async Task<T> DequeueAsync(int timeoutmilliseconds=-1, CancellationToken cancellationToken = default)
         {
-            await this._queueSem.WaitAsync(cancellationToken);
+            if (!await this._queueSem.WaitAsync(timeoutmilliseconds, cancellationToken))
+                throw new TimeoutException();
 
             var obj = this._queue.Dequeue();
             return obj;
