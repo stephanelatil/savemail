@@ -9,7 +9,7 @@ namespace Backend.Models.DTO
         [ReadOnly(true)]
         public int Id { get; set; }
         public string ImapDomain { get; set; } = string.Empty;
-        public short ImapPort { get; set; }
+        public short ImapPort { get; set; } = 993;
         public string Username {get ; set;} = string.Empty;
         [DataType(DataType.Password)]
         public string Password { private get; set; } = string.Empty;
@@ -40,11 +40,11 @@ namespace Backend.Models.DTO
     {
         public int Id { get; set; } = -1;
         public string? ImapDomain { get; set; } = null;
-        public short? ImapPort { get; set; } = null;
+        public short? ImapPort { get; set; } = 993;
         public string? Username {get ; set;} = null;
         [DataType(DataType.Password)]
         public string? Password { get; set; } = null;
         public SecureSocketOptions SecureSocketOptions { get; set; } = SecureSocketOptions.Auto;
-        public ImapProvider? Provider { get; set; } = null;
+        public ImapProvider Provider { get; set; } = ImapProvider.Simple;
     }
 }
