@@ -231,6 +231,8 @@ namespace Backend.Services
             this._context.ChangeTracker.DetectChanges();
             this._logger.LogDebug($"Ran Fixup: got total {mailbox.Folders.Count} folders to handle");
 
+            await this._imapMailFetchService.Prepare(mailbox, cancellationToken);
+
             foreach(Folder folder in mailbox.Folders)//this._context.Folder.Where(f=>f.MailBoxId == mailboxId))
             {
                 try{
@@ -241,12 +243,14 @@ namespace Backend.Services
                     this._logger.LogError(e, "Unable to fetch or save emails");
                 }
             }
+            this._imapMailFetchService.Disconnect();
             return new IntOrObject<IImapFetchTaskService>(this);
         }
 
         private async Task PopulateFolder(MailBox mailbox, Folder folder, CancellationToken cancellationToken)
         {
-            await this._imapMailFetchService.Prepare(mailbox, folder, cancellationToken);
+            await this._imapMailFetchService.SelectFolder(folder, cancellationToken);
+            
             List<Mail> newMails = [];
             while (true)
             {

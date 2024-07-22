@@ -73,7 +73,9 @@ namespace Backend.Services
 
     public interface IImapMailFetchService : IDisposable
     {
-        public Task Prepare(MailBox mailbox, Folder folder, CancellationToken cancellationToken = default);
+        public bool Prepared { get; }
+        public Task Prepare(MailBox mailbox, CancellationToken cancellationToken = default);
+        public Task SelectFolder(Folder folder, CancellationToken cancellationToken = default);
         public Task<List<Mail>> GetNextMails(int maxFetchPerLoop=20, CancellationToken cancellationToken = default);
         public void Disconnect();
     }
@@ -85,7 +87,7 @@ namespace Backend.Services
         private IMailFolder? _imapFolder;
         private Queue<UniqueId>? _uids = null;        
         private bool _disposed = false;
-        private bool _prepared = false;
+        public bool Prepared { get; private set; } = false;
 
         private readonly ILogger<ImapMailFetchService> _logger;
 
@@ -122,25 +124,17 @@ namespace Backend.Services
                                     range, MailKit.Search.SearchQuery.NotDraft, cancellationToken));
         }
 
-        public async Task Prepare(MailBox mailbox, Folder folder, CancellationToken cancellationToken = default)
+        public async Task Prepare(MailBox mailbox, CancellationToken cancellationToken = default)
         {
             this.Disconnect();
             this.imapClient = new();
             
-            this._folder = folder;
             await this.imapClient.ConnectAsync(mailbox.ImapDomain,
                                     mailbox.ImapPort,
                                     mailbox.SecureSocketOptions,
                                     cancellationToken);
             await mailbox.ImapAuthenticateAsync(this.imapClient, cancellationToken);
-
-            this._imapFolder = await this.imapClient.GetFolderAsync(folder.Path, cancellationToken);
-            await this._imapFolder.OpenAsync(FolderAccess.ReadOnly, cancellationToken);
-            this._uids = await this.GetUidsToFetchAsync(folder.LastPulledUid,
-                                                        folder.LastPulledInternalDate,
-                                                        cancellationToken);
-            this._logger.LogDebug($"Got {this._uids.Count} mail uids to fetch");
-            this._prepared = true;
+            this.Prepared = true;
         }
 
         public async Task<List<Mail>> GetNextMails(int maxFetchPerLoop=20, CancellationToken cancellationToken = default)
@@ -149,8 +143,8 @@ namespace Backend.Services
             
             ArgumentNullException.ThrowIfNull(this._imapFolder, nameof(this._imapFolder));
             ArgumentNullException.ThrowIfNull(this._folder, nameof(this._folder));
-            if (!this._prepared)
-                throw new ArgumentException(nameof(this._prepared), "Must prepare the service before getting emails");
+            if (!this.Prepared)
+                throw new ArgumentException(nameof(this.Prepared), "Must prepare the service before getting emails");
             if (this._uids is null || this._uids.Count == 0) //queue should not be empty
                 throw new InvalidOperationException("Now more UIDs available");
 
@@ -170,8 +164,8 @@ namespace Backend.Services
         }
 
         public void Disconnect(){
-            this._prepared = false;
-            if (this._prepared)
+            this.Prepared = false;
+            if (this.Prepared)
             {
                 this._imapFolder?.Close();
                 this._imapFolder = null;
@@ -195,6 +189,17 @@ namespace Backend.Services
             this.Dispose(!this._disposed);
             this._disposed = true;
             GC.SuppressFinalize(this);
+        }
+
+        public async Task SelectFolder(Folder folder, CancellationToken cancellationToken = default)
+        {
+            this._folder = folder;
+            this._imapFolder = await this.imapClient.GetFolderAsync(folder.Path, cancellationToken);
+            await this._imapFolder.OpenAsync(FolderAccess.ReadOnly, cancellationToken);
+            this._uids = await this.GetUidsToFetchAsync(folder.LastPulledUid,
+                                                        folder.LastPulledInternalDate,
+                                                        cancellationToken);
+            this._logger.LogDebug($"Got {this._uids.Count} mail uids to fetch");
         }
     }
 }
