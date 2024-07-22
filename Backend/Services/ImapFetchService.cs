@@ -172,6 +172,7 @@ namespace Backend.Services
                 this._uids = null;
                 this._folder = null;
                 this.imapClient.Disconnect(true);
+                this.imapClient.Dispose();
             }
         }
 
