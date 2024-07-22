@@ -18,18 +18,21 @@ namespace Backend.Controllers
         private readonly UserManager<AppUser> _userManager;
         private readonly IMailBoxService _mailBoxService;
         private readonly ITaskManager _taskManager;
+        private IMailBoxImapCheck _mailBoxImapCheckService;
         private readonly ILogger<MailBoxController> _logger;
 
         public MailBoxController(ApplicationDBContext context,
                                  UserManager<AppUser> userManager,
                                  IMailBoxService mailboxService,
                                  ITaskManager taskManager,
+                                 IMailBoxImapCheck mailBoxImapCheck,
                                  ILogger<MailBoxController> logger)
         {
             this._context = context;
             this._userManager = userManager;
             this._mailBoxService = mailboxService;
             this._taskManager = taskManager;
+            this._mailBoxImapCheckService = mailBoxImapCheck;
             this._logger = logger;
         }
 
@@ -70,7 +73,7 @@ namespace Backend.Controllers
         // Patch: api/MailBox/5
         [HttpPatch("{id}")]
         [Authorize]
-        public async Task<IActionResult> PutMailBox(int id, UpdateMailBox mailbox)
+        public async Task<IActionResult> PutMailBox(int id, UpdateMailBox mailbox, CancellationToken cancellationToken=default)
         {
             AppUser? self = await this._userManager.GetUserAsync(this.User);
             if (self is null)
@@ -79,8 +82,29 @@ namespace Backend.Controllers
             {
                 return this.BadRequest();
             }
-            if ((await this._context.MailBox.FindAsync(id))?.OwnerId != self.Id)
+            if ((await this._context.MailBox.FindAsync(id, cancellationToken))?.OwnerId != self.Id)
                 return this.Forbid();
+
+            var result = await this._mailBoxImapCheckService.CheckConnection(mailbox, cancellationToken);
+            switch (result)
+            {
+                case ImapCheckResult.NullValue:
+                case ImapCheckResult.InvalidValue:
+                    return this.BadRequest(new {message="Invalid or null value supplied"});
+                case ImapCheckResult.ConnectionToServerError:
+                    return this.BadRequest(new {message="Unable to connect to server"});
+                case ImapCheckResult.AuthenticationError:
+                    return this.BadRequest(new {message="Invalid credentials"});
+                case ImapCheckResult.InvalidSaslMethod:
+                    var validProviders = await this._mailBoxImapCheckService.GetValidProviders(mailbox, cancellationToken);
+                    return this.BadRequest(new {message="Invalid SASL provider: Select one of: "+string.Join(',',
+                                                                                                    validProviders.Select(x=>x.ToString())),
+                                                providers=validProviders.ToArray()});
+                case ImapCheckResult.Success:
+                default:
+                //all OK
+                    break;
+            }
 
             try
             {
@@ -111,28 +135,25 @@ namespace Backend.Controllers
                 return this.BadRequest("imapPort Cannot be null");
 
             //Attempt to connect and auth before adding
-            using var client = new ImapClient();
-            try
+            var result = await this._mailBoxImapCheckService.CheckConnection(mailbox, cancellationToken);
+            switch (result)
             {
-                await client.ConnectAsync(updateMailBox.ImapDomain,
-                                        updateMailBox.ImapPort.Value,
-                                        updateMailBox.SecureSocketOptions,
-                                        cancellationToken);
-                await MailBox.ImapAuthenticateAsync(client, updateMailBox, cancellationToken);
-            }
-            catch(ArgumentException){ return this.BadRequest(); }
-            catch(IOException){ return this.Problem($"Unable to access domain {updateMailBox.ImapDomain}:{updateMailBox.ImapPort}"); }
-            catch(ImapProtocolException){ return this.Problem($"Unable to access domain {updateMailBox.ImapDomain}:{updateMailBox.ImapPort}"); }
-            catch(SaslException){ return this.BadRequest($"Unable to create SaslMechanism with these credentials"); }
-            catch(AuthenticationException){ 
-                List<ImapProvider> validProviders = [];
-                HashSet<string> authMethods = client.AuthenticationMechanisms;
-                foreach (ImapProvider provider in Enum.GetValues(typeof(ImapProvider)))
-                    if (provider.IsValidProvider(authMethods))
-                        validProviders.Add(provider);
-                return this.BadRequest("Unable to Authenticate to imap server. "+
-                    "Check credentials or use one of the providers supported by the server: "+
-                    string.Join(',', validProviders.Select(p => (int)p)));
+                case ImapCheckResult.NullValue:
+                case ImapCheckResult.InvalidValue:
+                    return this.BadRequest(new {message="Invalid or null value supplied"});
+                case ImapCheckResult.ConnectionToServerError:
+                    return this.BadRequest(new {message="Unable to connect to server"});
+                case ImapCheckResult.AuthenticationError:
+                    return this.BadRequest(new {message="Invalid credentials"});
+                case ImapCheckResult.InvalidSaslMethod:
+                    var validProviders = await this._mailBoxImapCheckService.GetValidProviders(mailbox, cancellationToken);
+                    return this.BadRequest(new {message="Invalid SASL provider: Select one of: "+string.Join(',',
+                                                                                                    validProviders.Select(x=>x.ToString())),
+                                                providers=validProviders.ToArray()});
+                case ImapCheckResult.Success:
+                default:
+                //all OK
+                    break;
             }
 
             MailBox? mailbox = await this._mailBoxService.CreateMailBoxAsync(updateMailBox, self);
