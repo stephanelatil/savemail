@@ -2,7 +2,6 @@ using System.Data;
 using Backend.Models;
 using Microsoft.EntityFrameworkCore;
 using MailKit;
-using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace Backend.Services
 {
@@ -91,6 +90,7 @@ namespace Backend.Services
                                             CancellationToken cancellationToken=default)
         {
             ArgumentNullException.ThrowIfNull(mailbox);
+            folder.MailBoxId = mailbox.Id;
             mailbox = await this._context.MailBox
                                                 .Where(mb =>mb.Id == mailbox.Id)
                                                 .Include(mb => mb.Folders)
