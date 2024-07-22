@@ -1,4 +1,4 @@
-namespace Backend.Tests;
+namespace Backend.Tests.UtilsTest;
 using Backend.Utils;
 
 public class AsyncQueueTest
