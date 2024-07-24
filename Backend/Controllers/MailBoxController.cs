@@ -135,7 +135,7 @@ namespace Backend.Controllers
                 return this.BadRequest("imapPort Cannot be null");
 
             //Attempt to connect and auth before adding
-            var result = await this._mailBoxImapCheckService.CheckConnection(mailbox, cancellationToken);
+            var result = await this._mailBoxImapCheckService.CheckConnection(updateMailBox, cancellationToken);
             switch (result)
             {
                 case ImapCheckResult.NullValue:
@@ -146,7 +146,7 @@ namespace Backend.Controllers
                 case ImapCheckResult.AuthenticationError:
                     return this.BadRequest(new {message="Invalid credentials"});
                 case ImapCheckResult.InvalidSaslMethod:
-                    var validProviders = await this._mailBoxImapCheckService.GetValidProviders(mailbox, cancellationToken);
+                    var validProviders = await this._mailBoxImapCheckService.GetValidProviders(updateMailBox, cancellationToken);
                     return this.BadRequest(new {message="Invalid SASL provider: Select one of: "+string.Join(',',
                                                                                                     validProviders.Select(x=>x.ToString())),
                                                 providers=validProviders.ToArray()});
