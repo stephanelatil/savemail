@@ -31,9 +31,7 @@ namespace Backend.Services
         {
             ArgumentNullException.ThrowIfNull(updateMailBox);
 
-            MailBox? mailBox = await this.GetMailboxByIdAsync(id);
-            if (mailBox is null)
-                throw new KeyNotFoundException();
+            MailBox? mailBox = await this.GetMailboxByIdAsync(id) ?? throw new KeyNotFoundException();
             mailBox = this._context.MailBox.Entry(mailBox).Entity;
             
             mailBox.Username = updateMailBox.Username ?? mailBox.Username;
@@ -60,7 +58,7 @@ namespace Backend.Services
                 ImapDomain = mailbox.ImapDomain,
                 ImapPort = mailbox.ImapPort.Value,
                 Provider = mailbox.Provider,
-                Owner = owner
+                OwnerId = owner.Id
             };
 
             var entry =  await this._context.MailBox.AddAsync(newmb);
