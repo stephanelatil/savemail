@@ -215,11 +215,12 @@ namespace Backend.Services
 
         public async Task<IntOrObject<IImapFetchTaskService>> ExecuteTask(int mailboxId, CancellationToken cancellationToken = default)
         {
-            MailBox? mailbox = await this._context.MailBox.FindAsync(mailboxId, cancellationToken);
+            MailBox? mailbox = await this._context.MailBox.Where(x=> x.Id == mailboxId)
+                                                            .Include(mb =>mb.Folders)
+                                                            .FirstOrDefaultAsync(cancellationToken);
             if (mailbox == null)
                 //mailbox invalid or deleted. ignore
                 return new IntOrObject<IImapFetchTaskService>(this);
-            this._context.Entry(mailbox).Collection(mb => mb.Folders).Load();
 
             //get new undiscovered folders
             List<Folder> folders = await this._imapFolderFetchService.GetNewFolders(mailbox, cancellationToken);
@@ -287,9 +288,9 @@ namespace Backend.Services
             Mail? last = this.GetLastMail(newMails);
             if (last is null)
                 return;
-            Folder trackedFolder = this._context.Folder.Entry(folder).Entity;
-            trackedFolder.LastPulledInternalDate = last.DateSent;
-            trackedFolder.LastPulledUid = last.ImapMailUID;
+            this._context.TrackEntry(folder);
+            folder.LastPulledInternalDate = last.DateSent;
+            folder.LastPulledUid = last.ImapMailUID;
             await this._mailService.SaveMail(newMails, cancellationToken);
             newMails.Clear();
         }

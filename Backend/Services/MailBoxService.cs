@@ -7,7 +7,7 @@ namespace Backend.Services
 {
     public interface IMailBoxService
     {
-        public Task<MailBox?> GetMailboxByIdAsync(int id);
+        public Task<MailBox?> GetMailboxByIdAsync(int id, bool includeFolders=false);
         public Task UpdateMailBoxAsync(int id, UpdateMailBox? user);
         public Task<MailBox> CreateMailBoxAsync(UpdateMailBox mailbox, AppUser owner);
         public Task DeleteMailBoxAsync(MailBox mailbox);
@@ -22,9 +22,12 @@ namespace Backend.Services
             this._context = context;
         }
 
-        public async Task<MailBox?> GetMailboxByIdAsync(int id)
+        public async Task<MailBox?> GetMailboxByIdAsync(int id, bool includeFolders=false)
         {
-            return await this._context.MailBox.FindAsync(id);
+            var query =  this._context.MailBox.Where(x => x.Id == id);
+            if (includeFolders)
+                query = query.Include(mb => mb.Folders);
+            return await query.FirstOrDefaultAsync();
         }
 
         public async Task UpdateMailBoxAsync(int id, UpdateMailBox? updateMailBox)
@@ -32,7 +35,7 @@ namespace Backend.Services
             ArgumentNullException.ThrowIfNull(updateMailBox);
 
             MailBox? mailBox = await this.GetMailboxByIdAsync(id) ?? throw new KeyNotFoundException();
-            mailBox = this._context.MailBox.Entry(mailBox).Entity;
+            this._context.TrackEntry(mailBox);
             
             mailBox.Username = updateMailBox.Username ?? mailBox.Username;
             mailBox.Password = updateMailBox.Password ?? mailBox.Password;
@@ -61,10 +64,10 @@ namespace Backend.Services
                 OwnerId = owner.Id
             };
 
-            var entry =  await this._context.MailBox.AddAsync(newmb);
+            await this._context.MailBox.AddAsync(newmb);
             if (await this._context.SaveChangesAsync() == 0) 
                 throw new DbUpdateException();
-            return entry.Entity;
+            return newmb;
         }
 
         public async Task DeleteMailBoxAsync(MailBox mailbox)

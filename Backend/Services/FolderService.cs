@@ -114,12 +114,11 @@ namespace Backend.Services
                                             DateTimeOffset lastMailDate,
                                             CancellationToken cancellationToken=default)
         {
-            var entry = this._context.Folder.Entry(folder);
-            entry.State = EntityState.Modified;
+            this._context.TrackEntry(folder);
             if (folder.LastPulledUid < lastMailUid)
-                entry.Entity.LastPulledUid = lastMailUid;
+                folder.LastPulledUid = lastMailUid;
             if (folder.LastPulledUid < lastMailUid)
-                entry.Entity.LastPulledUid = lastMailUid;
+                folder.LastPulledUid = lastMailUid;
 
             await this._context.SaveChangesAsync(cancellationToken);
         }

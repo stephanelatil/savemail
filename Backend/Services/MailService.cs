@@ -28,7 +28,7 @@ namespace Backend.Services
 
         public async Task<Mail?> GetMail(long id)
         {
-            return await this._context.Mail.FindAsync(id);
+            return await this._context.Mail.Where(x=> x.Id == id).FirstOrDefaultAsync();
         }
 
         public async Task<Mail?> GetMail(UniqueId id)
