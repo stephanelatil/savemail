@@ -5,8 +5,6 @@ using Backend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Backend.Models.DTO;
-using MailKit.Net.Imap;
-using MailKit.Security;
 
 namespace Backend.Controllers
 {
@@ -56,9 +54,7 @@ namespace Backend.Controllers
         [Authorize]
         public async Task<ActionResult<MailBoxDto>> GetMailBox(int id)
         {
-            MailBox? mailbox = await this._context.MailBox.Where(mb => mb.Id == id)
-                                                            .Include(mb =>mb.Folders)
-                                                            .SingleOrDefaultAsync();
+            MailBox? mailbox = await this._mailBoxService.GetMailboxByIdAsync(id, true);
             if (mailbox == null)
             {
                 return this.NotFound();

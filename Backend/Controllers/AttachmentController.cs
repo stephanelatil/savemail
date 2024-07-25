@@ -55,7 +55,7 @@ namespace Backend.Controllers
                 return this.BadRequest();
             }
 
-            this._context.Entry(attachment).State = EntityState.Modified;
+            this._context.TrackEntry(attachment);
 
             try
             {

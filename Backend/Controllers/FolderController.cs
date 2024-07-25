@@ -67,9 +67,9 @@ namespace Backend.Controllers
                 return this.Forbid();
 
             return this.Ok(await PaginationService.GetPagedResult(
-                            this._context.Entry(folder).Collection(f=>f.Mails)
-                                                        .Query()
-                                                        .OrderByDescending(m =>m.DateSent),
+                            this._context.Mail.Where(m => m.FolderId == folder.Id)
+                                                        .OrderByDescending(m =>m.DateSent)
+                                                        .ThenByDescending(m => m.ImapMailUID),
                             paginationQueryParameters,
                             (x)=>new MailDto(x),
                             this.Request.PathBase+this.Request.Path
