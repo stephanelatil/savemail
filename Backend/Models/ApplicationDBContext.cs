@@ -12,6 +12,13 @@ namespace Backend.Models
             : base(new DbContextOptionsBuilder().UseInMemoryDatabase("TestDb").Options)
         { }
 
+        public virtual void TrackEntry(Mail mail) => this.Mail.Entry(mail);
+        public virtual void TrackEntry(MailBox mailbox) => this.MailBox.Entry(mailbox);
+        public virtual void TrackEntry(AppUser user) => this.Users.Entry(user);
+        public virtual void TrackEntry(Folder folder) => this.Folder.Entry(folder);
+        public virtual void TrackEntry(Attachment attachment) => this.Attachment.Entry(attachment);
+        public virtual void TrackEntry(EmailAddress eAddress) => this.EmailAddress.Entry(eAddress);
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
