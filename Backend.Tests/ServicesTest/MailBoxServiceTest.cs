@@ -87,4 +87,33 @@ public class MailBoxServiceTest
         context.Verify(c => c.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once());
         context.Verify(c => c.TrackEntry(It.IsAny<MailBox>()), Times.Once());
     }
+
+    [Fact]
+    public async Task ServiceTest_DeleteMailBox()
+    {
+        AppUser owner = new (){Id = Guid.Empty.ToString()};
+        var baseMb = new MailBox(){
+            Id = 123,
+            ImapDomain = "imap.mail.com",
+            ImapPort = 993,
+            Username = "example@mail.com",
+            Password = "password1234",
+            SecureSocketOptions = SecureSocketOptions.Auto,
+            Provider = ImapProvider.Simple
+        };
+        // Given
+        var context = CreateMockContext(baseMb);
+        MailBoxService service = new(context.Object);
+        // When
+        var record = await Record.ExceptionAsync(
+                                async () => 
+                                await service.DeleteMailBoxAsync(baseMb));
+
+        // Then
+        //no exception thrown
+        Assert.Null(record);
+        //Assert saved to Db
+        context.VerifyGet(c => c.MailBox.Remove(It.Is<MailBox>(x => x.Id == baseMb.Id)), Times.AtLeastOnce());
+        context.Verify(c => c.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once());
+    }
 }
