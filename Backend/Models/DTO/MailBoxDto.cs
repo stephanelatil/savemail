@@ -11,8 +11,6 @@ namespace Backend.Models.DTO
         public string ImapDomain { get; set; } = string.Empty;
         public short ImapPort { get; set; } = 993;
         public string Username {get ; set;} = string.Empty;
-        [DataType(DataType.Password)]
-        public string Password { private get; set; } = string.Empty;
         public SecureSocketOptions SecureSocketOptions { get; set; } = SecureSocketOptions.Auto;
         private ImapProvider Provider { get; set; } = ImapProvider.Plain;
         [ReadOnly(true)]
@@ -26,7 +24,6 @@ namespace Backend.Models.DTO
             this.ImapDomain = mailBox.ImapDomain;
             this.ImapPort = mailBox.ImapPort;
             this.Username = mailBox.Username;
-            this.Password = mailBox.Password;
             this.Provider = mailBox.Provider;
             this.SecureSocketOptions = mailBox.SecureSocketOptions;
             this.Folders = mailBox.Folders
