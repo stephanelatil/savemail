@@ -12,6 +12,7 @@ namespace Backend.Models
         public string FileName { get; set; } = string.Empty;
         public long FileSize { get; set; } = 0;
         public string FilePath { get; set; } = string.Empty;
+        public AppUser? Owner { get; set; } = null;
         public Attachment(){}
     }
 }
