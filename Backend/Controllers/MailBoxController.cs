@@ -69,7 +69,7 @@ namespace Backend.Controllers
         // Patch: api/MailBox/5
         [HttpPatch("{id}")]
         [Authorize]
-        public async Task<IActionResult> PutMailBox(int id, UpdateMailBox mailbox, CancellationToken cancellationToken=default)
+        public async Task<IActionResult> PatchMailBox(int id, UpdateMailBox mailbox, CancellationToken cancellationToken=default)
         {
             AppUser? self = await this._userManager.GetUserAsync(this.User);
             if (self is null)
@@ -78,7 +78,7 @@ namespace Backend.Controllers
             {
                 return this.BadRequest();
             }
-            if ((await this._context.MailBox.FindAsync(id, cancellationToken))?.OwnerId != self.Id)
+            if ((await this._context.MailBox.SingleOrDefaultAsync(mb => mb.Id == id, cancellationToken))?.OwnerId != self.Id)
                 return this.Forbid();
 
             var result = await this._mailBoxImapCheckService.CheckConnection(mailbox, cancellationToken);
@@ -86,16 +86,15 @@ namespace Backend.Controllers
             {
                 case ImapCheckResult.NullValue:
                 case ImapCheckResult.InvalidValue:
-                    return this.BadRequest(new {message="Invalid or null value supplied"});
+                    return this.BadRequest("Invalid or null value supplied");
                 case ImapCheckResult.ConnectionToServerError:
-                    return this.BadRequest(new {message="Unable to connect to server"});
+                    return this.BadRequest("Unable to connect to server");
                 case ImapCheckResult.AuthenticationError:
-                    return this.BadRequest(new {message="Invalid credentials"});
+                    return this.BadRequest("Invalid credentials");
                 case ImapCheckResult.InvalidSaslMethod:
                     var validProviders = await this._mailBoxImapCheckService.GetValidProviders(mailbox, cancellationToken);
-                    return this.BadRequest(new {message="Invalid SASL provider: Select one of: "+string.Join(',',
-                                                                                                    validProviders.Select(x=>x.ToString())),
-                                                providers=validProviders.ToArray()});
+                    return this.BadRequest("Invalid SASL provider: Select one of: "+string.Join(',',
+                                                                validProviders.Select(x=>x.ToString())));
                 case ImapCheckResult.Success:
                 default:
                 //all OK
@@ -107,7 +106,7 @@ namespace Backend.Controllers
                 await this._mailBoxService.UpdateMailBoxAsync(id, mailbox);
             }
             catch(ArgumentNullException)
-            {return this.BadRequest(new {message="Json body object cannot be null"});}
+            {return this.BadRequest("Json body object cannot be null");}
             catch(KeyNotFoundException)
             {return this.NotFound();}
             catch(DbUpdateException)
@@ -136,16 +135,15 @@ namespace Backend.Controllers
             {
                 case ImapCheckResult.NullValue:
                 case ImapCheckResult.InvalidValue:
-                    return this.BadRequest(new {message="Invalid or null value supplied"});
+                    return this.BadRequest("Invalid or null value supplied");
                 case ImapCheckResult.ConnectionToServerError:
-                    return this.BadRequest(new {message="Unable to connect to server"});
+                    return this.BadRequest("Unable to connect to server");
                 case ImapCheckResult.AuthenticationError:
-                    return this.BadRequest(new {message="Invalid credentials"});
+                    return this.BadRequest("Invalid credentials");
                 case ImapCheckResult.InvalidSaslMethod:
                     var validProviders = await this._mailBoxImapCheckService.GetValidProviders(updateMailBox, cancellationToken);
-                    return this.BadRequest(new {message="Invalid SASL provider: Select one of: "+string.Join(',',
-                                                                                                    validProviders.Select(x=>x.ToString())),
-                                                providers=validProviders.ToArray()});
+                    return this.BadRequest("Invalid SASL provider: Select one of: "+string.Join(',',
+                                                                                validProviders.Select(x=>x.ToString())));
                 case ImapCheckResult.Success:
                 default:
                 //all OK
@@ -161,7 +159,7 @@ namespace Backend.Controllers
         [Authorize]
         public async Task<ActionResult> RequestImapSyncMailbox(int id)
         {
-            MailBox? mailBox = await this._context.MailBox.FindAsync(id);
+            MailBox? mailBox = await this._context.MailBox.SingleOrDefaultAsync(mb => mb.Id == id);
             if (mailBox == null)
             {
                 return this.NotFound();
@@ -202,7 +200,7 @@ namespace Backend.Controllers
         [Authorize]
         public async Task<IActionResult> DeleteMailBox(int id)
         {
-            MailBox? mailbox = await this._context.MailBox.FindAsync(id);
+            MailBox? mailbox = await this._context.MailBox.SingleOrDefaultAsync(mb => mb.Id == id);
             if (mailbox == null)
             {
                 return this.NotFound();
