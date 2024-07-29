@@ -1,8 +1,6 @@
 
 
-interface EmailAddress {
+export interface EmailAddress {
   address: string,
   fullName: string
 }
-
-export default EmailAddress

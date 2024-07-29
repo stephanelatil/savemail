@@ -1,4 +1,5 @@
-import {AppUser, EditAppUser} from '@/models/appUser';
+import { AppUser } from '@/models/appUser';
+import {EditAppUser } from '@/models/appUser';
 import { apiFetch, apiFetchWithBody } from './fetchService';
 
 const USER_ENDPOINT = '/api/AppUser/';

@@ -1,6 +1,6 @@
 
 
-interface AppUser {
+export interface AppUser {
   id: string,
   email: string,
   emailConfirmed: boolean,
@@ -9,10 +9,8 @@ interface AppUser {
   lastName?: string
 }
 
-interface EditAppUser{
+export interface EditAppUser{
   id: string,
   firstName: string|null,
   lastName: string|null
 }
-
-export default AppUser

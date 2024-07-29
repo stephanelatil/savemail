@@ -1,8 +1,8 @@
-import Attachment from "./attachment"
-import EmailAddress from "./emailAddress"
+import { Attachment }  from "./attachment"
+import { EmailAddress } from "./emailAddress"
 
 
-interface Mail {
+export interface Mail {
   id: number,
   replyTo: number|null,
   replies:Mail[],
@@ -14,5 +14,3 @@ interface Mail {
   attachments:Attachment[],
   dateSent:string
 }
-
-export default Mail

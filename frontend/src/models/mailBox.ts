@@ -1,6 +1,6 @@
-import Folder from "./folder"
+import { Folder } from "./folder"
 
-enum SecureSockerOptions {
+export enum SecureSockerOptions {
   None = 0,
   Auto = 1,
   SslOnConnect = 2,
@@ -8,7 +8,7 @@ enum SecureSockerOptions {
   StartTlsIfAvailable = 4
 }
 
-enum ImapProvider {
+export enum ImapProvider {
   Simple=0,
   Plain=1,
   SaslLogin=2,
@@ -16,7 +16,7 @@ enum ImapProvider {
   Gmail=4
 }
 
-interface MailBox {
+export interface MailBox {
   id: number,
   imapDomain:string,
   imapPort:number,
@@ -26,7 +26,7 @@ interface MailBox {
   folders:Folder[]
 }
 
-interface EditMailBox{
+export interface EditMailBox{
   id: number,
   imapDomain:string,
   imapPort:number,
@@ -35,5 +35,3 @@ interface EditMailBox{
   secureSocketOptions:SecureSockerOptions,
   provider:ImapProvider
 }
-
-export default MailBox
