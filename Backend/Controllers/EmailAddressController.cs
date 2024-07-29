@@ -17,11 +17,11 @@ namespace Backend.Controllers
         }
 
         // GET: api/EmailAddress/5
-        [HttpGet("{id}")]
+        [HttpGet("{address}")]
         [Authorize]
-        public async Task<ActionResult<EmailAddress>> GetEmailAddress(string id)
+        public async Task<ActionResult<EmailAddress>> GetEmailAddress(string address)
         {
-            var emailAddress = await this._context.EmailAddress.FindAsync(id);
+            var emailAddress = await this._context.EmailAddress.SingleOrDefaultAsync(ea => ea.Address == address);
 
             if (emailAddress == null)
             {

@@ -42,7 +42,7 @@ namespace Backend.Controllers
             if (self.Id != attachment?.Owner?.Id)
                 return this.Forbid();
 
-            return this.PhysicalFile(attachment.FilePath, "multipart/x-mixed-replace",attachment.FileName);
+            return this.PhysicalFile(attachment.FilePath, "multipart/bytes",attachment.FileName);
         }
     }
 }
