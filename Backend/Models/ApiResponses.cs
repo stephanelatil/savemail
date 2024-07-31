@@ -1,17 +1,9 @@
 namespace Backend.Models
 {
-    public class ApiResponse<T>
-    {
-        public bool Success { get; set; }
-        public string Message { get; set; } = string.Empty;
-        public T? Data { get; set; }
-    }
-
     public class PaginatedList<T>
     {
         public List<T> Items { get; }
         public int PageIndex { get; }
-        public int TotalPages { get; }
         public string? PreviousPage { get; }
         public string? NextPage { get; }
 
