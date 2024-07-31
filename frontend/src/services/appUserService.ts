@@ -60,7 +60,7 @@ export const editUser = async (user: EditAppUser): Promise<boolean> => {
  * @returns A promise that resolves to the updated `User` object.
  * @throws An error if the edit operation fails or if the user is not authorized to make the edit.
  */
-export const deleteUser = async (id: string): Promise<boolean> => {
+export const deleteUser = async (id: string): Promise<null> => {
     const response = await apiFetchWithBody(`${USER_ENDPOINT}${id}`, 'DELETE')
 
     if (!response.ok) {
@@ -70,5 +70,5 @@ export const deleteUser = async (id: string): Promise<boolean> => {
             throw new Error("User not found error")
         throw new Error(`Failed to edit the user`)
     }
-    return response.json();
+    return null;
 }

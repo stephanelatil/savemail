@@ -74,5 +74,5 @@ export const deleteMailBox = async (id:number) : Promise<null> => {
     if (response.status >= 500)
         throw new Error("Database Error please try again later")
 
-    return response.json();
+    return null;
 }
