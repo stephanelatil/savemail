@@ -2,6 +2,8 @@ namespace Backend.Models.DTO;
 
 public class MailDto
 {
+    private const int MAX_PARTIAL_FETCH_LEN=200;
+
     public long Id { get; set; }
     public long? ReplyTo { get; set; } = null;
     public ICollection<MailDto> Replies { get; set; } = [];
@@ -34,7 +36,9 @@ public class MailDto
         {
             HtmlAgilityPack.HtmlDocument doc = new();
             doc.LoadHtml(this.Body);
-            this.Body = doc.DocumentNode.InnerText.Trim().Remove(200);
+            this.Body = doc.DocumentNode.InnerText.Trim();
+            if (this.Body.Length > MAX_PARTIAL_FETCH_LEN)
+                this.Body = this.Body.Remove(MAX_PARTIAL_FETCH_LEN-3)+"...";
         }
         this.Attachments = mail.Attachments.Select(a => new AttachmentDto(a)).ToList();
         this.DateSent = mail.DateSent;
