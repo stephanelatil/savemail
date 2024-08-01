@@ -97,6 +97,10 @@ app.UseAuthorization();
 
 // Map user model
 app.MapGroup("/api/auth").MapIdentityApi<AppUser>();
+app.MapPost("/api/auth/Logout", async (SignInManager<AppUser> _signInManager) => {
+    await _signInManager.SignOutAsync();
+    return Results.Ok();
+}).RequireAuthorization();
 
 //In case of 4xx error so it doesn't leak info
 app.UseStatusCodePages(async context =>
