@@ -3,32 +3,31 @@ using Microsoft.EntityFrameworkCore;
 using Backend.Models;
 using Microsoft.AspNetCore.Authorization;
 
-namespace Backend.Controllers
+namespace Backend.Controllers;
+
+[Route("api/[controller]")]
+[ApiController]
+public class EmailAddressController : ControllerBase
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class EmailAddressController : ControllerBase
+    private readonly ApplicationDBContext _context;
+
+    public EmailAddressController(ApplicationDBContext context)
     {
-        private readonly ApplicationDBContext _context;
+        this._context = context;
+    }
 
-        public EmailAddressController(ApplicationDBContext context)
+    // GET: api/EmailAddress/5
+    [HttpGet("{address}")]
+    [Authorize]
+    public async Task<ActionResult<EmailAddress>> GetEmailAddress(string address)
+    {
+        var emailAddress = await this._context.EmailAddress.SingleOrDefaultAsync(ea => ea.Address == address);
+
+        if (emailAddress == null)
         {
-            this._context = context;
+            return this.NotFound();
         }
 
-        // GET: api/EmailAddress/5
-        [HttpGet("{address}")]
-        [Authorize]
-        public async Task<ActionResult<EmailAddress>> GetEmailAddress(string address)
-        {
-            var emailAddress = await this._context.EmailAddress.SingleOrDefaultAsync(ea => ea.Address == address);
-
-            if (emailAddress == null)
-            {
-                return this.NotFound();
-            }
-
-            return emailAddress;
-        }
+        return emailAddress;
     }
 }
