@@ -3,6 +3,7 @@ using Backend.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Backend.Models.DTO;
 
 namespace Backend.Controllers;
 
@@ -23,7 +24,7 @@ public class MailController : ControllerBase
     // GET: api/Mail/5
     [HttpGet("{id}")]
     [Authorize]
-    public async Task<ActionResult<Mail>> GetMail(long id)
+    public async Task<ActionResult<MailDto>> GetMail(long id)
     {
         Mail? mail = await this._context.Mail.Where(m => m.Id == id)
                                             .Include(m => m.OwnerMailBox)
@@ -34,7 +35,7 @@ public class MailController : ControllerBase
         var self = await this._userManager.GetUserAsync(this.User);
         if (self is null || self.Id is null || self.Id != mail.OwnerMailBox?.OwnerId)
             return this.Forbid();
-        return mail;
+        return new MailDto(mail, false);
     }
 
     // DELETE: api/Mail/5
