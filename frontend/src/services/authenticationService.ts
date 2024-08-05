@@ -19,8 +19,9 @@ export const register = async (credentials: Credentials) : Promise<boolean> => {
     return true;
 }
 
-export const login = async (credentials: Credentials): Promise<boolean> => {
-    const response = await apiFetchWithBody(`${AUTH_ENDPOINT}login?useCookies=true`, 'POST', credentials);
+export const login = async (credentials: Credentials, rememberMe:boolean=false): Promise<boolean> => {
+    const remember:string = rememberMe ? "useCookies=true" : "useSessionCookies=true";
+    const response = await apiFetchWithBody(`${AUTH_ENDPOINT}login?${remember}`, 'POST', credentials);
 
     if (!response.ok) {
         if (credentials.twoFactorCode || credentials.twoFactorRecoveryCode)
