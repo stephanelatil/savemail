@@ -1,4 +1,4 @@
-import { ChangePassword, Credentials, Edit2FA, PasswordReset } from '@/models/credentials';
+import { ChangePassword, Credentials, Init2FA, Enable2FA, PasswordReset, Response2FA } from '@/models/credentials';
 import { apiFetch, apiFetchWithBody } from './fetchService';
 
 const AUTH_ENDPOINT = '/api/auth/';
@@ -73,7 +73,19 @@ export const changePassword = async (newPassword:ChangePassword) : Promise<boole
     return true;
 }
 
-export const edit2FA = async (edit2FA:Edit2FA) : Promise<boolean> => {
+export const init2FA = async (initial:Init2FA) : Promise<Response2FA> => {
+    const response = await apiFetchWithBody(`${AUTH_ENDPOINT}manage/2fa`, 'POST', initial);
+
+    if (!response.ok){
+        const err = (await response.json()).errors;
+        err.reduce((prev:string, curr:string, idx:number) => prev.concat(curr));
+        throw new Error(err);
+    }
+
+    return response.json();
+}
+
+export const enable2FA = async (edit2FA:Enable2FA) : Promise<Response2FA> => {
     const response = await apiFetchWithBody(`${AUTH_ENDPOINT}manage/2fa`, 'POST', edit2FA);
 
     if (!response.ok){
@@ -82,5 +94,5 @@ export const edit2FA = async (edit2FA:Edit2FA) : Promise<boolean> => {
         throw new Error(err);
     }
 
-    return true;
+    return response.json();
 }
