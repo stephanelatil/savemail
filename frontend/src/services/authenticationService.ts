@@ -32,6 +32,11 @@ export const login = async (credentials: Credentials, rememberMe:boolean=false):
     return true;
 }
 
+export const logout = async (): Promise<null> => {
+    await apiFetchWithBody(`${AUTH_ENDPOINT}logout`, 'POST');
+    return null;
+}
+
 export const resendConfirmationEmail = async (email:string) : Promise<boolean> => {
     const response = await apiFetchWithBody(`${AUTH_ENDPOINT}resendConfirmationEmail`, 'POST', {"email":email})
 
