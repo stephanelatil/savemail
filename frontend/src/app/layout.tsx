@@ -1,5 +1,5 @@
-import '@/app/global.css'
-import '@/app/tailwind.css'
+import './globals.css'
+import './tailwind.css'
 import NotificationSnackbar from '@/components/NotificationSnackbar'
 import type { Metadata } from "next";
 
@@ -17,7 +17,6 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
     <html lang="en">
       <body>
         {children}
-        <NotificationSnackbar />
       </body>
     </html>
   )
