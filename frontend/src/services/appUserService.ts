@@ -23,7 +23,7 @@ export const getLoggedInUser = async () : Promise<AppUser> => {
     const response = await apiFetch(`${USER_ENDPOINT}me`);
 
     if (!response.ok) {
-        throw new Error(`${response.status} ${response.statusText}: Failed to load loggedin user`);
+        throw new Error(`${response.status} ${response.statusText}: Failed to load logged-in user`);
     }
 
     return response.json();

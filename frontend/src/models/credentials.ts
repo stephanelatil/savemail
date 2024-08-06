@@ -1,6 +1,7 @@
 export interface Credentials {
     username: string,
     password: string,
+    passwordRepeat?:string,
     twoFactorCode?:string,
     twoFactorRecoveryCode?: string
 }
@@ -16,10 +17,17 @@ export interface ChangePassword{
     oldPassword:string
 }
 
-export interface Edit2FA{
+export interface Init2FA{}
+
+export interface Enable2FA{
     enable: boolean,
-    twoFactorCode: string,
-    resetSharedKey: boolean,
-    resetRecoveryCodes: boolean,
-    forgetMachine: boolean
+    twoFactorCode?: string
+}
+
+export interface Response2FA{
+    sharedKey:string,
+    recoveryCodesLeft:number
+    recoveryCodes:string[],
+    isTwoFactorEnabled:boolean,
+    isMachineRemembered:boolean
 }
