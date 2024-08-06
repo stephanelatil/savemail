@@ -12,8 +12,11 @@ export const register = async (credentials: Credentials) : Promise<boolean> => {
 
     if (!response.ok) {
         const err = (await response.json()).errors;
-        err.reduce((prev:string, curr:string, idx:number) => prev.concat(curr));
-        throw new Error(err);
+        let errString = ''
+        for (const [key, value] of Object.entries(err))
+            errString.concat(value+'\n')
+        errString.trim()
+        throw new Error(errString);
     }
 
     return true;
@@ -54,8 +57,11 @@ export const passwordReset = async (reset:PasswordReset) : Promise<boolean> => {
 
     if (!response.ok){
         const err = (await response.json()).errors;
-        err.reduce((prev:string, curr:string, idx:number) => prev.concat(curr));
-        throw new Error(err);
+        let errString = ''
+        for (const [key, value] of Object.entries(err))
+            errString.concat(value+'\n')
+        errString.trim()
+        throw new Error(errString);
     }
 
     return true;
@@ -66,8 +72,11 @@ export const changePassword = async (newPassword:ChangePassword) : Promise<boole
 
     if (!response.ok){
         const err = (await response.json()).errors;
-        err.reduce((prev:string, curr:string, idx:number) => prev.concat(curr));
-        throw new Error(err);
+        let errString = ''
+        for (const [key, value] of Object.entries(err))
+            errString.concat(value+'\n')
+        errString.trim()
+        throw new Error(errString);
     }
 
     return true;
@@ -78,8 +87,11 @@ export const init2FA = async (initial:Init2FA) : Promise<Response2FA> => {
 
     if (!response.ok){
         const err = (await response.json()).errors;
-        err.reduce((prev:string, curr:string, idx:number) => prev.concat(curr));
-        throw new Error(err);
+        let errString = ''
+        for (const [key, value] of Object.entries(err))
+            errString.concat(value+'\n')
+        errString.trim()
+        throw new Error(errString);
     }
 
     return response.json();
@@ -90,8 +102,11 @@ export const enable2FA = async (edit2FA:Enable2FA) : Promise<Response2FA> => {
 
     if (!response.ok){
         const err = (await response.json()).errors;
-        err.reduce((prev:string, curr:string, idx:number) => prev.concat(curr));
-        throw new Error(err);
+        let errString = ''
+        for (const [key, value] of Object.entries(err))
+            errString.concat(value+'\n')
+        errString.trim()
+        throw new Error(errString);
     }
 
     return response.json();
