@@ -1,9 +1,10 @@
 'use client'
 
+import { ColorMode } from "@/models/helpers";
 import { createTheme, ThemeProvider } from "@mui/material";
 import React, { PropsWithChildren } from "react";
+import { ColorModeContext } from "./context/ColorModeContext";
 
-type ColorMode = 'light' | 'dark'
 
 const lightTheme = createTheme({
     palette: {
@@ -40,9 +41,11 @@ const LightDarkMode:React.FC<PropsWithChildren> = ({children}) => {
     const theme = React.useMemo(() => getActiveTheme(mode), [mode]);
 
     return (
-        <ThemeProvider theme={theme}>
-            {children}
-        </ThemeProvider>);
+        <ColorModeContext.Provider value={{mode, setMode}}>
+            <ThemeProvider theme={theme}>
+                {children}
+            </ThemeProvider>
+        </ColorModeContext.Provider>);
 }
 
 export default LightDarkMode;
