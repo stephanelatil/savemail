@@ -1,7 +1,8 @@
+import { createTheme, CssBaseline } from '@mui/material';
 import './globals.css'
 import './tailwind.css'
-import NotificationSnackbar from '@/components/NotificationSnackbar'
 import type { Metadata } from "next";
+import LightDarkMode from '@/components/LightDarkMode';
 
 export const metadata: Metadata = {
   title: 'SaveMail',
@@ -15,9 +16,12 @@ export const metadata: Metadata = {
 export default function RootLayout({children}: {children: React.ReactNode}) {
   return (
     <html lang="en">
-      <body>
-        {children}
-      </body>
+      <LightDarkMode>
+      <CssBaseline />
+        <body>
+            {children}
+        </body>
+      </LightDarkMode>
     </html>
   )
 }
