@@ -9,8 +9,10 @@ import {
 } from '@/services/authenticationService'
 import { getLoggedInUser } from '@/services/appUserService'
 import { useState } from 'react'
+import { useNotification } from './useNotification'
 
 export const useAuthentication = () => {
+  const showNotification = useNotification();
   const [loading, setLoading] = useState(false);
 
   const login = async (credentials:Credentials, rememberMe:boolean=false): Promise<boolean> => {
@@ -23,6 +25,7 @@ export const useAuthentication = () => {
     } catch (error: unknown) {
       if (error instanceof Error) {
         console.warn(error.message, 'error');
+        showNotification(error.message, 'error');
       }
       return false;
     } finally {
@@ -35,7 +38,10 @@ export const useAuthentication = () => {
       setLoading(true);
       await logoutService();
     } catch (error: unknown) {
-      alert('Logout failed: ' + error);
+      if (error instanceof Error) {
+        console.warn(error.message, 'error');
+        showNotification(error.message, 'error');
+      }
     } finally {
       setLoading(false);
     }
@@ -50,9 +56,9 @@ export const useAuthentication = () => {
       return true;
     } catch (error: unknown) {
       if (error instanceof Error) {
-        alert(error.message);
+        showNotification(error.message, 'error');
       } else {
-        alert('Could not register');
+        showNotification('Could not register', 'error');
       }
     } finally {
       setLoading(false);
@@ -66,7 +72,7 @@ export const useAuthentication = () => {
       const user: AppUser = await getLoggedInUser();
       // setLoggedInUser(user);
     } catch (error: unknown) {
-      // setLoggedInUser(null);
+      showNotification(error+'', 'error');
       console.error(error + ': failed to fetch logged in user');
     } finally {
       setLoading(false);
