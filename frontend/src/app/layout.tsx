@@ -3,6 +3,7 @@ import './globals.css'
 import './tailwind.css'
 import type { Metadata } from "next";
 import LightDarkMode from '@/components/LightDarkMode';
+import NotificationSnackbar from '@/components/NotificationSnackbarProvider';
 
 export const metadata: Metadata = {
   title: 'SaveMail',
@@ -19,7 +20,9 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
       <LightDarkMode>
       <CssBaseline />
         <body>
+          <NotificationSnackbar>
             {children}
+          </NotificationSnackbar>
         </body>
       </LightDarkMode>
     </html>
