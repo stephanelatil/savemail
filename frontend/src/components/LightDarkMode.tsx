@@ -26,13 +26,13 @@ const LightDarkMode:React.FC<PropsWithChildren> = ({children}) => {
 
     const MODE_KEY = 'LIGHT_DARK_MODE';
 
-    const [mode, setMode] = React.useState<ColorMode>(localStorage.getItem(MODE_KEY) as ColorMode || 'light');
+    const [mode, setMode] = React.useState<ColorMode>(global?.localStorage?.getItem(MODE_KEY) as ColorMode || 'light');
     const toggleMode = React.useCallback(
                 () => {
                         const modeToSet = mode === 'light' ? 'dark' : 'light';
                         setMode(modeToSet);
                         try{
-                            localStorage.setItem(MODE_KEY, modeToSet);
+                            global?.localStorage?.setItem(MODE_KEY, modeToSet);
                         }catch{} },
                 [mode]);
   
