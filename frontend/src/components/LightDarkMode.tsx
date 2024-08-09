@@ -25,23 +25,15 @@ function getActiveTheme(themeMode: 'light' | 'dark') {
 const LightDarkMode:React.FC<PropsWithChildren> = ({children}) => {
 
     const [mode, setMode] = React.useState<ColorMode>('light');
-    const colorMode = React.useMemo(
-      () => ({
-        // The dark mode switch would invoke this method
-        toggleColorMode: () => {
-            setMode((prevMode: ColorMode) =>
-                prevMode === 'light' ? 'dark' : 'light',
-            );
-            },
-        }),
-      [],
-    );
+    const toggleMode = React.useCallback(
+                () => setMode(mode === 'light' ? 'dark' : 'light'),
+                [mode]);
   
     // Update the theme only if the mode changes
     const theme = React.useMemo(() => getActiveTheme(mode), [mode]);
 
     return (
-        <ColorModeContext.Provider value={{mode, setMode}}>
+        <ColorModeContext.Provider value={{mode, toggleMode}}>
             <ThemeProvider theme={theme}>
                 {children}
             </ThemeProvider>

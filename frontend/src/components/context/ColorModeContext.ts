@@ -1,9 +1,13 @@
+'use client'
+
 import { ColorMode } from "@/models/helpers";
-import { createContext, useState } from "react";
+import { createContext } from "react";
+
+
 
 export type ColorModeEdit ={
     mode:ColorMode,
-    setMode: (mode:ColorMode)=>void
+    toggleMode: ()=>void
 }
 
-export const ColorModeContext = createContext<ColorModeEdit|null>(null);
+export const ColorModeContext = createContext<ColorModeEdit>({mode:'light', toggleMode:()=>{}});
