@@ -24,9 +24,16 @@ function getActiveTheme(themeMode: 'light' | 'dark') {
 
 const LightDarkMode:React.FC<PropsWithChildren> = ({children}) => {
 
-    const [mode, setMode] = React.useState<ColorMode>('light');
+    const MODE_KEY = 'LIGHT_DARK_MODE';
+
+    const [mode, setMode] = React.useState<ColorMode>(localStorage.getItem(MODE_KEY) as ColorMode || 'light');
     const toggleMode = React.useCallback(
-                () => setMode(mode === 'light' ? 'dark' : 'light'),
+                () => {
+                        const modeToSet = mode === 'light' ? 'dark' : 'light';
+                        setMode(modeToSet);
+                        try{
+                            localStorage.setItem(MODE_KEY, modeToSet);
+                        }catch{} },
                 [mode]);
   
     // Update the theme only if the mode changes
