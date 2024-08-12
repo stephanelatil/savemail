@@ -86,7 +86,13 @@ The application relies on several environment variables that need to be configur
 
 #### For Backend:
 
-Available in `savemail/Backend/appsettings.json`.
+You can configure it directly in `savemail/Backend/appsettings.json` or use the environment variables (for docker).
+
+| Environment Variable | Use | Default |
+| --- | --- | --- |
+| `SAVEMAIL_ConnectionStrings_Host` | The Host IP or domain of the database | `localhost` |
+| `SAVEMAIL_ConnectionStrings_Username` | The database Username to use to connect | `postgres` |
+| `SAVEMAIL_ConnectionStrings_Password` | The database password | `P0stgres` |
 
 ## Need an issue fixed faster or a question answered faster?
 

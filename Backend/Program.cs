@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.Json.Serialization;
 using Backend.Models;
 using Backend.Services;
@@ -7,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddAuthorization();
+builder.Configuration.AddEnvironmentVariables("SAVEMAIL_");
 
 // Add services to the container.
 
@@ -36,12 +38,13 @@ else
 {
     builder.Services.AddDbContext<ApplicationDBContext>(opt =>
         {
-            string connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? string.Empty;
-            if (connectionString.Length < "localhost".Length)
-            {
-                //TODO: use env variables here
-            }
-            opt.UseNpgsql(connectionString);
+            var connectionString = new StringBuilder();
+            
+            connectionString.Append($"Host={builder.Configuration.GetConnectionString("Host")};");
+            connectionString.Append($"Username={builder.Configuration.GetConnectionString("Username")};");
+            connectionString.Append($"Password={builder.Configuration.GetConnectionString("Password")}");
+
+            opt.UseNpgsql(connectionString.ToString());
         });
 }
 //Setup SendGrid
