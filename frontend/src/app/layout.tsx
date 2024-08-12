@@ -4,6 +4,7 @@ import './tailwind.css'
 import type { Metadata } from "next";
 import LightDarkMode from '@/components/LightDarkMode';
 import NotificationSnackbar from '@/components/NotificationSnackbarProvider';
+import { AppRouterCacheProvider } from '@mui/material-nextjs/v14-appRouter'
 
 export const metadata: Metadata = {
   title: 'SaveMail',
@@ -17,14 +18,16 @@ export const metadata: Metadata = {
 export default function RootLayout({children}: {children: React.ReactNode}) {
   return (
     <html lang="en">
-      <LightDarkMode>
       <CssBaseline />
         <body>
-          <NotificationSnackbar>
-            {children}
-          </NotificationSnackbar>
+          <AppRouterCacheProvider>
+            <LightDarkMode>
+              <NotificationSnackbar>
+                {children}
+              </NotificationSnackbar>
+            </LightDarkMode>
+          </AppRouterCacheProvider>
         </body>
-      </LightDarkMode>
     </html>
   )
 }
