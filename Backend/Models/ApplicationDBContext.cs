@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using MailKit;
+using Backend.Utils;
 
 namespace Backend.Models
 {
@@ -41,6 +43,14 @@ namespace Backend.Models
                 .Property(e => e.UniqueHash)
                 .UsePropertyAccessMode(PropertyAccessMode.PreferFieldDuringConstruction);
         }
+
+        protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+        {
+            base.ConfigureConventions(configurationBuilder);
+            configurationBuilder.Properties<UniqueId>()
+                                .HaveConversion<UniqueIdConverter>();
+        }
+
         public virtual DbSet<Attachment> Attachment { get; set; }
         public virtual DbSet<EmailAddress> EmailAddress { get; set; }
         public virtual DbSet<Folder> Folder { get; set; }
