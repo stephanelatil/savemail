@@ -10,7 +10,7 @@ using MimeKit;
 
 namespace Backend.Models
 {
-    [Index(nameof(UniqueHash), IsUnique = true)]
+    [Index(nameof(UniqueHash), IsUnique = false)]
     [Index(nameof(FolderId), IsUnique = false)]
     public class Mail
     {
