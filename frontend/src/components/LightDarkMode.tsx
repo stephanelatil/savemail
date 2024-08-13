@@ -1,9 +1,10 @@
 'use client'
 
 import { ColorMode } from "@/models/helpers";
-import { createTheme, ThemeProvider } from "@mui/material";
-import React, { PropsWithChildren } from "react";
+import { createTheme, CssBaseline, IconButton, ThemeProvider } from "@mui/material";
+import React, { PropsWithChildren, useEffect } from "react";
 import { ColorModeContext } from "./context/ColorModeContext";
+import { Brightness3, Brightness6 } from "@mui/icons-material";
 
 
 const lightTheme = createTheme({
@@ -26,13 +27,13 @@ const LightDarkMode:React.FC<PropsWithChildren> = ({children}) => {
 
     const MODE_KEY = 'LIGHT_DARK_MODE';
 
-    const [mode, setMode] = React.useState<ColorMode>(global?.localStorage?.getItem(MODE_KEY) as ColorMode || 'light');
+    const [mode, setMode] = React.useState<ColorMode>(window?.localStorage?.getItem(MODE_KEY) === 'dark' ? 'dark' : 'light');
     const toggleMode = React.useCallback(
                 () => {
                         const modeToSet = mode === 'light' ? 'dark' : 'light';
                         setMode(modeToSet);
                         try{
-                            global?.localStorage?.setItem(MODE_KEY, modeToSet);
+                            window?.localStorage?.setItem(MODE_KEY, modeToSet);
                         }catch{} },
                 [mode]);
   
@@ -42,7 +43,11 @@ const LightDarkMode:React.FC<PropsWithChildren> = ({children}) => {
     return (
         <ColorModeContext.Provider value={{mode, toggleMode}}>
             <ThemeProvider theme={theme}>
+                <CssBaseline />
                 {children}
+                <IconButton onClick={toggleMode}>
+                    {mode === 'light' ? <Brightness3 /> : <Brightness6 />}
+                </IconButton>
             </ThemeProvider>
         </ColorModeContext.Provider>);
 }

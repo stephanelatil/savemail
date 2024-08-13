@@ -1,4 +1,3 @@
-import { createTheme, CssBaseline } from '@mui/material';
 import './globals.css'
 import './tailwind.css'
 import type { Metadata } from "next";
@@ -19,7 +18,6 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
   return (
     <html lang="en">
       <meta name="format-detection" content="telephone=no, date=no, email=no, address=no" />
-      <CssBaseline />
         <body>
           <AppRouterCacheProvider>
             <LightDarkMode>
