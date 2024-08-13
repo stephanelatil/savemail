@@ -7,7 +7,7 @@ import { TextField, Button, Typography, Link, CircularProgress, Box } from '@mui
 import { useRouter } from 'next/navigation';
 import { Credentials } from '@/models/credentials';
 import { useState } from 'react';
-import { useNotification } from '@/hooks/useNotification';
+import { LOGIN_URL } from '@/constants/NavRoutes';
 
 const RegisterForm: React.FC = () => {
   const { register, handleSubmit, formState: { errors }, watch } = useForm<Credentials>();
@@ -18,7 +18,7 @@ const RegisterForm: React.FC = () => {
   const onSubmit: SubmitHandler<Credentials> = async (data) => {
     try {
       if (await registerService(data))
-        router.push('/auth/login'); // Redirect to home after successful register
+        router.push(LOGIN_URL); // Redirect to home after successful register
     } catch (err) {
       console.error('Register failed:', err);
       if (err instanceof Error)
@@ -90,7 +90,7 @@ const RegisterForm: React.FC = () => {
         </Button>
         <Typography textAlign="center">
           Already logged in?{' '}
-          <Link href="/auth/login" underline="hover">
+          <Link href={LOGIN_URL} underline="hover">
             Log In
           </Link>
         </Typography>

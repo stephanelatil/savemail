@@ -3,14 +3,18 @@
 import Head from 'next/head';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { useAuthentication } from '@/hooks/useAuthentication';
-import { TextField, Button, Typography, Link, CircularProgress, Box } from '@mui/material';
+import { TextField, Button, Typography, Link, CircularProgress, Box, IconButton } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import { Credentials } from '@/models/credentials';
 import { useState } from 'react';
+import { REGISTER_URL } from '@/constants/NavRoutes';
+import { DarkMode, LightMode } from '@mui/icons-material';
+import { useLightDarkModeSwitch } from '@/hooks/useLightDarkModeSwitch';
 
 const LoginForm: React.FC = () => {
   const { register, handleSubmit, formState: { errors } } = useForm<Credentials>();
   const { login:loginService, loading } = useAuthentication();
+  const { mode, toggleMode } = useLightDarkModeSwitch();
   const router = useRouter();
   const [errorText, setErrorText] = useState("");
 
@@ -81,11 +85,17 @@ const LoginForm: React.FC = () => {
         </Button>
         <Typography textAlign="center">
           Don't have an account?{' '}
-          <Link href="/auth/register" underline="hover">
+          <Link href={REGISTER_URL} underline="hover">
             Register
           </Link>
         </Typography>
       </Box>
+      <IconButton onClick={toggleMode} sx={{
+        position: 'fixed',
+        bottom: 16, left: 16,
+        zIndex: 1000, /* ensure it stays on top */}}>
+        {mode === 'light' ? <LightMode /> : <DarkMode />}
+      </IconButton>
     </>
   );
 };
