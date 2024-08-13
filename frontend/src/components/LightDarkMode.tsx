@@ -2,7 +2,7 @@
 
 import { ColorMode } from "@/models/helpers";
 import { createTheme, CssBaseline, ThemeProvider } from "@mui/material";
-import React, { PropsWithChildren } from "react";
+import React, { PropsWithChildren, useEffect } from "react";
 import { ColorModeContext } from "./context/ColorModeContext";
 
 
@@ -25,7 +25,7 @@ function getActiveTheme(themeMode: 'light' | 'dark') {
 const LightDarkMode:React.FC<PropsWithChildren> = ({children}) => {
 
     const MODE_KEY = 'LIGHT_DARK_MODE';
-    const [mode, setMode] = React.useState<ColorMode>(typeof window !== undefined? window.localStorage?.getItem(MODE_KEY) as ColorMode : 'light');
+    const [mode, setMode] = React.useState<ColorMode>('dark');
     const toggleMode = React.useCallback(
                 () => {
                         const modeToSet = mode === 'light' ? 'dark' : 'light';
@@ -37,6 +37,11 @@ const LightDarkMode:React.FC<PropsWithChildren> = ({children}) => {
   
     // Update the theme only if the mode changes
     const theme = React.useMemo(() => getActiveTheme(mode), [mode]);
+    useEffect(()=>{
+        var wantedMode = window?.localStorage?.getItem(MODE_KEY) as ColorMode;
+        if (!!mode && mode !== wantedMode)
+            setMode(wantedMode);
+    });
 
     return (
         <ColorModeContext.Provider value={{mode, toggleMode}}>
