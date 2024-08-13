@@ -1,10 +1,9 @@
 'use client'
 
 import { ColorMode } from "@/models/helpers";
-import { createTheme, CssBaseline, IconButton, ThemeProvider } from "@mui/material";
-import React, { PropsWithChildren, useEffect } from "react";
+import { createTheme, CssBaseline, ThemeProvider } from "@mui/material";
+import React, { PropsWithChildren } from "react";
 import { ColorModeContext } from "./context/ColorModeContext";
-import { Brightness3, Brightness6 } from "@mui/icons-material";
 
 
 const lightTheme = createTheme({
@@ -26,8 +25,7 @@ function getActiveTheme(themeMode: 'light' | 'dark') {
 const LightDarkMode:React.FC<PropsWithChildren> = ({children}) => {
 
     const MODE_KEY = 'LIGHT_DARK_MODE';
-
-    const [mode, setMode] = React.useState<ColorMode>(window?.localStorage?.getItem(MODE_KEY) === 'dark' ? 'dark' : 'light');
+    const [mode, setMode] = React.useState<ColorMode>(typeof window !== undefined? window.localStorage?.getItem(MODE_KEY) as ColorMode : 'light');
     const toggleMode = React.useCallback(
                 () => {
                         const modeToSet = mode === 'light' ? 'dark' : 'light';
@@ -45,9 +43,6 @@ const LightDarkMode:React.FC<PropsWithChildren> = ({children}) => {
             <ThemeProvider theme={theme}>
                 <CssBaseline />
                 {children}
-                <IconButton onClick={toggleMode}>
-                    {mode === 'light' ? <Brightness3 /> : <Brightness6 />}
-                </IconButton>
             </ThemeProvider>
         </ColorModeContext.Provider>);
 }
