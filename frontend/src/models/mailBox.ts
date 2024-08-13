@@ -1,6 +1,6 @@
 import { Folder } from "./folder"
 
-export enum SecureSockerOptions {
+export enum SecureSocketOptions {
   None = 0,
   Auto = 1,
   SslOnConnect = 2,
@@ -21,7 +21,7 @@ export interface MailBox {
   imapDomain:string,
   imapPort:number,
   username:string,
-  secureSocketOptions:SecureSockerOptions,
+  secureSocketOptions:SecureSocketOptions,
   provider:ImapProvider,
   folders:Folder[]
 }
@@ -32,6 +32,6 @@ export interface EditMailBox{
   imapPort:number,
   username:string,
   password:string,
-  secureSocketOptions:SecureSockerOptions,
+  secureSocketOptions:SecureSocketOptions,
   provider:ImapProvider
 }
