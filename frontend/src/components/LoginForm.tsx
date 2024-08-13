@@ -74,6 +74,7 @@ const LoginForm: React.FC = () => {
           color="primary"
           fullWidth
           disabled={loading}
+          aria-busy={loading}
           sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
         >
           {loading ? <CircularProgress size={24} color="inherit" /> : 'Login'}

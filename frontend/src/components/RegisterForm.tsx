@@ -84,6 +84,7 @@ const RegisterForm: React.FC = () => {
           fullWidth
           disabled={loading}
           sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          aria-busy={loading}
         >
           {loading ? <CircularProgress size={24} color="inherit" /> : 'Login'}
         </Button>
