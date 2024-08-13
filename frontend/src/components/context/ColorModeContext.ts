@@ -1,12 +1,13 @@
 'use client'
 
-import { ColorMode } from "@/models/helpers";
+import { ModalTypeMap } from "@mui/material";
+// import { ColorMode } from "@/models/helpers";
 import { createContext } from "react";
 
 
 
 export type ColorModeEdit ={
-    mode:ColorMode,
+    mode?:any,
     toggleMode: ()=>void
 }
 
