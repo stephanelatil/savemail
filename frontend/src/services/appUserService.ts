@@ -1,6 +1,6 @@
 import { AppUser } from '@/models/appUser';
-import {EditAppUser } from '@/models/appUser';
-import { apiFetch, apiFetchWithBody } from './fetchService';
+import { EditAppUser } from '@/models/appUser';
+import { apiFetch, apiFetchWithBody, FetchError as Error } from './fetchService';
 
 const USER_ENDPOINT = '/api/AppUser/';
 
@@ -8,7 +8,7 @@ export const getUser = async (id: string) : Promise<AppUser> => {
     const response = await apiFetch(USER_ENDPOINT);
 
     if (!response.ok) {
-        throw new Error(`${response.status} ${response.statusText}: Failed to load user`);
+        throw new Error(`${response.status} ${response.statusText}: Failed to load user`, response.status);
     }
 
     return response.json();
@@ -23,7 +23,7 @@ export const getLoggedInUser = async () : Promise<AppUser> => {
     const response = await apiFetch(`${USER_ENDPOINT}me`);
 
     if (!response.ok) {
-        throw new Error(`${response.status} ${response.statusText}: Failed to load logged-in user`);
+        throw new Error(`${response.status} ${response.statusText}: Failed to load logged-in user`, response.status);
     }
 
     return response.json();
@@ -43,12 +43,12 @@ export const editUser = async (user: EditAppUser): Promise<boolean> => {
 
     if (!response.ok) {
         if (response.status === 401 || response.status === 403)
-            throw new Error(`You are not authorized to edit this user`)
+            throw new Error(`You are not authorized to edit this user`, response.status);
         if (response.status == 404)
-            throw new Error("User not found error")
+            throw new Error("User not found error", response.status);
         if (response.status == 400)
-            throw new Error("Invalid or missing values")
-        throw new Error(`Failed to edit the user`)
+            throw new Error("Invalid or missing values", response.status);
+        throw new Error(`Failed to edit the user`, response.status);
     }
     return response.json()
 }
@@ -65,10 +65,10 @@ export const deleteUser = async (id: string): Promise<null> => {
 
     if (!response.ok) {
         if (response.status === 401 || response.status === 403)
-            throw new Error(`You are not authorized to edit this user`)
+            throw new Error(`You are not authorized to edit this user`, response.status);
         if (response.status == 404)
-            throw new Error("User not found error")
-        throw new Error(`Failed to edit the user`)
+            throw new Error("User not found error", response.status);
+        throw new Error(`Failed to edit the user`, response.status);
     }
     return null;
 }

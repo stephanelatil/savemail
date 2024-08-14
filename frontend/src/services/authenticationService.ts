@@ -1,5 +1,5 @@
 import { ChangePassword, Credentials, Init2FA, Enable2FA, PasswordReset, Response2FA } from '@/models/credentials';
-import { apiFetch, apiFetchWithBody } from './fetchService';
+import { FetchError as Error, apiFetchWithBody } from './fetchService';
 
 const AUTH_ENDPOINT = '/api/auth/';
 
@@ -15,7 +15,7 @@ export const register = async (credentials: Credentials) : Promise<boolean> => {
         var errString = '';
         Object.values(err).forEach((val,index, arr)=>errString=errString.concat(val+'\n'));
         errString.trim()
-        throw new Error(errString);
+        throw new Error(errString, response.status);
     }
 
     return true;
@@ -27,8 +27,8 @@ export const login = async (credentials: Credentials, rememberMe:boolean=false):
 
     if (!response.ok) {
         if (credentials.twoFactorCode || credentials.twoFactorRecoveryCode)
-            throw new Error("Incorrect username, password or 2FA");
-        throw new Error("Incorrect username or password");
+            throw new Error("Incorrect username, password or 2FA", response.status);
+        throw new Error("Incorrect username or password", response.status);
     }
 
     return true;
@@ -59,7 +59,7 @@ export const passwordReset = async (reset:PasswordReset) : Promise<boolean> => {
         var errString = '';
         Object.values(err).forEach((val,index, arr)=>errString=errString.concat(val+'\n'));
         errString.trim()
-        throw new Error(errString);
+        throw new Error(errString, response.status);
     }
 
     return true;
@@ -73,7 +73,7 @@ export const changePassword = async (newPassword:ChangePassword) : Promise<boole
         var errString = '';
         Object.values(err).forEach((val,index, arr)=>errString=errString.concat(val+'\n'));
         errString.trim()
-        throw new Error(errString);
+        throw new Error(errString, response.status);
     }
 
     return true;
@@ -87,7 +87,7 @@ export const init2FA = async (initial:Init2FA) : Promise<Response2FA> => {
         var errString = '';
         Object.values(err).forEach((val,index, arr)=>errString=errString.concat(val+'\n'));
         errString.trim()
-        throw new Error(errString);
+        throw new Error(errString, response.status);
     }
 
     return response.json();
@@ -101,7 +101,7 @@ export const enable2FA = async (edit2FA:Enable2FA) : Promise<Response2FA> => {
         var errString = '';
         Object.values(err).forEach((val,index, arr)=>errString=errString.concat(val+'\n'));
         errString.trim()
-        throw new Error(errString);
+        throw new Error(errString, response.status);
     }
 
     return response.json();
