@@ -83,7 +83,7 @@ export const apiFetchWithFormData = async (endpoint: string, body: FormData) => 
 export class FetchError extends Error{
   constructor(msg:string, public statusCode:number, options?:ErrorOptions){
     super(msg, options);
-    Object.setPrototypeOf(this, FetchError.prototype);
     this.statusCode = statusCode;
+    this.name = "FetchError"
   }
 }
