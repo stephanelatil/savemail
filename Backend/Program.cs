@@ -85,6 +85,7 @@ builder.Services.AddHostedService<DailyScheduleService>();
 builder.Services.AddTransient<IImapFetchTaskService, ImapFetchTaskService>();
 builder.Services.AddScoped<IImapMailFetchService, ImapMailFetchService>();
 builder.Services.AddScoped<IImapFolderFetchService, ImapFolderFetchService>();
+builder.Services.AddScoped<IMailBoxImapCheck, MailboxImapCheck>();
 
 //Add Services to edit elements in the database
 builder.Services.AddScoped<IUserService, UserService>();
@@ -129,6 +130,7 @@ if (app.Environment.IsDevelopment())
 }
 else
 {
+    app.UseHttpsRedirection();
     // in case of 5xx error to avoid leaking info
     app.UseExceptionHandler(errorApp =>
     {
@@ -141,8 +143,6 @@ else
         });
     });
 }
-
-app.UseHttpsRedirection();
 
 app.MapControllers();
 
