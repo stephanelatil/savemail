@@ -2,11 +2,11 @@
 
 import { useAppUserData } from '@/hooks/useAppUserData';
 import { useLightDarkModeSwitch } from '@/hooks/useLightDarkModeSwitch';
-import { DarkMode, LightMode, ManageAccounts } from '@mui/icons-material';
-import { CircularProgress, Container, IconButton, Typography } from "@mui/material";
-import { Suspense, useEffect, useMemo, useState } from 'react';
+import { DarkMode, LightMode, Logout, ManageAccounts } from '@mui/icons-material';
+import { CircularProgress, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Typography } from "@mui/material";
+import { useEffect, useState } from 'react';
 
-const UserCard :React.FC = () => {
+const UserCardListItem :React.FC = () => {
     const { mode, toggleMode } = useLightDarkModeSwitch();
     const { getCurrentlyLoggedInUser } = useAppUserData();
     const [username, setUsername] = useState(<CircularProgress key='USERNAME_LOADING'/>)
@@ -23,16 +23,33 @@ const UserCard :React.FC = () => {
     },[]);
 
     return (
-        <Container >
-            <IconButton href={'/settings'}>
-                <ManageAccounts />
-            </IconButton>
-            { username }
-            <IconButton onClick={toggleMode}>
-                {mode === 'light' ? <LightMode /> : <DarkMode />}
-            </IconButton>
-        </Container>
+        <List sx={{ bottom:0, flexShrink: 0 }}>
+            <ListItem sx={{alignSelf:'center', px:0.5}}>
+                <ListItemButton href={'/settings'}>
+                    <ListItemIcon >
+                        <ManageAccounts />
+                    </ListItemIcon>
+                    <ListItemText primary={ username } />
+                </ListItemButton>
+            </ListItem>
+            <ListItem sx={{alignSelf:'center', px:0.5}}>
+                <ListItemButton onClick={toggleMode}>
+                    <ListItemIcon >
+                            {mode === 'light' ? <LightMode /> : <DarkMode />}
+                    </ListItemIcon>
+                    <ListItemText primary={ mode === 'light' ? 'Light Mode' : 'Dark mode' } />
+                </ListItemButton>
+            </ListItem>
+            <ListItem sx={{alignSelf:'center', px:0.5}}>
+                <ListItemButton>
+                    <ListItemIcon>
+                        <Logout />
+                    </ListItemIcon>
+                    <ListItemText primary='Logout'/>
+                </ListItemButton>
+            </ListItem>
+        </List>
     );
 }
 
-export default UserCard;
+export default UserCardListItem;
