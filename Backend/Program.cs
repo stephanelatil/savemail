@@ -136,7 +136,4 @@ else
 
 app.MapControllers();
 
-using (var context = app.Services.GetRequiredService<ApplicationDBContext>())
-    await context.Database.MigrateAsync();
-
 app.Run();
