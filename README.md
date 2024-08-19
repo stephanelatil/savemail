@@ -70,15 +70,17 @@ dotnet restore
 dotnet publish
 ```
 
-Finally run the application:
+Finally enure that Postgres is running in the background and that you have correctly set the username, password and host in the application.json file (or environment variables).
+Then run the following commands to ensure the database is created and setup correctly and run the application:
 
 ```bash
+dotnet ef database update
 dotnet ./bin/Release/net8.0/Backend.dll
 ```
 
 ### Frontend
 
-The frontend is in development! Contribute or come back later when it's funtional.
+The frontend is in development! Contribute or come back later when it's functional.
 
 ## Configuration Variables
 
