@@ -3,8 +3,8 @@
 import { useMailboxes } from "@/hooks/useMailboxes";
 import { Folder } from "@/models/folder";
 import { Archive as ArchiveIcon, CreateNewFolder, Delete as DeleteIcon, Email as EmailIcon, ExpandLess, ExpandMore, Folder as FolderIcon, Send as SendIcon } from "@mui/icons-material";
-import { CircularProgress, Collapse, Divider, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Typography } from "@mui/material";
-import React, { Suspense, useEffect, useMemo, useState } from "react";
+import { CircularProgress, Collapse, Divider, List, ListItem, ListItemButton, ListItemIcon, ListItemText } from "@mui/material";
+import React, { useEffect, useState } from "react";
 
 const mapFolderIcon = (name:string) =>{
     switch (name.toLowerCase()) {

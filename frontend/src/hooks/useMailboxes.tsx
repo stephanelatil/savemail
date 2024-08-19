@@ -1,10 +1,10 @@
 'use client'
 
-import { getAllMailboxes } from '@/services/mailboxService'
+import { getAllMailboxes, createMailBox, editMailBox as editMailBoxService } from '@/services/mailboxService'
 import { useState } from 'react'
 import { useNotification } from './useNotification'
 import { useRouter } from 'next/navigation'
-import { MailBox } from '@/models/mailBox'
+import { EditMailBox, MailBox } from '@/models/mailBox'
 import { FetchError } from '@/services/fetchService'
 
 export const useMailboxes = () => {
@@ -30,8 +30,51 @@ export const useMailboxes = () => {
     }
   }
 
+  const createNewMailbox  = async (newMb:EditMailBox): Promise<MailBox|null> => {
+    try{
+      setLoading(true);
+      return await createMailBox(newMb);
+    }catch (error: unknown){
+      if (error instanceof FetchError){
+        if (error.statusCode == 500){
+          showNotification("Backend Error", 'error');
+          console.error(error.message, error)
+        }
+        else if (error.statusCode == 400)
+          showNotification(error.message, 'warning');
+      }
+      return null;
+    }
+    finally{
+      setLoading(false);
+    }
+  }
+
+  const editMailBox = async (edits:EditMailBox):Promise<void> => {
+    try{
+      setLoading(true);
+      await editMailBoxService(edits);
+
+    }catch (error:unknown){
+      if (error instanceof FetchError)
+        if (error.statusCode == 400)
+          showNotification(error.message, 'warning');
+        else if (error.statusCode == 404)
+          showNotification("Mailbox does not exist", 'error');
+        else
+          showNotification('This mailbox does not belong to you!', 'warning');
+      else{
+        showNotification("Backend error", 'error');
+        console.error(error);
+      }
+    }finally{
+      setLoading(false);
+    }
+  }
+
   return {
     loading,
-    getMailboxList
+    getMailboxList,
+    createNewMailbox
   };
 }
