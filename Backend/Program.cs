@@ -27,26 +27,16 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 //insert DBContext
-if (builder.Environment.IsDevelopment())
-{
-    builder.Services.AddDbContext<ApplicationDBContext>(opt =>
-        {
-            opt.UseInMemoryDatabase("SaveMailDev");
-        });
-}
-else
-{
-    builder.Services.AddDbContext<ApplicationDBContext>(opt =>
-        {
-            var connectionString = new StringBuilder();
-            
-            connectionString.Append($"Host={builder.Configuration.GetConnectionString("Host")};");
-            connectionString.Append($"Username={builder.Configuration.GetConnectionString("Username")};");
-            connectionString.Append($"Password={builder.Configuration.GetConnectionString("Password")}");
+builder.Services.AddDbContext<ApplicationDBContext>(opt =>{
+    var connectionString = new StringBuilder();
+    
+    connectionString.Append($"Host={builder.Configuration.GetConnectionString("Host")};");
+    connectionString.Append($"Username={builder.Configuration.GetConnectionString("Username")};");
+    connectionString.Append($"Password={builder.Configuration.GetConnectionString("Password")};");
+    connectionString.Append($"Database={builder.Configuration.GetConnectionString("Database") ?? "savemaildb"};");
 
-            opt.UseNpgsql(connectionString.ToString());
-        });
-}
+    opt.UseNpgsql(connectionString.ToString());
+});
 //Setup SendGrid
 //string a = builder.Configuration.GetRequiredSection("SendGrid")['SendGridKey'];
 
@@ -145,5 +135,8 @@ else
 }
 
 app.MapControllers();
+
+using (var context = app.Services.GetRequiredService<ApplicationDBContext>())
+    await context.Database.MigrateAsync();
 
 app.Run();

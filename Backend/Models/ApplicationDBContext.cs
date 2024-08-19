@@ -7,8 +7,7 @@ namespace Backend.Models
 {
     public class ApplicationDBContext : IdentityDbContext<AppUser>
     {
-        public ApplicationDBContext(DbContextOptions<ApplicationDBContext> options)
-            : base(options)
+        public ApplicationDBContext(DbContextOptions<ApplicationDBContext> options) : base(options)
         { }
         public ApplicationDBContext()
             : base(new DbContextOptionsBuilder().UseInMemoryDatabase("TestDb").Options)
