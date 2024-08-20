@@ -22,11 +22,10 @@ const mapFolderIcon = (name:string) =>{
 interface PartialFolderInfo{
     id:number,
     name:string,
-    children:Folder[],
-    showFolder?:(folderId:number)=>void
+    children:Folder[]
 }
 
-const FolderListItem: React.FC<PartialFolderInfo> = ({id, name, children, showFolder}) => {
+const FolderListItem: React.FC<PartialFolderInfo> = ({id, name, children}) => {
     const hasChildren:boolean = children.length > 0;
     const [open, setOpen] = useState(false);
 
@@ -49,7 +48,7 @@ const FolderListItem: React.FC<PartialFolderInfo> = ({id, name, children, showFo
         <Collapse in={open} timeout='auto' unmountOnExit>
             <List>
                 {children.map(f => 
-                    <FolderListItem id={f.id} name={f.name} children={f.children} showFolder={showFolder}/>
+                    <FolderListItem id={f.id} name={f.name} children={f.children}/>
                 )}
             </List>
         </Collapse>
@@ -60,11 +59,10 @@ const FolderListItem: React.FC<PartialFolderInfo> = ({id, name, children, showFo
 interface PartialMailbox{
     id:number,
     username:string,
-    folders?:Folder[]|null,
-    showFolder?:(folderId:number)=>void
+    folders?:Folder[]|null
 }
 
-const MailBoxListItem : React.FC<PartialMailbox> = ({id, username, folders, showFolder}) =>{
+const MailBoxListItem : React.FC<PartialMailbox> = ({id, username, folders}) =>{
     const [open, setOpen] = useState(false);
 
     const handleClick = ()=> setOpen(!open);
@@ -84,7 +82,7 @@ const MailBoxListItem : React.FC<PartialMailbox> = ({id, username, folders, show
         </ListItem>
         <Collapse in={open} timeout='auto' unmountOnExit>
             <List>
-                { !!folders && folders.length > 0 ? folders?.map(f => <FolderListItem id={f.id} name={f.name} children={f.children} showFolder={showFolder}/>) : <></>}
+                { !!folders && folders.length > 0 ? folders?.map(f => <FolderListItem id={f.id} name={f.name} children={f.children} />) : <></>}
             </List>
         </Collapse>
         <Divider/>
@@ -108,7 +106,7 @@ const NewMailboxListItem:React.FC = () => {
         </ListItem>);
 }
 
-const MailBoxList: React.FC<{showFolder?:(folderId:number)=>void}> = ({showFolder}) => {
+const MailBoxList: React.FC = () => {
     const {getMailboxList} = useMailboxes();
     const [mailboxesList, setMailboxesList] = useState(<CircularProgress size={20} key='MAILBOX_LOADING' sx={{ alignSelf:'center'}}/>)
 
@@ -118,7 +116,7 @@ const MailBoxList: React.FC<{showFolder?:(folderId:number)=>void}> = ({showFolde
             if (mailboxes.length == 0)
                 setMailboxesList(<></>);
             else
-                setMailboxesList(<>{mailboxes.map(mb => <MailBoxListItem id={mb.id} username={mb.username} showFolder={showFolder}/>)}</>);
+                setMailboxesList(<>{mailboxes.map(mb => <MailBoxListItem id={mb.id} username={mb.username}/>)}</>);
         }
         if (mailboxesList?.key === 'MAILBOX_LOADING')
             populateMailboxes();
