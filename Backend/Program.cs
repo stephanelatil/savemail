@@ -36,6 +36,7 @@ builder.Services.AddDbContext<ApplicationDBContext>(opt =>{
     connectionString.Append($"Database={builder.Configuration.GetConnectionString("Database") ?? "savemaildb"};");
 
     opt.UseNpgsql(connectionString.ToString());
+    opt.EnableSensitiveDataLogging(false);
 });
 //Setup SendGrid
 //string a = builder.Configuration.GetRequiredSection("SendGrid")['SendGridKey'];
