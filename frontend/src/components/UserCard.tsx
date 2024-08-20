@@ -1,14 +1,18 @@
 'use client'
 
 import { useAppUserData } from '@/hooks/useAppUserData';
+import { useAuthentication } from '@/hooks/useAuthentication';
 import { useLightDarkModeSwitch } from '@/hooks/useLightDarkModeSwitch';
 import { DarkMode, LightMode, Logout, ManageAccounts } from '@mui/icons-material';
 import { CircularProgress, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Typography } from "@mui/material";
-import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useCallback, useEffect, useState } from 'react';
 
 const UserCardListItem :React.FC = () => {
     const { mode, toggleMode } = useLightDarkModeSwitch();
     const { getCurrentlyLoggedInUser } = useAppUserData();
+    const { logout } = useAuthentication();
+    const router = useRouter();
     const [username, setUsername] = useState(<CircularProgress key='USERNAME_LOADING'/>)
 
     useEffect(() =>{
@@ -21,6 +25,14 @@ const UserCardListItem :React.FC = () => {
         if (username.key === 'USERNAME_LOADING')
             populateUserNameOrEmail();
     },[]);
+
+    function onLogout(){
+        const doLogout = async ()=>{
+            await logout();
+            router.push('/auth/login');
+        }
+        doLogout();
+    }
 
     return (
         <List sx={{ bottom:0, flexShrink: 0 }}>
@@ -41,7 +53,7 @@ const UserCardListItem :React.FC = () => {
                 </ListItemButton>
             </ListItem>
             <ListItem sx={{alignSelf:'center', px:0.5}}>
-                <ListItemButton>
+                <ListItemButton onClick={onLogout}>
                     <ListItemIcon>
                         <Logout />
                     </ListItemIcon>
