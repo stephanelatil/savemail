@@ -12,5 +12,5 @@ export interface Mail {
   subject:string,
   body:string,
   attachments:Attachment[],
-  dateSent:string
+  dateSent:Date
 }
