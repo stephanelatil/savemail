@@ -3,22 +3,24 @@
 import Head from 'next/head';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { useAuthentication } from '@/hooks/useAuthentication';
-import { TextField, Button, Typography, Link, CircularProgress, Box } from '@mui/material';
+import { TextField, Button, Typography, Link, CircularProgress, Box, IconButton } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import { Credentials } from '@/models/credentials';
 import { useState } from 'react';
-import { LOGIN_URL } from '@/constants/NavRoutes';
+import { DarkMode, LightMode } from '@mui/icons-material';
+import { useLightDarkModeSwitch } from '@/hooks/useLightDarkModeSwitch';
 
-const RegisterForm: React.FC = () => {
+const RegisterForm: React.FC<{registerSuccess: (email:string)=>void}> = ({registerSuccess}) => {
   const { register, handleSubmit, formState: { errors }, watch } = useForm<Credentials>();
   const { register:registerService, loading } = useAuthentication();
+  const { mode, toggleMode } = useLightDarkModeSwitch();
   const router = useRouter();
   const [errorText, setErrorText] = useState("");
 
   const onSubmit: SubmitHandler<Credentials> = async (data) => {
     try {
       if (await registerService(data))
-        router.push(LOGIN_URL); // Redirect to home after successful register
+        registerSuccess(data.email); //action to run after register is successful
     } catch (err) {
       console.error('Register failed:', err);
       if (err instanceof Error)
@@ -28,10 +30,6 @@ const RegisterForm: React.FC = () => {
   var passwd = watch('password');
 
   return (
-    <>
-      <Head key="page_title">
-        <title>Login</title>
-      </Head>
       <Box
         component="form"
         onSubmit={handleSubmit(onSubmit)}
@@ -90,13 +88,59 @@ const RegisterForm: React.FC = () => {
         </Button>
         <Typography textAlign="center">
           Already logged in?{' '}
-          <Link href={LOGIN_URL} underline="hover">
+          <Link href={'/auth/login'} underline="hover">
             Log In
           </Link>
         </Typography>
-      </Box>
-    </>
-  );
+        <IconButton onClick={toggleMode} sx={{
+          position: 'fixed',
+          bottom: 16, left: 16,
+          zIndex: 1000, /* ensure it stays on top */}}>
+          {mode === 'light' ? <LightMode /> : <DarkMode />}
+        </IconButton>
+      </Box>);
 };
 
-export default RegisterForm;
+const AfterRegisterInfo:React.FC<{email:string}> = ({email}) => {
+  return (
+  <Box sx={{
+    maxWidth: '400px',
+    margin: '0 auto',
+    padding: '2rem',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1rem'
+  }}>
+    <Typography variant='h3' component='h1' textAlign='center'>
+      Register successful
+    </Typography>
+    <Typography sx={{py:5}}>
+      If email verification is enabled, verification email sent to <i>{email}</i>
+      
+      Check your email and confirm your email address. Then you can go to the login page
+    </Typography>
+    <Typography textAlign="center" variant='h4'>
+      <Link href={'/auth/login'}  underline="hover">
+        Log In Here!
+      </Link>
+    </Typography>
+  </Box>);
+}
+
+const RegisterPageComponent:React.FC = () => {
+
+  function registerSuccess(email:string) {
+    setPage(<AfterRegisterInfo email={email}/>);
+  }
+  const [page, setPage] = useState(<RegisterForm registerSuccess={registerSuccess}/>);
+
+  return (
+  <>
+    <Head key="page_title">
+      <title>Register</title>
+    </Head>
+    {page}
+  </>);
+}
+
+export default RegisterPageComponent;

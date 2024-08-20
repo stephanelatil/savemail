@@ -1,7 +1,7 @@
-import RegisterForm from '@/components/RegisterForm'
+import RegisterPageComponent from '@/components/RegisterForm'
 
 const RegisterPage: React.FC = async () => {
-  return <RegisterForm />
+  return <RegisterPageComponent />
 }
 
 export default RegisterPage
