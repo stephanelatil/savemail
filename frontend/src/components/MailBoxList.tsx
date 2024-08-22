@@ -93,10 +93,12 @@ const MailBoxListItem : React.FC<PartialMailbox> = ({id, username, folders}) =>{
 const NewMailboxListItem:React.FC = () => {
     return (
         <ListItem sx={{alignSelf:'center', px:0.5}}>
-            <ListItemButton key={'NEW'} sx={{
-                minHeight:'3em',
-                justifyContent:'space-between',
-                px:2
+            <ListItemButton key={'NEW'} 
+                href="/mailbox/new"
+                sx={{
+                    minHeight:'3em',
+                    justifyContent:'space-between',
+                    px:2
             }}>
                 <ListItemIcon>
                     <CreateNewFolder />
