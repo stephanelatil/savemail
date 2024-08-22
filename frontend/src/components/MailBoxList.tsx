@@ -4,6 +4,7 @@ import { useMailboxes } from "@/hooks/useMailboxes";
 import { Folder } from "@/models/folder";
 import { Archive as ArchiveIcon, CreateNewFolder, Delete as DeleteIcon, Email as EmailIcon, ExpandLess, ExpandMore, Folder as FolderIcon, Send as SendIcon } from "@mui/icons-material";
 import { CircularProgress, Collapse, Divider, List, ListItem, ListItemButton, ListItemIcon, ListItemText } from "@mui/material";
+import { usePathname } from "next/navigation";
 import React, { useEffect, useState } from "react";
 
 const mapFolderIcon = (name:string) =>{
@@ -27,14 +28,13 @@ interface PartialFolderInfo{
 
 const FolderListItem: React.FC<PartialFolderInfo> = ({id, name, children}) => {
     const hasChildren:boolean = children.length > 0;
-    const [open, setOpen] = useState(false);
-
-    const handleClick = ()=> setOpen(!open);
+    const pathname = usePathname();
+    const open = RegExp("/mailbox/([0-9]+)/?").test(pathname) && RegExp("[0-9]+").exec(pathname)?.at(0) == (id+'');
 
     return (
     <>
     <ListItem sx={{alignSelf:'center', px:0.5}}>
-        <ListItemButton key={'FOLDER_'+id} onClick={handleClick}>
+        <ListItemButton key={'FOLDER_'+id}  href={`/folder/${id}`}>
             <ListItemIcon>
                 {mapFolderIcon(name)}
             </ListItemIcon>
@@ -63,14 +63,14 @@ interface PartialMailbox{
 }
 
 const MailBoxListItem : React.FC<PartialMailbox> = ({id, username, folders}) =>{
-    const [open, setOpen] = useState(false);
-
-    const handleClick = ()=> setOpen(!open);
+    const pathname = usePathname();
+    const open = RegExp("/mailbox/([0-9]+)/?").test(pathname) && RegExp("[0-9]+").exec(pathname)?.at(0) == (id+'');
 
     return (
         <>
-        <ListItem key={'MAILBOX_'+id} disablePadding  sx={{alignSelf:'center', px:0.5, display:'block'}} onClick={handleClick} >
-            <ListItemButton sx={{
+        <ListItem key={'MAILBOX_'+id} disablePadding  sx={{alignSelf:'center', px:0.5, display:'block'}} >
+            <ListItemButton href={`/mailbox/${id}`}
+            sx={{
                 minHeight:'3em',
                 justifyContent:'space-between'
             }}>
