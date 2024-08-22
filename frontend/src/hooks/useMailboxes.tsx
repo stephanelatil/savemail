@@ -1,6 +1,6 @@
 'use client'
 
-import { getAllMailboxes, createMailBox, editMailBox as editMailBoxService } from '@/services/mailboxService'
+import { getAllMailboxes, getMailbox as getMailboxService, createMailBox, editMailBox as editMailBoxService } from '@/services/mailboxService'
 import { useState } from 'react'
 import { useNotification } from './useNotification'
 import { useRouter } from 'next/navigation'
@@ -25,6 +25,24 @@ export const useMailboxes = () => {
           showNotification(error.message, 'error');
       }
       return [];
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const getMailbox = async (id:number):Promise<MailBox|null> => {
+    try {
+      setLoading(true);
+      return await getMailboxService(id);
+    } catch (error: unknown) {
+      if (error instanceof FetchError){
+        if (error.statusCode >= 500)
+          showNotification("Backend issue: "+error.message, 'error');
+
+        else if (error.statusCode == 401)
+          showNotification(error.message, 'error');
+      }
+      return null;
     } finally {
       setLoading(false);
     }
@@ -74,7 +92,9 @@ export const useMailboxes = () => {
 
   return {
     loading,
+    getMailbox,
     getMailboxList,
-    createNewMailbox
+    createNewMailbox,
+    editMailBox
   };
 }

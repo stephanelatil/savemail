@@ -5,7 +5,6 @@ import { AppUser } from '@/models/appUser'
 import { useState } from 'react'
 import { useNotification } from './useNotification'
 import { useRouter } from 'next/navigation'
-import { LOGIN_URL } from '@/constants/NavRoutes'
 import { FetchError } from '@/services/fetchService'
 
 export const useAppUserData = () => {
@@ -22,7 +21,7 @@ export const useAppUserData = () => {
         // 500 error backend issue notify user
         showNotification("Backend issue: "+error.message, 'error');
       else //unable to get user: 401/403 thus probably not logged in
-        router.push(LOGIN_URL)
+        router.push('/auth/login');
       return null;
     } finally {
       setLoading(false);
