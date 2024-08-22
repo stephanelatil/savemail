@@ -7,7 +7,6 @@ import { TextField, Button, Typography, Link, CircularProgress, Box, IconButton 
 import { useRouter } from 'next/navigation';
 import { Credentials } from '@/models/credentials';
 import { useState } from 'react';
-import { REGISTER_URL } from '@/constants/NavRoutes';
 import { DarkMode, LightMode } from '@mui/icons-material';
 import { useLightDarkModeSwitch } from '@/hooks/useLightDarkModeSwitch';
 
@@ -31,9 +30,6 @@ const LoginForm: React.FC = () => {
 
   return (
     <>
-      <Head key="page_title">
-        <title>Login</title>
-      </Head>
       <Box
         component="form"
         onSubmit={handleSubmit(onSubmit)}
@@ -85,7 +81,7 @@ const LoginForm: React.FC = () => {
         </Button>
         <Typography textAlign="center">
           Don't have an account?{' '}
-          <Link href={REGISTER_URL} underline="hover">
+          <Link href='/auth/register' underline="hover">
             Register
           </Link>
         </Typography>

@@ -37,7 +37,7 @@ const UserCardListItem :React.FC = () => {
     return (
         <List sx={{ bottom:0, flexShrink: 0 }}>
             <ListItem sx={{alignSelf:'center', px:0.5}}>
-                <ListItemButton href={'/settings'}>
+                <ListItemButton href={'/me'}>
                     <ListItemIcon >
                         <ManageAccounts />
                     </ListItemIcon>
