@@ -42,6 +42,14 @@ namespace Backend.Models
                 .Entity<Mail>()
                 .Property(e => e.UniqueHash)
                 .UsePropertyAccessMode(PropertyAccessMode.PreferFieldDuringConstruction);
+
+            modelBuilder.Entity<OAuthCredentials>().HasOne(c => c.OwnerMailbox)
+                                                   .WithOne(mb => mb.OAuthCredentials)
+                                                   .HasForeignKey<OAuthCredentials>(c => c.OwnerMailboxId)
+                                                   .OnDelete(DeleteBehavior.SetNull);
+            modelBuilder.Entity<MailBox>().HasOne(mb => mb.OAuthCredentials)
+                                          .WithOne(c => c.OwnerMailbox)
+                                          .OnDelete(DeleteBehavior.Cascade);
         }
 
         protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
@@ -56,5 +64,6 @@ namespace Backend.Models
         public virtual DbSet<Folder> Folder { get; set; }
         public virtual DbSet<Mail> Mail { get; set; }
         public virtual DbSet<MailBox> MailBox { get; set; }
+        public virtual DbSet<OAuthCredentials> OAuthCredentials{ get; set; }
     }
 }

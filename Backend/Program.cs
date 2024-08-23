@@ -129,12 +129,14 @@ builder.Services.AddScoped<IImapMailFetchService, ImapMailFetchService>();
 builder.Services.AddScoped<IImapFolderFetchService, ImapFolderFetchService>();
 builder.Services.AddScoped<IMailBoxImapCheck, MailboxImapCheck>();
 builder.Services.AddScoped<HttpClient,HttpClient>();
+builder.Services.AddScoped<IOAuthService, OAuthService>();
 
 //Add Services to edit elements in the database
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IFolderService, FolderService>();
 builder.Services.AddScoped<IMailBoxService, MailBoxService>();
 builder.Services.AddScoped<IMailService, MailService>();
+builder.Services.AddScoped<IOAuthCredentialsService, OAuthCredentialsService>();
 
 
 var app = builder.Build();
