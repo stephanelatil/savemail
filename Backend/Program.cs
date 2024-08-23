@@ -2,6 +2,8 @@ using System.Text;
 using System.Text.Json.Serialization;
 using Backend.Models;
 using Backend.Services;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -38,11 +40,17 @@ builder.Services.AddDbContext<ApplicationDBContext>(opt =>{
     opt.UseNpgsql(connectionString.ToString());
     opt.EnableSensitiveDataLogging(false);
 });
+
+
 //Setup SendGrid
 //string a = builder.Configuration.GetRequiredSection("SendGrid")['SendGridKey'];
 
 builder.Services.AddProblemDetails();
 // Add User auth
+builder.Services.AddAuthentication(opt => 
+                    opt.DefaultAuthenticateScheme=CookieAuthenticationDefaults.AuthenticationScheme)
+                .AddCookie();
+
 builder.Services.AddIdentityApiEndpoints<AppUser>()
     .AddEntityFrameworkStores<ApplicationDBContext>().AddDefaultTokenProviders();
 
@@ -70,6 +78,49 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.SlidingExpiration = true;
 });
 
+//Setup google oauth
+string? clientId = builder.Configuration.GetValue<string>("OAuth2__GOOGLE_CLIENT_ID");
+string? clientSecret = builder.Configuration.GetValue<string>("OAuth2__GOOGLE_CLIENT_SECRET");
+if (clientId is not null && clientSecret is not null)
+    builder.Services.AddAuthentication()
+        .AddOAuth("Google", options =>
+        {
+            options.ClientId = clientId;
+            options.ClientSecret = clientSecret;
+            options.CallbackPath = new PathString("/signin-google");
+
+            options.AuthorizationEndpoint = "https://accounts.google.com/o/oauth2/auth";
+            options.TokenEndpoint = "https://oauth2.googleapis.com/token";
+            options.UserInformationEndpoint = "https://www.googleapis.com/oauth2/v2/userinfo";
+
+            options.Scope.Add("https://www.googleapis.com/auth/gmail.readonly");
+            options.Scope.Add("https://www.googleapis.com/auth/gmail.metadata");
+
+            // Use PKCE
+            options.UsePkce = true;
+            options.SaveTokens = true;
+
+            options.Events = new OAuthEvents()
+            {
+                OnCreatingTicket = async (context) =>
+                {
+                    var request = new HttpRequestMessage(HttpMethod.Get, context.Options.UserInformationEndpoint);
+                    request.Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+                    request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", context.AccessToken);
+
+                    var response = await context.Backchannel.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, context.HttpContext.RequestAborted);
+                    response.EnsureSuccessStatusCode();
+
+                    var user = System.Text.Json.JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+                    context.RunClaimActions(user.RootElement);
+                }
+            };
+        });
+
+
+builder.Services.AddControllers();
+
+
 //Add services for background tasks
 builder.Services.AddSingleton<ITaskManager, TaskManager>();
 builder.Services.AddHostedService<DailyScheduleService>();
@@ -77,6 +128,7 @@ builder.Services.AddTransient<IImapFetchTaskService, ImapFetchTaskService>();
 builder.Services.AddScoped<IImapMailFetchService, ImapMailFetchService>();
 builder.Services.AddScoped<IImapFolderFetchService, ImapFolderFetchService>();
 builder.Services.AddScoped<IMailBoxImapCheck, MailboxImapCheck>();
+builder.Services.AddScoped<HttpClient,HttpClient>();
 
 //Add Services to edit elements in the database
 builder.Services.AddScoped<IUserService, UserService>();
