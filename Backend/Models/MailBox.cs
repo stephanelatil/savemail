@@ -1,10 +1,13 @@
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
-using System.Net;
+using Google.Apis.Auth.OAuth2;
 using System.Text.Json.Serialization;
 using Backend.Models.DTO;
+using Backend.Utils;
 using MailKit.Net.Imap;
 using MailKit.Security;
+using Google.Apis.Auth.OAuth2.Flows;
+using Google.Apis.Util.Store;
 
 namespace Backend.Models
 {
@@ -13,20 +16,20 @@ namespace Backend.Models
         public int Id { get; set; }
         public string ImapDomain { get; set; } = string.Empty;
         public short ImapPort { get; set; }
-        public SecureSocketOptions SecureSocketOptions { get; set; } = SecureSocketOptions.Auto;
         [JsonIgnore]
         [ReadOnly(true)]
         public string OwnerId { get; set; } = string.Empty;
         [JsonIgnore]
         [ReadOnly(true)]
         public AppUser? Owner { get; set; } = null;
-        public string Username {get ; set;} = string.Empty;
+        public string Username { get; set; } = string.Empty;
         [DataType(DataType.Password)]
         public string Password { get; set; } = string.Empty;
         public ImapProvider Provider { get; set; } = ImapProvider.Plain;
+        public OAuthCredentials? OAuthCredentials { get; set; }
         [JsonIgnore]
-        public ICollection<Mail> Mails { get;set; } = [];
-        public ICollection<Folder> Folders { get; set;} = [];
+        public ICollection<Mail> Mails { get; set; } = [];
+        public ICollection<Folder> Folders { get; set; } = [];
 
         public static async Task ImapAuthenticateAsync(ImapClient client, UpdateMailBox mb,
                                                         CancellationToken cancellationToken = default)
@@ -46,6 +49,7 @@ namespace Backend.Models
                     await client.AuthenticateAsync(new SaslMechanismCramMd5(mb.Username, mb.Password), cancellationToken);
                     break;
                 case ImapProvider.Gmail:
+                    //TODO handle OAuth here
                     await client.AuthenticateAsync(new SaslMechanismOAuth2(mb.Username, mb.Password), cancellationToken);
                     break;
                 default:

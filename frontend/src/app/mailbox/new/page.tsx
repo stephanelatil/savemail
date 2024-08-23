@@ -1,7 +1,7 @@
 'use client'
 
 import { useMailboxes } from "@/hooks/useMailboxes";
-import { EditMailBox, MailBox, ImapProvider, SecureSocketOptions } from "@/models/mailBox";
+import { EditMailBox, ImapProvider } from "@/models/mailBox";
 import { ExpandLess, ExpandMore } from "@mui/icons-material";
 import { Box, Button, CircularProgress, Collapse, FormControl, FormHelperText, MenuItem, Select, TextField, Typography } from "@mui/material";
 import Head from "next/head";
@@ -19,8 +19,7 @@ const NewMailboxForm:React.FC = () =>{
         imapPort:993,
         username:"",
         password:"",
-        provider:0,
-        secureSocketOptions:1}});
+        provider:0}});
 
     const onSubmit: SubmitHandler<EditMailBox> = async (mb) => {
         try {
@@ -113,23 +112,6 @@ const NewMailboxForm:React.FC = () =>{
                     flexDirection: 'column',
                     gap: '1rem'}}
                 >
-                    <FormControl error={!!errors.secureSocketOptions} fullWidth>
-                        <FormHelperText>
-                        {errors.secureSocketOptions?.message ?? "Secure Socket Options"}
-                        </FormHelperText>
-                        <Select
-                        defaultValue={ SecureSocketOptions.Auto }
-                        label="Secure Socket Options"
-                        {...register('secureSocketOptions', { required: 'Secure Socket Options value is required'})}
-                        fullWidth>
-                            <MenuItem value={0}>None</MenuItem>
-                            <MenuItem value={1}>Auto</MenuItem>
-                            <MenuItem value={2}>SslOnConnect</MenuItem>
-                            <MenuItem value={3}>StartTls</MenuItem>
-                            <MenuItem value={4}>StartTlsIfAvailable</MenuItem>
-                        </Select>
-                    </FormControl>
-
                     <FormControl error={!!errors.provider} fullWidth>
                         <FormHelperText>
                             {errors.provider?.message??'Imap Authentication Method'}
@@ -137,7 +119,7 @@ const NewMailboxForm:React.FC = () =>{
                         <Select
                         label="Imap Authentication Method"
                         defaultValue={ImapProvider.Simple}
-                        {...register('provider', { required: 'Secure Socket Options value is required'})}>
+                        {...register('provider', { required: 'Authentication value is required'})}>
                             <MenuItem value={0}>Simple</MenuItem>
                             <MenuItem value={4}>Gmail</MenuItem>
                             <MenuItem value={1}>Plain</MenuItem>

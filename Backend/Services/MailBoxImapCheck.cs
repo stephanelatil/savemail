@@ -41,10 +41,10 @@ public class MailboxImapCheck : IMailBoxImapCheck
         try{
             await client.ConnectAsync(mailbox.ImapDomain,
                                     mailbox.ImapPort.Value,
-                                    mailbox.SecureSocketOptions,
+                                    SecureSocketOptions.Auto,
                                     cancellationToken);
 
-            if (!mailbox.Provider.IsValidProvider(client.AuthenticationMechanisms))
+            if (mailbox.Provider != ImapProvider.Simple && !mailbox.Provider.IsValidProvider(client.AuthenticationMechanisms))
                 return ImapCheckResult.InvalidSaslMethod;
             
             await MailBox.ImapAuthenticateAsync(
@@ -68,7 +68,7 @@ public class MailboxImapCheck : IMailBoxImapCheck
 
         await client.ConnectAsync(mailbox.ImapDomain,
                                 mailbox.ImapPort.Value,
-                                mailbox.SecureSocketOptions,
+                                SecureSocketOptions.Auto,
                                 cancellationToken);
 
         HashSet<string> authMethods = client.AuthenticationMechanisms;

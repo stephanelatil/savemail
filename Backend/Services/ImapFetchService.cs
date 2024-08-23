@@ -12,12 +12,14 @@ namespace Backend.Services
     public class ImapFolderFetchService : IImapFolderFetchService
     {
         private ImapClient imapClient;
+        private readonly ILogger<ImapFolderFetchService> _logger;
         private bool _disposed = false;
 
 
-        public ImapFolderFetchService()
+        public ImapFolderFetchService(ILogger<ImapFolderFetchService> logger)
         {
             this.imapClient = new();
+            this._logger = logger;
         }
 
         /// <summary>
@@ -33,7 +35,7 @@ namespace Backend.Services
             {
                 await this.imapClient.ConnectAsync(mailbox.ImapDomain,
                                         mailbox.ImapPort,
-                                        mailbox.SecureSocketOptions,
+                                        MailKit.Security.SecureSocketOptions.Auto,
                                         cancellationToken);
                 await mailbox.ImapAuthenticateAsync(this.imapClient, cancellationToken);
 
@@ -44,6 +46,10 @@ namespace Backend.Services
                     if (!mailbox.Folders.Any(f => f.Path == imapFolder.FullName))
                         folders.Add(new Folder(imapFolder));
                 }
+            }
+            catch(Exception e)
+            {
+                this._logger.LogWarning(e, "Unable to connect to imap service for mailbox {}", mailbox.Id);
             }
             finally
             {
@@ -131,7 +137,7 @@ namespace Backend.Services
             
             await this.imapClient.ConnectAsync(mailbox.ImapDomain,
                                     mailbox.ImapPort,
-                                    mailbox.SecureSocketOptions,
+                                    MailKit.Security.SecureSocketOptions.Auto,
                                     cancellationToken);
             await mailbox.ImapAuthenticateAsync(this.imapClient, cancellationToken);
             this.Prepared = true;
