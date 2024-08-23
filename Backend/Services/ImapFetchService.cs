@@ -13,13 +13,16 @@ namespace Backend.Services
     {
         private ImapClient imapClient;
         private readonly ILogger<ImapFolderFetchService> _logger;
+        private readonly IOAuthService _oAuthService;
         private bool _disposed = false;
 
 
-        public ImapFolderFetchService(ILogger<ImapFolderFetchService> logger)
+        public ImapFolderFetchService(ILogger<ImapFolderFetchService> logger,
+                                      IOAuthService oAuthService)
         {
             this.imapClient = new();
             this._logger = logger;
+            this._oAuthService = oAuthService;
         }
 
         /// <summary>
@@ -37,7 +40,7 @@ namespace Backend.Services
                                         mailbox.ImapPort,
                                         MailKit.Security.SecureSocketOptions.Auto,
                                         cancellationToken);
-                await mailbox.ImapAuthenticateAsync(this.imapClient, cancellationToken);
+                await mailbox.ImapAuthenticateAsync(this.imapClient, this._oAuthService, cancellationToken);
 
                 foreach (var imapFolder in await this.imapClient.GetFoldersAsync(this.imapClient.PersonalNamespaces[0],
                                                                                 false,
@@ -89,6 +92,7 @@ namespace Backend.Services
     public class ImapMailFetchService : IImapMailFetchService
     {
         private ImapClient imapClient = new();
+        private readonly IOAuthService _oAuthService;
         private Folder? _folder;
         private IMailFolder? _imapFolder;
         private Queue<UniqueId>? _uids = null;        
@@ -97,9 +101,11 @@ namespace Backend.Services
 
         private readonly ILogger<ImapMailFetchService> _logger;
 
-        public ImapMailFetchService(ILogger<ImapMailFetchService> logger) 
+        public ImapMailFetchService(ILogger<ImapMailFetchService> logger,
+                                    IOAuthService oAuthService) 
         {
             this._logger = logger;
+            this._oAuthService = oAuthService;
         }
 
         private async Task<Queue<UniqueId>> GetUidsToFetchAsync(UniqueId? lastUid, DateTimeOffset lastDate,
@@ -139,7 +145,7 @@ namespace Backend.Services
                                     mailbox.ImapPort,
                                     MailKit.Security.SecureSocketOptions.Auto,
                                     cancellationToken);
-            await mailbox.ImapAuthenticateAsync(this.imapClient, cancellationToken);
+            await mailbox.ImapAuthenticateAsync(this.imapClient, this._oAuthService, cancellationToken);
             this.Prepared = true;
         }
 

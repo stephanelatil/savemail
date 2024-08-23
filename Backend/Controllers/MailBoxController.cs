@@ -91,10 +91,6 @@ public class MailBoxController : ControllerBase
                 return this.BadRequest("Unable to connect to server");
             case ImapCheckResult.AuthenticationError:
                 return this.BadRequest("Invalid credentials");
-            case ImapCheckResult.InvalidSaslMethod:
-                var validProviders = await this._mailBoxImapCheckService.GetValidProviders(mailbox, cancellationToken);
-                return this.BadRequest("Invalid SASL provider: Select one of: "+string.Join(',',
-                                                            validProviders.Select(x=>x.ToString())));
             case ImapCheckResult.Success:
             default:
             //all OK
@@ -140,10 +136,6 @@ public class MailBoxController : ControllerBase
                 return this.BadRequest("Unable to connect to server");
             case ImapCheckResult.AuthenticationError:
                 return this.BadRequest("Invalid credentials");
-            case ImapCheckResult.InvalidSaslMethod:
-                var validProviders = await this._mailBoxImapCheckService.GetValidProviders(updateMailBox, cancellationToken);
-                return this.BadRequest("Invalid SASL provider: Select one of: "+string.Join(',',
-                                                                            validProviders.Select(x=>x.ToString())));
             case ImapCheckResult.Success:
             default:
             //all OK

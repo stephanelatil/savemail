@@ -11,7 +11,7 @@ public class MailBoxDto
     public string ImapDomain { get; set; } = string.Empty;
     public short ImapPort { get; set; } = 993;
     public string Username {get ; set;} = string.Empty;
-    private ImapProvider Provider { get; set; } = ImapProvider.Plain;
+    private ImapProvider Provider { get; set; } = ImapProvider.Simple;
     [ReadOnly(true)]
     public ICollection<FolderDto> Folders { get; set;} = [];
 

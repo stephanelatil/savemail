@@ -217,6 +217,7 @@ namespace Backend.Services
         {
             MailBox? mailbox = await this._context.MailBox.Where(x=> x.Id == mailboxId)
                                                             .Include(mb =>mb.Folders)
+                                                            .Include(mb =>mb.OAuthCredentials)
                                                             .FirstOrDefaultAsync(cancellationToken);
             if (mailbox == null)
                 //mailbox invalid or deleted. ignore

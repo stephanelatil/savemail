@@ -14,14 +14,12 @@ public enum ImapCheckResult
     NullValue,
     InvalidValue,
     ConnectionToServerError,
-    AuthenticationError,
-    InvalidSaslMethod
+    AuthenticationError
 }
 
 public interface IMailBoxImapCheck
 {
     public Task<ImapCheckResult> CheckConnection(UpdateMailBox mailbox, CancellationToken cancellationToken=default);
-    public Task<List<ImapProvider>> GetValidProviders(UpdateMailBox mailbox, CancellationToken cancellationToken=default);
 }
 
 public class MailboxImapCheck : IMailBoxImapCheck
@@ -43,14 +41,9 @@ public class MailboxImapCheck : IMailBoxImapCheck
                                     mailbox.ImapPort.Value,
                                     SecureSocketOptions.Auto,
                                     cancellationToken);
-
-            if (mailbox.Provider != ImapProvider.Simple && !mailbox.Provider.IsValidProvider(client.AuthenticationMechanisms))
-                return ImapCheckResult.InvalidSaslMethod;
             
-            await MailBox.ImapAuthenticateAsync(
-                                    client,
-                                    mailbox,
-                                    cancellationToken);
+            if (mailbox.Provider == ImapProvider.Simple)
+                await client.AuthenticateAsync(mailbox.Username, mailbox.Password, cancellationToken);
         }
         catch(ArgumentException){ return ImapCheckResult.InvalidValue;}
         catch(IOException){ return ImapCheckResult.ConnectionToServerError;}
@@ -58,26 +51,5 @@ public class MailboxImapCheck : IMailBoxImapCheck
         catch(AuthenticationException){ return ImapCheckResult.AuthenticationError;}
 
         return ImapCheckResult.Success;
-    }
-
-    public async Task<List<ImapProvider>> GetValidProviders(UpdateMailBox mailbox, CancellationToken cancellationToken = default)
-    {
-        using var client = new ImapClient();
-        List<ImapProvider> validProviders = [];
-        ArgumentNullException.ThrowIfNull(mailbox.ImapPort);
-
-        await client.ConnectAsync(mailbox.ImapDomain,
-                                mailbox.ImapPort.Value,
-                                SecureSocketOptions.Auto,
-                                cancellationToken);
-
-        HashSet<string> authMethods = client.AuthenticationMechanisms;
-        foreach (ImapProvider provider in Enum.GetValues(typeof(ImapProvider)))
-            if (provider.IsValidProvider(authMethods))
-                validProviders.Add(provider);
-        if (validProviders.Contains(ImapProvider.Plain))
-            validProviders.Add(ImapProvider.Simple);
-
-        return validProviders;
     }
 }
