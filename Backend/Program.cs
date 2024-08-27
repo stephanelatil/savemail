@@ -3,7 +3,6 @@ using System.Text.Json.Serialization;
 using Backend.Models;
 using Backend.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -82,12 +81,12 @@ builder.Services.ConfigureApplicationCookie(options =>
 string? clientId = builder.Configuration.GetValue<string>("OAuth2__GOOGLE_CLIENT_ID");
 string? clientSecret = builder.Configuration.GetValue<string>("OAuth2__GOOGLE_CLIENT_SECRET");
 if (clientId is not null && clientSecret is not null)
+
     builder.Services.AddAuthentication()
         .AddOAuth("Google", options =>
         {
             options.ClientId = clientId;
             options.ClientSecret = clientSecret;
-            options.CallbackPath = new PathString("/signin-google");
 
             options.AuthorizationEndpoint = "https://accounts.google.com/o/oauth2/auth";
             options.TokenEndpoint = "https://oauth2.googleapis.com/token";
@@ -95,25 +94,23 @@ if (clientId is not null && clientSecret is not null)
 
             options.Scope.Add("https://www.googleapis.com/auth/gmail.readonly");
             options.Scope.Add("https://www.googleapis.com/auth/gmail.metadata");
+            options.Scope.Add("https://www.googleapis.com/auth/userinfo.email");
 
             // Use PKCE
             options.UsePkce = true;
             options.SaveTokens = true;
 
-            options.Events = new OAuthEvents()
+            options.Events.OnCreatingTicket = async (context) =>
             {
-                OnCreatingTicket = async (context) =>
-                {
-                    var request = new HttpRequestMessage(HttpMethod.Get, context.Options.UserInformationEndpoint);
-                    request.Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
-                    request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", context.AccessToken);
+                var request = new HttpRequestMessage(HttpMethod.Get, context.Options.UserInformationEndpoint);
+                request.Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", context.AccessToken);
 
-                    var response = await context.Backchannel.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, context.HttpContext.RequestAborted);
-                    response.EnsureSuccessStatusCode();
+                var response = await context.Backchannel.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, context.HttpContext.RequestAborted);
+                response.EnsureSuccessStatusCode();
 
-                    var user = System.Text.Json.JsonDocument.Parse(await response.Content.ReadAsStringAsync());
-                    context.RunClaimActions(user.RootElement);
-                }
+                var user = System.Text.Json.JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+                context.RunClaimActions(user.RootElement);
             };
         });
 
