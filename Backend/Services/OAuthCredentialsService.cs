@@ -42,6 +42,11 @@ public class OAuthCredentialsService : IOAuthCredentialsService
             OwnerMailbox = mailbox
         };
         var entity = this._context.OAuthCredentials.Add(credentials);
+        mailbox.ImapPort = 933;
+        mailbox.ImapDomain = credentials.ImapUrl;
+
+        mailbox.Username = await this._oAuthService.GetEmail(credentials);
+
         await this._context.SaveChangesAsync();
 
         return entity.Entity;
@@ -54,18 +59,8 @@ public class OAuthCredentialsService : IOAuthCredentialsService
 
     public async Task<OAuthCredentials?> RefreshCredentials(OAuthCredentials credentials)
     {
-        var newTokens = await this._oAuthService.RefreshToken(credentials);
-
-        if (newTokens is null)
+        if (!await this._oAuthService.RefreshToken(credentials))
             return null;
-
-        if (newTokens.RefreshToken?.Length > 0)
-            credentials.RefreshToken =  newTokens.RefreshToken;
-        credentials.AccessToken = newTokens.AccessToken;
-        
-        var entry = this._context.OAuthCredentials.Update(credentials);
-        await this._context.SaveChangesAsync();
-
-        return entry.Entity;
+        return credentials;
     }
 }
