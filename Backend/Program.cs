@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using Backend.Models;
 using Backend.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -46,9 +47,7 @@ builder.Services.AddDbContext<ApplicationDBContext>(opt =>{
 
 builder.Services.AddProblemDetails();
 // Add User auth
-builder.Services.AddAuthentication(opt => 
-                    opt.DefaultAuthenticateScheme=CookieAuthenticationDefaults.AuthenticationScheme)
-                .AddCookie();
+builder.Services.AddAuthentication().AddCookie();
 
 builder.Services.AddIdentityApiEndpoints<AppUser>()
     .AddEntityFrameworkStores<ApplicationDBContext>().AddDefaultTokenProviders();
