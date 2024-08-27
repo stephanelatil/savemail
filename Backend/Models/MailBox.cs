@@ -1,7 +1,6 @@
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
-using Backend.Models.DTO;
 using Backend.Services;
 using MailKit.Net.Imap;
 using MailKit.Security;
@@ -45,14 +44,29 @@ namespace Backend.Models
                         if (!await tokenRefreshService.RefreshToken(this.OAuthCredentials))
                             throw new AuthenticationException("Unable to refresh credentials");
                     }
-                    await client.AuthenticateAsync(new SaslMechanismOAuth2(this.Username, this.Password), cancellationToken);
+                    await client.AuthenticateAsync(new SaslMechanismOAuth2(this.Username, this.OAuthCredentials.AccessToken), cancellationToken);
                     break;
                 default:
                     await client.AuthenticateAsync(new SaslMechanismAnonymous(this.Username), cancellationToken);
                     break;
             };
         }
+
+        public static string? GetImapDomainForProvider(ImapProvider provider){
+            return provider switch {
+                ImapProvider.Google => "imap.gmail.com",
+                _ => null
+            };
+        }
+
+        public static short? GetImapPortForProvider(ImapProvider provider){
+            return provider switch {
+                ImapProvider.Google => 993,
+                _ => null
+            };
+        }
     }
+
 
     public enum ImapProvider
     {
