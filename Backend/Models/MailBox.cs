@@ -52,17 +52,17 @@ namespace Backend.Models
             };
         }
 
-        public static string? GetImapDomainForProvider(ImapProvider provider){
+        public static string GetImapDomainForProvider(ImapProvider provider){
             return provider switch {
                 ImapProvider.Google => "imap.gmail.com",
-                _ => null
+                _ => string.Empty
             };
         }
 
-        public static short? GetImapPortForProvider(ImapProvider provider){
+        public static short GetImapPortForProvider(ImapProvider provider){
             return provider switch {
                 ImapProvider.Google => 993,
-                _ => null
+                _ => 993
             };
         }
     }

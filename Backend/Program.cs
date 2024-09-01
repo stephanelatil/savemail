@@ -47,7 +47,7 @@ builder.Services.AddDbContext<ApplicationDBContext>(opt =>{
 
 builder.Services.AddProblemDetails();
 // Add User auth
-builder.Services.AddAuthentication().AddCookie();
+var auth = builder.Services.AddAuthentication("Identity").AddCookie("Identity");
 
 builder.Services.AddIdentityApiEndpoints<AppUser>()
     .AddEntityFrameworkStores<ApplicationDBContext>().AddDefaultTokenProviders();
@@ -77,13 +77,12 @@ builder.Services.ConfigureApplicationCookie(options =>
 });
 
 //Setup google oauth
-string? clientId = builder.Configuration.GetValue<string>("OAuth2__GOOGLE_CLIENT_ID");
-string? clientSecret = builder.Configuration.GetValue<string>("OAuth2__GOOGLE_CLIENT_SECRET");
+string? clientId = builder.Configuration["OAuth2:GOOGLE_CLIENT_ID"];
+string? clientSecret = builder.Configuration["OAuth2:GOOGLE_CLIENT_SECRET"];
 if (clientId is not null && clientSecret is not null)
-
-    builder.Services.AddAuthentication()
-        .AddOAuth("Google", options =>
+    auth.AddGoogle("Google", options =>
         {
+            options.AccessType = "offline";
             options.ClientId = clientId;
             options.ClientSecret = clientSecret;
 
@@ -96,21 +95,9 @@ if (clientId is not null && clientSecret is not null)
             options.Scope.Add("https://www.googleapis.com/auth/userinfo.email");
 
             // Use PKCE
-            options.UsePkce = true;
+            // options.UsePkce = true;
             options.SaveTokens = true;
-
-            options.Events.OnCreatingTicket = async (context) =>
-            {
-                var request = new HttpRequestMessage(HttpMethod.Get, context.Options.UserInformationEndpoint);
-                request.Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
-                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", context.AccessToken);
-
-                var response = await context.Backchannel.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, context.HttpContext.RequestAborted);
-                response.EnsureSuccessStatusCode();
-
-                var user = System.Text.Json.JsonDocument.Parse(await response.Content.ReadAsStringAsync());
-                context.RunClaimActions(user.RootElement);
-            };
+            options.SignInScheme = IdentityConstants.ExternalScheme;
         });
 
 
@@ -133,6 +120,21 @@ builder.Services.AddScoped<IFolderService, FolderService>();
 builder.Services.AddScoped<IMailBoxService, MailBoxService>();
 builder.Services.AddScoped<IMailService, MailService>();
 builder.Services.AddScoped<IOAuthCredentialsService, OAuthCredentialsService>();
+
+builder.Services.AddCors(opt => 
+    opt.AddPolicy("AllowOrigin",b =>
+        {
+            b.WithOrigins("https://localhost:3000")
+             .AllowAnyHeader()
+             .AllowAnyMethod();
+            b.WithOrigins("https://localhost:7014")
+             .AllowAnyHeader()
+             .AllowAnyMethod();
+            b.WithOrigins("https://accounts.google.com")
+             .AllowAnyHeader()
+             .AllowAnyMethod();
+        })
+);
 
 
 var app = builder.Build();

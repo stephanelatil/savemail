@@ -12,20 +12,20 @@ public class OAuthCredentials
     [Required]
     public required MailBox OwnerMailbox { get; set; }
     public int OwnerMailboxId { get; set; }
-    public OAuthProvider Provider { get; set; } 
-    public string RefreshUrl => this.Provider switch
+    public ImapProvider Provider { get; set; } 
+    public static string RefreshUrl(ImapProvider provider) => provider switch
             {
-                OAuthProvider.GoogleOAuth => "https://oauth2.googleapis.com/token",
+                ImapProvider.Google => "https://oauth2.googleapis.com/token",
                 _ => string.Empty,
             };
-    public string UserProfileUrl => this.Provider switch
+    public static string UserProfileUrl(ImapProvider provider) => provider switch
             {
-                OAuthProvider.GoogleOAuth => "https://www.googleapis.com/oauth2/v2/userinfo",
+                ImapProvider.Google => "https://www.googleapis.com/oauth2/v2/userinfo",
                 _ => string.Empty,
             };
-    public string ImapUrl => this.Provider switch
+    public static string ImapUrl(ImapProvider provider) => provider switch
             {
-                OAuthProvider.GoogleOAuth => "imap.google.com",
+                ImapProvider.Google => "imap.google.com",
                 _ => string.Empty,
             };
     public bool AccessTokenExpired => IsExpired(this.AccessToken);
@@ -34,10 +34,5 @@ public class OAuthCredentials
     private static bool IsExpired(string token){
         return new JwtSecurityTokenHandler().ReadToken(token) is not JwtSecurityToken jwtToken 
                         || jwtToken.ValidTo.ToUniversalTime().AddMinutes(15) < DateTime.UtcNow;
-    }
-
-    public enum OAuthProvider
-    {
-        GoogleOAuth
     }
 }
