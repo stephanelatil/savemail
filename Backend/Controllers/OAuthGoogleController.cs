@@ -7,11 +7,16 @@ using Backend.Models;
 using Backend.Models.DTO;
 using Microsoft.AspNetCore.Identity;
 using Backend.Services;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.WebUtilities;
 
 [Route("oauth/google")]
 public class OAuthGoogleController : Controller
 {
     private readonly IMailBoxService _mailboxService;
+    private readonly ApplicationDBContext _context;
+
+    private readonly IOAuthService _oAuthService;
     private readonly IOAuthCredentialsService _oAuthCredentialsService;
     private readonly UserManager<AppUser> _userManager;
     private readonly ILogger<OAuthGoogleController> _logger;
@@ -19,75 +24,83 @@ public class OAuthGoogleController : Controller
     public OAuthGoogleController(IMailBoxService mailboxService,
                                 UserManager<AppUser> userManager,
                                 ILogger<OAuthGoogleController> logger,
-                                IOAuthCredentialsService oAuthCredentialsService)
+                                IOAuthCredentialsService oAuthCredentialsService,
+                                ApplicationDBContext context,
+                                IOAuthService oAuthService)
     {
         this._mailboxService = mailboxService;
         this._oAuthCredentialsService = oAuthCredentialsService;
         this._userManager = userManager;
+        this._oAuthService = oAuthService;
         this._logger = logger;
+        this._context = context;
     }
 
     [Authorize] //only a logged in user can add an oauth token to a mailbox
-    [HttpGet("login")]
-    public async Task<IActionResult> LoginWithGoogle()
+    [HttpGet("login/{mailboxId?}")]
+    public async Task<IActionResult> LoginWithGoogle(int? mailboxId, [FromQuery]string mailboxUrlRedirect)
     {
-
         var user = await this._userManager.GetUserAsync(this.User);
         if (user?.Id is null)
             return this.Forbid();
-        var mailbox = await this._mailboxService.CreateMailBoxAsync(
-                            new UpdateMailBox(){Provider = ImapProvider.Google}, user);
 
         var properties = new AuthenticationProperties()
         {
-            RedirectUri = this.Url.Action("GoogleCallback", mailbox.Id)
+            RedirectUri = mailboxId is null ? 
+                        this.Url.Action(nameof(GoogleCallback)) :
+                        this.Url.Action(nameof(GoogleCallback), mailboxId)
         };
-        return this.Challenge(properties, "Google");
-    }
 
-    [Authorize] //only a logged in user can add an oauth token to a mailbox
-    [HttpGet("relogin/{mailboxId}")]
-    public async Task<IActionResult> ReLoginWithGoogle(int mailboxId)
-    {
-        var mailbox = await this._mailboxService.GetMailboxByIdAsync(mailboxId);
-        if (mailbox is null)
-            return this.NotFound();
+        if(mailboxUrlRedirect is not null && properties.RedirectUri is not null)
+            properties.RedirectUri = QueryHelpers.AddQueryString(properties.RedirectUri,
+                                                                 "mailboxUrlRedirect",
+                                                                 mailboxUrlRedirect);
 
-        var user = await this._userManager.GetUserAsync(this.User);
-        if (user?.Id is null || mailbox.OwnerId != user.Id)
-            return this.Forbid();
-
-        var properties = new AuthenticationProperties()
-        {
-            RedirectUri = this.Url.Action("GoogleCallback", mailboxId)
-        };
         return this.Challenge(properties, "Google");
     }
 
     [Authorize]
-    [HttpGet("callback/{mailboxId}")]
-    public async Task<IActionResult> GoogleCallback(int mailboxId)
+    [HttpGet("callback/{mailboxId?}")]
+    public async Task<IActionResult> GoogleCallback(int? mailboxId, [FromQuery]string mailboxUrlRedirect)
     {
+        this._logger.LogInformation("In callback with mailbox id = {}", mailboxId ?? 0);
+
+        AppUser? user = await this._userManager.GetUserAsync(this.User);
+        if (user?.Id is null)
+            return this.Forbid();
+            
         var authenticateResult = await this.HttpContext.AuthenticateAsync("Google");
+
+        this._logger.LogInformation("After Auth");
+
         if (!authenticateResult.Succeeded)
             return this.BadRequest("Google Authentication failed");
-        // Extract Google tokens and save them securely, associated with the current user
         var accessToken = authenticateResult.Properties.GetTokenValue("access_token");
-        var refreshToken = authenticateResult.Properties.GetTokenValue("refresh_token");
+        var refreshToken = authenticateResult.Properties.GetTokenValue("refresh_token") ?? string.Empty;
+    
+        this._logger.LogInformation("Got tokens");
 
         if (accessToken is null)
-            return this.BadRequest("Google Access Token not provided");
+            return this.BadRequest("Access Token is null");
 
-        try{
-            await this._oAuthCredentialsService.CreateNewCredentials(OAuthCredentials.OAuthProvider.GoogleOAuth,
-                                                            accessToken,
-                                                            refreshToken ?? string.Empty,
-                                                            mailboxId);
-        }
-        catch (Exception e){
-            return this.BadRequest(e.Message);
-        }
+        string email = await this._oAuthService.GetEmail(accessToken, OAuthCredentials.UserProfileUrl(ImapProvider.Google));
+        this._logger.LogInformation("Email gotten from access token {email}", email);
 
-        return this.CreatedAtAction("GetMailBox","MailBoxController", new { id = mailboxId }, null);
+        MailBox? mailbox = mailboxId.HasValue ? await this._context.MailBox.Where(mb => mb.Id == mailboxId && mb.OwnerId == user.Id)
+                                                      .FirstOrDefaultAsync() : null;
+        if (mailbox is null)
+            mailbox = await this._oAuthCredentialsService.CreateNewMailboxWithCredentials(
+                            ImapProvider.Google,
+                            accessToken,
+                            refreshToken,
+                            user);
+        else
+            await this._oAuthCredentialsService.CreateNewCredentials(
+                            ImapProvider.Google,
+                            accessToken,
+                            refreshToken,
+                            mailbox.Id);
+
+        return this.Redirect($"{mailboxUrlRedirect.TrimEnd('/')}/{mailbox.Id}");
     }
 }
