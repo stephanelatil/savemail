@@ -141,11 +141,15 @@ namespace Backend.Services
             this.Disconnect();
             this.imapClient = new();
             
-            await this.imapClient.ConnectAsync(mailbox.ImapDomain,
+            try{
+                await this.imapClient.ConnectAsync(mailbox.ImapDomain,
                                     mailbox.ImapPort,
                                     MailKit.Security.SecureSocketOptions.Auto,
                                     cancellationToken);
-            await mailbox.ImapAuthenticateAsync(this.imapClient, this._oAuthService, cancellationToken);
+                await mailbox.ImapAuthenticateAsync(this.imapClient, this._oAuthService, cancellationToken);
+            }catch (Exception e){
+                this._logger.LogWarning(e, "Unable to connect to connect and authenticate for mailbox {}", mailbox.Id);
+            }
             this.Prepared = true;
         }
 

@@ -140,10 +140,11 @@ namespace Backend.Services
             using IServiceScope scope = this._serviceScopeFactory.CreateScope();
             var taskManager = scope.ServiceProvider.GetRequiredService<ITaskManager>();
             AsyncQueue<IntOrObject<IImapFetchTaskService>> taskRunners = new();
-            for (int i = 0; i < 5; ++i)
-                taskRunners.Enqueue(
-                    new IntOrObject<IImapFetchTaskService>(
-                        scope.ServiceProvider.GetRequiredService<IImapFetchTaskService>()));
+            
+            taskRunners.Enqueue(
+                new IntOrObject<IImapFetchTaskService>(
+                    scope.ServiceProvider.GetRequiredService<IImapFetchTaskService>()));
+            
             await taskManager.RunTasks(taskRunners,stoppingToken);
         }
 

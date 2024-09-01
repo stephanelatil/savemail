@@ -6,7 +6,8 @@ namespace Backend.Services;
 public interface IOAuthCredentialsService
 {
     public Task<OAuthCredentials?> GetCredentialsById(int id);
-    public Task<OAuthCredentials> CreateNewCredentials(OAuthCredentials.OAuthProvider provider, string accessToken, string refreshToken, int mailboxId);
+    public Task<OAuthCredentials> CreateNewCredentials(ImapProvider provider, string accessToken, string refreshToken, int mailboxId);
+    public Task<MailBox> CreateNewMailboxWithCredentials(ImapProvider provider, string accessToken, string refreshToken, AppUser owner);
     public Task<OAuthCredentials?> RefreshCredentials(OAuthCredentials credentials);
 }
 
@@ -21,7 +22,30 @@ public class OAuthCredentialsService : IOAuthCredentialsService
         this._context = context;
     }
 
-    public async Task<OAuthCredentials> CreateNewCredentials(OAuthCredentials.OAuthProvider provider, string accessToken, string refreshToken, int mailboxId)
+    public async Task<MailBox> CreateNewMailboxWithCredentials(ImapProvider provider, string accessToken, string refreshToken, AppUser owner)
+    {
+        var mailbox = this._context.MailBox.Add(new MailBox(){
+            Owner = owner,
+            Provider = provider,
+            ImapPort = MailBox.GetImapPortForProvider(provider)
+        });
+
+
+        var credentials = this._context.OAuthCredentials.Add(new(){
+            AccessToken = accessToken,
+            RefreshToken = refreshToken,
+            Provider = provider,
+            OwnerMailbox = mailbox.Entity
+        });
+
+        mailbox.Entity.ImapDomain = OAuthCredentials.ImapUrl(provider);
+        mailbox.Entity.OAuthCredentials = credentials.Entity;
+        mailbox.Entity.Username = await this._oAuthService.GetEmail(credentials.Entity);
+        await this._context.SaveChangesAsync();
+        return mailbox.Entity;
+    }
+
+    public async Task<OAuthCredentials> CreateNewCredentials(ImapProvider provider, string accessToken, string refreshToken, int mailboxId)
     {
         MailBox mailbox = await this._context.MailBox.Where(mb => mb.Id == mailboxId)
                                                  .Include(mb=> mb.OAuthCredentials)
@@ -42,11 +66,11 @@ public class OAuthCredentialsService : IOAuthCredentialsService
             OwnerMailbox = mailbox
         };
         var entity = this._context.OAuthCredentials.Add(credentials);
-        mailbox.ImapPort = 933;
-        mailbox.ImapDomain = credentials.ImapUrl;
+        mailbox.ImapPort = MailBox.GetImapPortForProvider(provider);
+        mailbox.ImapDomain = OAuthCredentials.ImapUrl(provider);
 
         mailbox.Username = await this._oAuthService.GetEmail(credentials);
-
+        this._context.Update(mailbox);
         await this._context.SaveChangesAsync();
 
         return entity.Entity;

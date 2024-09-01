@@ -14,6 +14,7 @@ namespace Backend.Services;
 public interface IOAuthService
 {
     public Task<bool> RefreshToken(OAuthCredentials credentials);
+    public Task<string> GetEmail(string accessToken, string userInfoUrl);
     public Task<string> GetEmail(OAuthCredentials credentials); 
 }
 
@@ -34,8 +35,25 @@ public class OAuthService : IOAuthService
 
     public async Task<string> GetEmail(OAuthCredentials credentials)
     {
-        HttpRequestMessage request = new (HttpMethod.Get, credentials.UserProfileUrl);
+        HttpRequestMessage request = new (HttpMethod.Get, OAuthCredentials.UserProfileUrl(credentials.Provider));
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", credentials.AccessToken);
+
+        using HttpResponseMessage response = await this._httpClient.SendAsync(request);
+
+        if (response.IsSuccessStatusCode)
+        {
+            var jsonResponse = JObject.Parse(await response.Content.ReadAsStringAsync());
+            string? email = jsonResponse["email"]?.ToString();
+            if (email is not null)
+                return email;
+        }
+        throw new AuthenticationException("Unable to get user email");
+    }
+
+    public async Task<string> GetEmail(string accessToken, string userInfoUrl)
+    {
+        HttpRequestMessage request = new (HttpMethod.Get, userInfoUrl);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
         using HttpResponseMessage response = await this._httpClient.SendAsync(request);
 
@@ -59,7 +77,7 @@ public class OAuthService : IOAuthService
             return false;
         }
 
-        HttpRequestMessage request = new (HttpMethod.Post, credentials.RefreshUrl);
+        HttpRequestMessage request = new (HttpMethod.Post, OAuthCredentials.RefreshUrl(credentials.Provider));
 
         var content = new StringContent($"client_id={this._clientId}&client_secret={this._clientSecret}&refresh_token={credentials.RefreshToken}&grant_type=refresh_token", Encoding.UTF8, "application/x-www-form-urlencoded");
         request.Content = content;
