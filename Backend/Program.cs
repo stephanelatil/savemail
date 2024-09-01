@@ -95,7 +95,7 @@ if (clientId is not null && clientSecret is not null)
             options.Scope.Add("https://www.googleapis.com/auth/userinfo.email");
 
             // Use PKCE
-            // options.UsePkce = true;
+            options.UsePkce = true;
             options.SaveTokens = true;
             options.SignInScheme = IdentityConstants.ExternalScheme;
         });
