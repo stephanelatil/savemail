@@ -30,7 +30,6 @@ public class MailBoxServiceTest
             ImapPort = 143,
             Username = "example@mail.com",
             Password = "password1234",
-            SecureSocketOptions = SecureSocketOptions.Auto,
             Provider = ImapProvider.Simple
         };
 
@@ -57,7 +56,6 @@ public class MailBoxServiceTest
             ImapPort = 993,
             Username = "example@mail.com",
             Password = "password1234",
-            SecureSocketOptions = SecureSocketOptions.Auto,
             Provider = ImapProvider.Simple
         };
         // Given
@@ -70,8 +68,7 @@ public class MailBoxServiceTest
             ImapDomain = "newimap.email.com",
             Username = "email2@mail.com",
             Password = "NewP@ssword123",
-            SecureSocketOptions = SecureSocketOptions.None,
-            Provider = ImapProvider.Plain
+            Provider = ImapProvider.Simple
         };
 
         // When
@@ -98,7 +95,6 @@ public class MailBoxServiceTest
             ImapPort = 993,
             Username = "example@mail.com",
             Password = "password1234",
-            SecureSocketOptions = SecureSocketOptions.Auto,
             Provider = ImapProvider.Simple
         };
         // Given
