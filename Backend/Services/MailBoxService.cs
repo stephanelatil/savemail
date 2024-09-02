@@ -41,7 +41,6 @@ namespace Backend.Services
             mailBox.Password = updateMailBox.Password ?? mailBox.Password;
             mailBox.ImapDomain = updateMailBox.ImapDomain ?? mailBox.ImapDomain;
             mailBox.ImapPort = updateMailBox.ImapPort ?? mailBox.ImapPort;
-            mailBox.Provider = updateMailBox.Provider;
 
             if (await this._context.SaveChangesAsync() == 0)
                 throw new DbUpdateException();
@@ -60,7 +59,6 @@ namespace Backend.Services
                 Password = mailbox.Password,
                 ImapDomain = mailbox.ImapDomain,
                 ImapPort = mailbox.ImapPort.Value,
-                Provider = mailbox.Provider,
                 OwnerId = owner.Id
             };
 

@@ -42,8 +42,7 @@ public class MailboxImapCheck : IMailBoxImapCheck
                                     SecureSocketOptions.Auto,
                                     cancellationToken);
             
-            if (mailbox.Provider == ImapProvider.Simple)
-                await client.AuthenticateAsync(mailbox.Username, mailbox.Password, cancellationToken);
+            await client.AuthenticateAsync(mailbox.Username, mailbox.Password, cancellationToken);
         }
         catch(ArgumentException){ return ImapCheckResult.InvalidValue;}
         catch(IOException){ return ImapCheckResult.ConnectionToServerError;}

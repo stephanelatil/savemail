@@ -11,7 +11,6 @@ public class MailBoxDto
     public string ImapDomain { get; set; } = string.Empty;
     public short ImapPort { get; set; } = 993;
     public string Username {get ; set;} = string.Empty;
-    private ImapProvider Provider { get; set; } = ImapProvider.Simple;
     [ReadOnly(true)]
     public ICollection<FolderDto> Folders { get; set;} = [];
 
@@ -23,7 +22,6 @@ public class MailBoxDto
         this.ImapDomain = mailBox.ImapDomain;
         this.ImapPort = mailBox.ImapPort;
         this.Username = mailBox.Username;
-        this.Provider = mailBox.Provider;
         this.Folders = mailBox.Folders
                                 .Where(f => f.Parent is null)
                                 .Select(f => new FolderDto(f))
@@ -39,5 +37,4 @@ public class UpdateMailBox
     public string? Username {get ; set;} = null;
     [DataType(DataType.Password)]
     public string? Password { get; set; } = null;
-    public ImapProvider Provider { get; set; } = ImapProvider.Simple;
 }
