@@ -63,14 +63,6 @@ const Sidebar :React.FC = () => {
   const theme = useTheme();
   const [open, setOpen] = useState(false);
 
-  const handleDrawerOpen = () => {
-    setOpen(true);
-  };
-
-  const handleDrawerClose = () => {
-    setOpen(false);
-  };
-
   return (
     <Box sx={{ display: 'grid' }}>
       <Drawer variant="permanent" open={open}>
@@ -78,7 +70,7 @@ const Sidebar :React.FC = () => {
           <IconButton
               color="inherit"
               aria-label={open ? "Close Drawer" : "Open Drawer"}
-              onClick={open ? handleDrawerClose : handleDrawerOpen}
+              onClick={() => setOpen((prev) => !prev)}
               edge="end"
               sx={{ marginRight: 0 }}>
             {open ? <ChevronLeftIcon /> : <MenuIcon />}
