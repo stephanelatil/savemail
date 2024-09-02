@@ -29,8 +29,7 @@ public class MailBoxServiceTest
             ImapDomain = "imap.mail.com",
             ImapPort = 143,
             Username = "example@mail.com",
-            Password = "password1234",
-            Provider = ImapProvider.Simple
+            Password = "password1234"
         };
 
         // When
@@ -67,8 +66,7 @@ public class MailBoxServiceTest
             ImapPort = 999,
             ImapDomain = "newimap.email.com",
             Username = "email2@mail.com",
-            Password = "NewP@ssword123",
-            Provider = ImapProvider.Simple
+            Password = "NewP@ssword123"
         };
 
         // When
