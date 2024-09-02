@@ -11,6 +11,7 @@ public class MailBoxDto
     public string ImapDomain { get; set; } = string.Empty;
     public short ImapPort { get; set; } = 993;
     public string Username {get ; set;} = string.Empty;
+    public ImapProvider Provider { get; set; } = ImapProvider.Simple;
     [ReadOnly(true)]
     public ICollection<FolderDto> Folders { get; set;} = [];
 
@@ -21,6 +22,7 @@ public class MailBoxDto
         this.Id = mailBox.Id;
         this.ImapDomain = mailBox.ImapDomain;
         this.ImapPort = mailBox.ImapPort;
+        this.Provider = mailBox.Provider;
         this.Username = mailBox.Username;
         this.Folders = mailBox.Folders
                                 .Where(f => f.Parent is null)
