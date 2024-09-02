@@ -1,6 +1,5 @@
 'use client' 
 
-import Head from 'next/head';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { useAuthentication } from '@/hooks/useAuthentication';
 import { TextField, Button, Typography, Link, CircularProgress, Box, IconButton } from '@mui/material';
@@ -9,6 +8,11 @@ import { Credentials } from '@/models/credentials';
 import { useState } from 'react';
 import { DarkMode, LightMode } from '@mui/icons-material';
 import { useLightDarkModeSwitch } from '@/hooks/useLightDarkModeSwitch';
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Register'
+}
 
 const RegisterForm: React.FC<{registerSuccess: (email:string)=>void}> = ({registerSuccess}) => {
   const { register, handleSubmit, formState: { errors }, watch } = useForm<Credentials>();
@@ -19,8 +23,11 @@ const RegisterForm: React.FC<{registerSuccess: (email:string)=>void}> = ({regist
 
   const onSubmit: SubmitHandler<Credentials> = async (data) => {
     try {
-      if (await registerService(data))
-        registerSuccess(data.email); //action to run after register is successful
+      if (await registerService(data)){
+        const url = new URL('/auth/register-ok')
+        url.searchParams.set('email', data.email);
+        router.push(url.toString()); //action to run after register is successful
+      }
     } catch (err) {
       console.error('Register failed:', err);
       if (err instanceof Error)
@@ -101,46 +108,4 @@ const RegisterForm: React.FC<{registerSuccess: (email:string)=>void}> = ({regist
       </Box>);
 };
 
-const AfterRegisterInfo:React.FC<{email:string}> = ({email}) => {
-  return (
-  <Box sx={{
-    maxWidth: '400px',
-    margin: '0 auto',
-    padding: '2rem',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '1rem'
-  }}>
-    <Typography variant='h3' component='h1' textAlign='center'>
-      Register successful
-    </Typography>
-    <Typography sx={{py:5}}>
-      If email verification is enabled, verification email sent to <i>{email}</i>
-      
-      Check your email and confirm your email address. Then you can go to the login page
-    </Typography>
-    <Typography textAlign="center" variant='h4'>
-      <Link href={'/auth/login'}  underline="hover">
-        Log In Here!
-      </Link>
-    </Typography>
-  </Box>);
-}
-
-const RegisterPageComponent:React.FC = () => {
-
-  function registerSuccess(email:string) {
-    setPage(<AfterRegisterInfo email={email}/>);
-  }
-  const [page, setPage] = useState(<RegisterForm registerSuccess={registerSuccess}/>);
-
-  return (
-  <>
-    <Head key="page_title">
-      <title>Register</title>
-    </Head>
-    {page}
-  </>);
-}
-
-export default RegisterPageComponent;
+export default RegisterForm;
