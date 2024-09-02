@@ -48,18 +48,8 @@ public class OAuthGoogleController : Controller
         {
             RedirectUri = mailboxId is null ? 
                         this.Url.Action(nameof(GoogleCallback)) :
-                        this.Url.Action(nameof(GoogleCallback), mailboxId),
-            AllowRefresh = true,
+                        this.Url.Action(nameof(GoogleCallback), mailboxId)
         };
-
-        if (mailboxId.HasValue){
-            var mb = await this._mailboxService.GetMailboxByIdAsync(mailboxId.Value, false);
-            if (mb is null)
-                return this.NotFound("This mailbox does not exist");
-            if (mb.OwnerId != user.Id)
-                return this.Forbid("This mailbox does not belong to you");
-            properties.SetString("login_hint", mb.Username);
-        }
 
         if(mailboxUrlRedirect is not null && properties.RedirectUri is not null)
             properties.RedirectUri = QueryHelpers.AddQueryString(properties.RedirectUri,
@@ -69,13 +59,6 @@ public class OAuthGoogleController : Controller
         return this.Challenge(properties, "Google");
     }
 
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="mailboxId">The mailbox ID for which to update the oauth tokens for</param>
-    /// <param name="mailboxUrlRedirect">A URL parameter where the frontend should be redirected after a login.
-    /// Note that the mailbox ID will be appended to this url</param>
-    /// <returns></returns>
     [Authorize]
     [HttpGet("callback/{mailboxId?}")]
     public async Task<IActionResult> GoogleCallback(int? mailboxId, [FromQuery]string mailboxUrlRedirect)

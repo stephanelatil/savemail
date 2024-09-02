@@ -5,7 +5,6 @@ using Backend.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -99,15 +98,7 @@ if (clientId is not null && clientSecret is not null)
             options.UsePkce = true;
             options.SaveTokens = true;
             options.SignInScheme = IdentityConstants.ExternalScheme;
-
-            //ensures in case of re-auth that the user maintains the same email address
-            options.Events.OnRedirectToAuthorizationEndpoint = (context) =>
-                {
-                    if (context.Properties.Items.TryGetValue("login_hint", out var loginHint) && loginHint is not null)
-                        context.RedirectUri = QueryHelpers.AddQueryString(context.RedirectUri, "login_hint", loginHint);
-                    return Task.CompletedTask;
-                };
-            });
+        });
 
 
 builder.Services.AddControllers();
