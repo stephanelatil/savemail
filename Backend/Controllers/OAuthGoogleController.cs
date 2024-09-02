@@ -38,7 +38,7 @@ public class OAuthGoogleController : Controller
 
     [Authorize] //only a logged in user can add an oauth token to a mailbox
     [HttpGet("login/{mailboxId?}")]
-    public async Task<IActionResult> LoginWithGoogle(int? mailboxId, [FromQuery]string mailboxUrlRedirect)
+    public async Task<IActionResult> LoginWithGoogle(int? mailboxId, [FromQuery]string next)
     {
         var user = await this._userManager.GetUserAsync(this.User);
         if (user?.Id is null)
@@ -51,43 +51,62 @@ public class OAuthGoogleController : Controller
                         this.Url.Action(nameof(GoogleCallback), mailboxId)
         };
 
-        if(mailboxUrlRedirect is not null && properties.RedirectUri is not null)
+        if (mailboxId.HasValue){
+            var mb = await this._mailboxService.GetMailboxByIdAsync(mailboxId.Value, false);
+            if (mb is null)
+                return this.NotFound("This mailbox does not exist");
+            if (mb.OwnerId != user.Id)
+                return this.Forbid("This mailbox does not belong to you");
+            properties.SetString("login_hint", mb.Username);
+        }
+
+        if(next is not null && properties.RedirectUri is not null)
             properties.RedirectUri = QueryHelpers.AddQueryString(properties.RedirectUri,
-                                                                 "mailboxUrlRedirect",
-                                                                 mailboxUrlRedirect);
+                                                                 "next", next);
 
         return this.Challenge(properties, "Google");
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="mailboxId">The mailbox ID for which to update the oauth tokens for</param>
+    /// <param name="next">A URL parameter where the frontend should be redirected after a login.
+    /// Note that the mailbox ID will be appended to this url</param>
+    /// <returns></returns>
     [Authorize]
     [HttpGet("callback/{mailboxId?}")]
-    public async Task<IActionResult> GoogleCallback(int? mailboxId, [FromQuery]string mailboxUrlRedirect)
+    public async Task<IActionResult> GoogleCallback(int? mailboxId, [FromQuery]string next)
     {
-        this._logger.LogInformation("In callback with mailbox id = {}", mailboxId ?? 0);
-
         AppUser? user = await this._userManager.GetUserAsync(this.User);
         if (user?.Id is null)
             return this.Forbid();
             
         var authenticateResult = await this.HttpContext.AuthenticateAsync("Google");
 
-        this._logger.LogInformation("After Auth");
-
         if (!authenticateResult.Succeeded)
+        {
+            this._logger.LogDebug("Authentication failed google auth for user {}", user.Id);
             return this.BadRequest("Google Authentication failed");
+        }else
+            this._logger.LogDebug("Successful google auth for user {}", user.Id);
         var accessToken = authenticateResult.Properties.GetTokenValue("access_token");
         var refreshToken = authenticateResult.Properties.GetTokenValue("refresh_token") ?? string.Empty;
-    
-        this._logger.LogInformation("Got tokens");
 
         if (accessToken is null)
             return this.BadRequest("Access Token is null");
 
         string email = await this._oAuthService.GetEmail(accessToken, OAuthCredentials.UserProfileUrl(ImapProvider.Google));
-        this._logger.LogInformation("Email gotten from access token {email}", email);
 
-        MailBox? mailbox = mailboxId.HasValue ? await this._context.MailBox.Where(mb => mb.Id == mailboxId && mb.OwnerId == user.Id)
-                                                      .FirstOrDefaultAsync() : null;
+        MailBox? mailbox = null;
+        if (mailboxId.HasValue)
+            // if re-auth with known mailboxID
+            mailbox = await this._context.MailBox.Where(mb => mb.Id == mailboxId && mb.OwnerId == user.Id)
+                                                 .FirstOrDefaultAsync();
+        else
+            // auth withoug givin mailbox id, ensure mailbox does not already exist with this email for this user
+            mailbox = await this._context.MailBox.Where(mb => mb.OwnerId == user.Id && mb.Username == email)
+                                                 .FirstOrDefaultAsync();
         if (mailbox is null)
             mailbox = await this._oAuthCredentialsService.CreateNewMailboxWithCredentials(
                             ImapProvider.Google,
@@ -101,6 +120,6 @@ public class OAuthGoogleController : Controller
                             refreshToken,
                             mailbox.Id);
 
-        return this.Redirect($"{mailboxUrlRedirect.TrimEnd('/')}/{mailbox.Id}");
+        return this.Redirect($"{next.TrimEnd('/')}/{mailbox.Id}");
     }
 }

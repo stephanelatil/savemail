@@ -45,7 +45,8 @@ public class OAuthService : IOAuthService
             var jsonResponse = JObject.Parse(await response.Content.ReadAsStringAsync());
             string? email = jsonResponse["email"]?.ToString();
             if (email is not null)
-                return email;
+                return email.ToLowerInvariant();
+            throw new InvalidDataException("Unable to fetch email");
         }
         throw new AuthenticationException("Unable to get user email");
     }
@@ -62,7 +63,7 @@ public class OAuthService : IOAuthService
             var jsonResponse = JObject.Parse(await response.Content.ReadAsStringAsync());
             string? email = jsonResponse["email"]?.ToString();
             if (email is not null)
-                return email;
+                return email.ToLowerInvariant();
         }
         throw new AuthenticationException("Unable to get user email");
     }
