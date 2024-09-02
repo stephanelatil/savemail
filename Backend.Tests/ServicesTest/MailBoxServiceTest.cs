@@ -109,7 +109,7 @@ public class MailBoxServiceTest
         //no exception thrown
         Assert.Null(record);
         //Assert saved to Db
-        context.VerifyGet(c => c.MailBox.Remove(It.Is<MailBox>(x => x.Id == baseMb.Id)), Times.AtLeastOnce());
+        context.Verify(c => c.MailBox.Remove(It.Is<MailBox>(x => x.Id == baseMb.Id)), Times.AtLeastOnce());
         context.Verify(c => c.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once());
     }
 }
