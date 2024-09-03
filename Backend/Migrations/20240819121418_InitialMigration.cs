@@ -48,7 +48,7 @@ namespace Backend.Migrations
                     PhoneNumber = table.Column<string>(type: "text", nullable: true),
                     PhoneNumberConfirmed = table.Column<bool>(type: "boolean", nullable: false),
                     TwoFactorEnabled = table.Column<bool>(type: "boolean", nullable: false),
-                    LockoutEnd = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    LockoutEnd = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     LockoutEnabled = table.Column<bool>(type: "boolean", nullable: false),
                     AccessFailedCount = table.Column<int>(type: "integer", nullable: false)
                 },
@@ -210,7 +210,7 @@ namespace Backend.Migrations
                     ParentId = table.Column<int>(type: "integer", nullable: true),
                     MailBoxId = table.Column<int>(type: "integer", nullable: false),
                     LastPulledUid = table.Column<decimal>(type: "numeric(20,0)", nullable: false),
-                    LastPulledInternalDate = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+                    LastPulledInternalDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -240,7 +240,7 @@ namespace Backend.Migrations
                     SenderAddress = table.Column<string>(type: "character varying(256)", nullable: true),
                     Subject = table.Column<string>(type: "text", nullable: false),
                     Body = table.Column<string>(type: "text", nullable: false),
-                    DateSent = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    DateSent = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     OwnerMailBoxId = table.Column<int>(type: "integer", nullable: false),
                     FolderId = table.Column<int>(type: "integer", nullable: false),
                     UniqueHash = table.Column<decimal>(type: "numeric(20,0)", nullable: false)

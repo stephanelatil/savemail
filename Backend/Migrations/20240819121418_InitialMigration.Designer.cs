@@ -57,7 +57,7 @@ namespace Backend.Migrations
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("boolean");
 
-                    b.Property<DateTimeOffset?>("LockoutEnd")
+                    b.Property<DateTime?>("LockoutEnd")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("NormalizedEmail")
@@ -159,7 +159,7 @@ namespace Backend.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTimeOffset>("LastPulledInternalDate")
+                    b.Property<DateTime>("LastPulledInternalDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<ulong>("LastPulledUid")
@@ -199,7 +199,7 @@ namespace Backend.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<DateTimeOffset>("DateSent")
+                    b.Property<DateTime>("DateSent")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("FolderId")
