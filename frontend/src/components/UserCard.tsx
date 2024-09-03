@@ -6,7 +6,7 @@ import { useLightDarkModeSwitch } from '@/hooks/useLightDarkModeSwitch';
 import { DarkMode, LightMode, Logout, ManageAccounts } from '@mui/icons-material';
 import { CircularProgress, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Typography } from "@mui/material";
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 const UserCardListItem :React.FC = () => {
     const { mode, toggleMode } = useLightDarkModeSwitch();

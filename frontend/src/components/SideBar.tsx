@@ -29,9 +29,9 @@ const closedMixin = (theme: Theme): CSSObject => ({
     duration: theme.transitions.duration.leavingScreen,
   }),
   overflowX: 'hidden',
-  width: `calc(${theme.spacing(7)} + 1px)`,
+  width: `calc(${theme.spacing(6)} + 1px)`,
   [theme.breakpoints.up('sm')]: {
-    width: `calc(${theme.spacing(8)} + 1px)`,
+    width: `calc(${theme.spacing(7)} + 1px)`,
   },
 });
 
@@ -39,13 +39,15 @@ const DrawerBlock = styled('div')(({ theme }) => ({
   display: 'contents',
   alignItems: 'center',
   justifyContent: 'space-between',
-  alignSelf:'center'
+  alignSelf:'center',
+  overflowY:'hidden'
 }));
 
 const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' })(
   ({ theme, open }) => ({
     width: drawerWidth,
     flexShrink: 0,
+    maxHeight: '100vh',
     whiteSpace: 'nowrap',
     boxSizing: 'border-box',
     ...(open && {
@@ -64,7 +66,7 @@ const Sidebar :React.FC = () => {
   const [open, setOpen] = useState(false);
 
   return (
-    <Box sx={{ display: 'grid' }}>
+    <Box sx={{ display: 'grid', height:'100%'}}>
       <Drawer variant="permanent" open={open}>
         <DrawerBlock theme={theme}>
           <IconButton
@@ -72,13 +74,15 @@ const Sidebar :React.FC = () => {
               aria-label={open ? "Close Drawer" : "Open Drawer"}
               onClick={() => setOpen((prev) => !prev)}
               edge="end"
-              sx={{ marginRight: 0 }}>
+              sx={{
+                marginRight: 0
+              }}>
             {open ? <ChevronLeftIcon /> : <MenuIcon />}
           </IconButton>
         </DrawerBlock>
         <Divider />
         <DrawerBlock theme={theme}>
-          <Stack display='contents' alignItems='center' height='100vh' useFlexGap justifyContent='space-between' direction='column' alignContent='center'>
+          <Stack display='contents' alignItems='center' justifyContent='space-between' direction='column' alignContent='center'>
             <MailBoxList />
             <UserCardListItem />
           </Stack>

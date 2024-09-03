@@ -48,7 +48,7 @@ const FolderListItem: React.FC<PartialFolderInfo> = ({id, name, children}) => {
         <Collapse in={open} timeout='auto' unmountOnExit>
             <List>
                 {children.map(f => 
-                    <FolderListItem id={f.id} name={f.name} children={f.children}/>
+                    <FolderListItem key={'FOLDER_LI_'+f.id} id={f.id} name={f.name} children={f.children}/>
                 )}
             </List>
         </Collapse>
@@ -68,23 +68,25 @@ const MailBoxListItem : React.FC<PartialMailbox> = ({id, username, folders}) =>{
 
     return (
         <>
-        <ListItem key={'MAILBOX_'+id} disablePadding  sx={{alignSelf:'center', px:0.5, display:'block'}} >
+        <ListItem key={'MAILBOX_'+id} sx={{alignSelf:'center', py:0, px:0.5}} >
             <ListItemButton href={`/mailbox/${id}`}
-            sx={{
-                minHeight:'3em',
-                justifyContent:'space-between'
-            }}>
+                sx={{
+                    justifyContent:'space-between',
+                    paddingLeft:0
+                }}>
                 <ListItemIcon sx={{justifyContent:'center'}}>
                     <EmailIcon/>
                 </ListItemIcon>
                 <ListItemText primary={username}/>
             </ListItemButton>
         </ListItem>
-        <Collapse in={open} timeout='auto' unmountOnExit>
-            <List>
-                { !!folders && folders.length > 0 ? folders?.map(f => <FolderListItem id={f.id} name={f.name} children={f.children} />) : <></>}
-            </List>
-        </Collapse>
+        {
+            open ? 
+                <List>
+                    { !!folders && folders.length > 0 ? folders?.map(f => <FolderListItem key={'FOLDER_LI_'+f.id} id={f.id} name={f.name} children={f.children} />) : <></>}
+                </List> 
+                : <></>
+        }
         <Divider/>
         </>
     );
@@ -118,7 +120,7 @@ const MailBoxList: React.FC = () => {
             if (mailboxes.length == 0)
                 setMailboxesList(<></>);
             else
-                setMailboxesList(<>{mailboxes.map(mb => <MailBoxListItem id={mb.id} username={mb.username}/>)}</>);
+                setMailboxesList(<>{mailboxes.map(mb => <MailBoxListItem key={'MAILBOX_LI_'+mb.id} id={mb.id} username={mb.username}/>)}</>);
         }
         if (mailboxesList?.key === 'MAILBOX_LOADING')
             populateMailboxes();
@@ -126,7 +128,7 @@ const MailBoxList: React.FC = () => {
 
     return (
         <List sx={{height:'100%', display:'flex', flexDirection:'column', flex:'1 1 auto', overflowY:'auto', overflowX:'hidden'}}>
-            <NewMailboxListItem />
+            <NewMailboxListItem key={'NEW_LI'}/>
             {mailboxesList}
         </List>
     );
