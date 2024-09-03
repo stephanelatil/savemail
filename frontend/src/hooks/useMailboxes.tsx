@@ -1,6 +1,6 @@
 'use client'
 
-import { getAllMailboxes, getMailbox as getMailboxService, createMailBox, editMailBox as editMailBoxService } from '@/services/mailboxService'
+import { getAllMailboxes, getMailbox as getMailboxService, createMailBox, editMailBox as editMailBoxService, synchronizeMailBox as synchronizeMailBoxService, deleteMailBox as deleteMailBoxService } from '@/services/mailboxService'
 import { useState } from 'react'
 import { useNotification } from './useNotification'
 import { useRouter } from 'next/navigation'
@@ -90,11 +90,56 @@ export const useMailboxes = () => {
     }
   }
 
+  const synchronizeMailbox = async (id:number) => {
+    try{
+      setLoading(true);
+      await synchronizeMailBoxService(id);
+
+    }catch (error:unknown){
+      if (error instanceof FetchError)
+        if (error.statusCode == 400)
+          showNotification(error.message, 'warning');
+        else if (error.statusCode == 404)
+          showNotification("Mailbox does not exist", 'error');
+        else
+          showNotification('This mailbox does not belong to you!', 'warning');
+      else{
+        showNotification("Backend error", 'error');
+        console.error(error);
+      }
+    }finally{
+      setLoading(false);
+    }
+  }
+
+  const deleteMailBox = async (id:number) => {
+    try{
+      setLoading(true);
+      await deleteMailBoxService(id);
+    }catch (error:unknown){
+      if (error instanceof FetchError)
+        if (error.statusCode == 400)
+          showNotification(error.message, 'warning');
+        else if (error.statusCode == 404)
+          showNotification("Mailbox does not exist", 'error');
+        else
+          showNotification('This mailbox does not belong to you!', 'warning');
+      else{
+        showNotification("Backend error", 'error');
+        console.error(error);
+      }
+    }finally{
+      setLoading(false);
+    }
+  }
+
   return {
     loading,
     getMailbox,
     getMailboxList,
     createNewMailbox,
-    editMailBox
+    editMailBox,
+    synchronizeMailbox,
+    deleteMailBox
   };
 }

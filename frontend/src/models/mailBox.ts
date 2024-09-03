@@ -2,18 +2,15 @@ import { Folder } from "./folder"
 
 export enum ImapProvider {
   Simple=0,
-  Plain=1,
-  SaslLogin=2,
-  Cram_MD5=3,
-  Gmail=4
+  Google=1
 }
 
 export interface MailBox {
   id: number,
   imapDomain:string,
   imapPort:number,
-  username:string,
   provider:ImapProvider,
+  username:string,
   folders:Folder[]
 }
 
@@ -22,6 +19,5 @@ export interface EditMailBox{
   imapDomain:string,
   imapPort:number,
   username:string,
-  password:string,
-  provider:ImapProvider
+  password:string
 }

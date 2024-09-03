@@ -77,3 +77,16 @@ export const deleteMailBox = async (id:number) : Promise<null> => {
 
     return null;
 }
+
+export const synchronizeMailBox = async (id:number) : Promise<null> => {
+    const response = await apiFetchWithBody(`${MAILBOX_ENDPOINT}${id}/sync`, 'POST');
+
+    if (response.status == 401 || response.status == 403)
+        throw new Error("Forbidden", response.status);
+    if (response.status == 404)
+        throw new Error("Mailbox not found", response.status);
+    if (response.status >= 500)
+        throw new Error("Database Error please try again later", response.status);
+
+    return null;
+}
