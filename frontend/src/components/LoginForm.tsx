@@ -1,9 +1,8 @@
 'use client' 
 
-import Head from 'next/head';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { useAuthentication } from '@/hooks/useAuthentication';
-import { TextField, Button, Typography, Link, CircularProgress, Box, IconButton } from '@mui/material';
+import { TextField, Button, Typography, Link, CircularProgress, Box, IconButton, Divider, FormControlLabel, Checkbox } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import { Credentials } from '@/models/credentials';
 import { useState } from 'react';
@@ -16,10 +15,11 @@ const LoginForm: React.FC = () => {
   const { mode, toggleMode } = useLightDarkModeSwitch();
   const router = useRouter();
   const [errorText, setErrorText] = useState("");
+  const [ rememberMe, setRememberMe ] = useState(false);
 
   const onSubmit: SubmitHandler<Credentials> = async (data) => {
     try {
-      if (await loginService(data))
+      if (await loginService(data, rememberMe))
         router.push('/'); // Redirect to home after successful login
     } catch (err) {
       console.error('Login failed:', err);
@@ -68,6 +68,15 @@ const LoginForm: React.FC = () => {
           {...register('twoFactorCode')}
           fullWidth
         />
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={rememberMe}
+              onChange={(e, c) => setRememberMe(c)}
+            />}
+          label="Remember Me"
+          labelPlacement="end"
+        />
         <Button
           type="submit"
           variant="contained"
@@ -79,6 +88,7 @@ const LoginForm: React.FC = () => {
         >
           {loading ? <CircularProgress size={24} color="inherit" /> : 'Login'}
         </Button>
+        <Divider />
         <Typography textAlign="center">
           Don't have an account?{' '}
           <Link href='/auth/register' underline="hover">

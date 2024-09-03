@@ -6,10 +6,7 @@ export const metadata: Metadata = {
 }
 
 const LoginPage: React.FC = async () => {
-  return (
-  <>
-    <LoginForm />
-  </>);
+  return <LoginForm />;
 }
 
 export default LoginPage

@@ -8,13 +8,8 @@ import { Credentials } from '@/models/credentials';
 import { useState } from 'react';
 import { DarkMode, LightMode } from '@mui/icons-material';
 import { useLightDarkModeSwitch } from '@/hooks/useLightDarkModeSwitch';
-import { Metadata } from 'next';
 
-export const metadata: Metadata = {
-  title: 'Register'
-}
-
-const RegisterForm: React.FC<{registerSuccess: (email:string)=>void}> = ({registerSuccess}) => {
+const RegisterForm: React.FC = () => {
   const { register, handleSubmit, formState: { errors }, watch } = useForm<Credentials>();
   const { register:registerService, loading } = useAuthentication();
   const { mode, toggleMode } = useLightDarkModeSwitch();
