@@ -25,7 +25,7 @@ namespace Backend.Models
         [JsonIgnore]
         public ICollection<Mail> Mails { get; set; } = [];
         public UniqueId LastPulledUid { get; set; } = UniqueId.MinValue;
-        public DateTimeOffset LastPulledInternalDate { get; set; } = DateTimeOffset.MinValue;
+        public DateTime LastPulledInternalDate { get; set; } = DateTime.MinValue;
 
         public Folder(){}
         public Folder(IMailFolder folder){

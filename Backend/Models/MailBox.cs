@@ -38,7 +38,7 @@ namespace Backend.Models
                     ArgumentNullException.ThrowIfNull(this.OAuthCredentials, nameof(this.OAuthCredentials));
                     if (this.OAuthCredentials.AccessTokenExpired)
                     {
-                        if (this.OAuthCredentials.NeedReAuth || this.OAuthCredentials.RefreshTokenExpired || tokenRefreshService is null)
+                        if (this.OAuthCredentials.NeedReAuth || tokenRefreshService is null)
                             throw new AuthenticationException("OAuthCredentials expired");
                         //refresh here
                         if (!await tokenRefreshService.RefreshToken(this.OAuthCredentials))

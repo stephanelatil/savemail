@@ -13,7 +13,7 @@ public class MailDto
     public string Subject { get; set; } = string.Empty;
     public string Body { get; set; } = string.Empty;
     public ICollection<AttachmentDto> Attachments { get; set; } = [];
-    public DateTimeOffset DateSent { get; set; } = DateTimeOffset.Now;
+    public DateTime DateSent { get; set; } = DateTime.Now;
 
     public MailDto(){}
 

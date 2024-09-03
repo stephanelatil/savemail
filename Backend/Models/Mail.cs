@@ -38,9 +38,9 @@ namespace Backend.Models
         public string Body { get; set; } = string.Empty;
         [ReadOnly(true)]
         public ICollection<Attachment> Attachments { get; set; } = [];
-        [DataType(DataType.DateTime)]
+        [Column(TypeName = "timestamp(6)")]
         [ReadOnly(true)]
-        public DateTimeOffset DateSent { get; set; } = DateTimeOffset.MinValue;
+        public DateTime DateSent { get; set; } = DateTime.MinValue;
         [Required]
         [JsonIgnore]
         [ReadOnly(true)]
@@ -63,7 +63,7 @@ namespace Backend.Models
 
                     xxHash.Append(Encoding.UTF8.GetBytes(this.Subject));
                     xxHash.Append(Encoding.UTF8.GetBytes(this.Body));
-                    xxHash.Append(BitConverter.GetBytes(this.DateSent.UtcTicks));
+                    xxHash.Append(BitConverter.GetBytes(this.DateSent.Ticks));
                     if (this.Sender is not null)
                         xxHash.Append(Encoding.UTF8.GetBytes(this.Sender.Address));
 
@@ -86,7 +86,7 @@ namespace Backend.Models
             this.Body = msg.HtmlBody;
             this.Folder = folder;
             this.OwnerMailBox = folder.MailBox;
-            this.DateSent = msg.Date;
+            this.DateSent = msg.Date.ToUniversalTime().DateTime;
 
             MailboxAddress? from = (MailboxAddress?) msg.From.FirstOrDefault((MailboxAddress?)null);
             this.Sender = new EmailAddress(){FullName=from?.Name, Address=from?.Address ?? "UNKNOWN"};
