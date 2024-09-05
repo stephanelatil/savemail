@@ -38,7 +38,7 @@ public class OAuthGoogleController : Controller
 
     [Authorize] //only a logged in user can add an oauth token to a mailbox
     [HttpGet("login/{mailboxId?}")]
-    public async Task<IActionResult> LoginWithGoogle(int? mailboxId, [FromQuery]string next)
+    public async Task<IActionResult> LoginWithGoogle(int? mailboxId, [FromQuery]string? next)
     {
         var user = await this._userManager.GetUserAsync(this.User);
         if (user?.Id is null)
@@ -76,7 +76,7 @@ public class OAuthGoogleController : Controller
     /// <returns></returns>
     [Authorize]
     [HttpGet("callback/{mailboxId?}")]
-    public async Task<IActionResult> GoogleCallback(int? mailboxId, [FromQuery]string next)
+    public async Task<IActionResult> GoogleCallback(int? mailboxId, [FromQuery]string? next)
     {
         AppUser? user = await this._userManager.GetUserAsync(this.User);
         if (user?.Id is null)
@@ -92,6 +92,11 @@ public class OAuthGoogleController : Controller
             this._logger.LogDebug("Successful google auth for user {}", user.Id);
         var accessToken = authenticateResult.Properties.GetTokenValue("access_token");
         var refreshToken = authenticateResult.Properties.GetTokenValue("refresh_token") ?? string.Empty;
+        var expiresIn = authenticateResult.Properties.GetTokenValue("expires_in");
+
+        //Mark expired 10min after expiry date to discourage use of expired token when syncing with server
+        var validUntil = int.TryParse(expiresIn, out int remainingSeconds) ? DateTime.Now.AddSeconds(remainingSeconds).AddMinutes(-10):
+                                                                             DateTime.Now.AddMinutes(40);
 
         if (accessToken is null)
             return this.BadRequest("Access Token is null");
@@ -111,15 +116,19 @@ public class OAuthGoogleController : Controller
             mailbox = await this._oAuthCredentialsService.CreateNewMailboxWithCredentials(
                             ImapProvider.Google,
                             accessToken,
+                            validUntil,
                             refreshToken,
                             user);
         else
             await this._oAuthCredentialsService.CreateNewCredentials(
                             ImapProvider.Google,
                             accessToken,
+                            validUntil,
                             refreshToken,
                             mailbox.Id);
-
-        return this.Redirect($"{next.TrimEnd('/')}/{mailbox.Id}");
+        if (next is not null)
+            return this.Redirect($"{next.TrimEnd('/')}/{mailbox.Id}");
+        else
+            return this.Ok("Authentication Success. Return to your page continue");
     }
 }
