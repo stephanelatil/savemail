@@ -71,37 +71,38 @@ public class OAuthService : IOAuthService
     public async Task<bool> RefreshToken(OAuthCredentials credentials)
     {
         this._context.OAuthCredentials.Update(credentials);
-        if (credentials.RefreshTokenExpired)
-        {
-            credentials.NeedReAuth = true;
-            await this._context.SaveChangesAsync();
-            return false;
-        }
 
         HttpRequestMessage request = new (HttpMethod.Post, OAuthCredentials.RefreshUrl(credentials.Provider));
 
         var content = new StringContent($"client_id={this._clientId}&client_secret={this._clientSecret}&refresh_token={credentials.RefreshToken}&grant_type=refresh_token", Encoding.UTF8, "application/x-www-form-urlencoded");
         request.Content = content;
 
-        var response = await this._httpClient.SendAsync(request);
-        if (!response.IsSuccessStatusCode)
-        {
+        try{
+            var response = await this._httpClient.SendAsync(request);
+            if (!response.IsSuccessStatusCode)
+            {
+                credentials.NeedReAuth = true;
+                await this._context.SaveChangesAsync();
+                return false;
+            }
+
+            var tokenResponse = await response.Content.ReadFromJsonAsync<AccessTokenResponse>();
+            if (tokenResponse is null)
+            {
+                credentials.NeedReAuth = true;
+                await this._context.SaveChangesAsync();
+                return false;
+            }
+
+            credentials.AccessToken = tokenResponse.AccessToken;
+            credentials.RefreshToken = tokenResponse.RefreshToken;
+            credentials.NeedReAuth = false;
+        }
+        catch {
             credentials.NeedReAuth = true;
             await this._context.SaveChangesAsync();
             return false;
         }
-
-        var tokenResponse = await response.Content.ReadFromJsonAsync<AccessTokenResponse>();
-        if (tokenResponse is null)
-        {
-            credentials.NeedReAuth = true;
-            await this._context.SaveChangesAsync();
-            return false;
-        }
-
-        credentials.AccessToken = tokenResponse.AccessToken;
-        credentials.RefreshToken = tokenResponse.RefreshToken;
-        credentials.NeedReAuth = false;
 
         this._context.OAuthCredentials.Update(credentials);
         await this._context.SaveChangesAsync();

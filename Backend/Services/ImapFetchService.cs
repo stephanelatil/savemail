@@ -108,7 +108,7 @@ namespace Backend.Services
             this._oAuthService = oAuthService;
         }
 
-        private async Task<Queue<UniqueId>> GetUidsToFetchAsync(UniqueId? lastUid, DateTimeOffset lastDate,
+        private async Task<Queue<UniqueId>> GetUidsToFetchAsync(UniqueId? lastUid, DateTime lastDate,
                                                                 CancellationToken cancellationToken = default)
         {
             ArgumentNullException.ThrowIfNull(this._imapFolder);
@@ -116,12 +116,12 @@ namespace Backend.Services
             //Gets the latest mails starting at the 
             if (lastUid.HasValue && this._imapFolder.UidValidity == lastUid.Value.Validity)
                 start = lastUid.Value;
-            else if (lastDate != DateTimeOffset.MinValue)
+            else if (lastDate != DateTime.MinValue)
             {
                 try{
                 MailKit.Search.SearchResults result = await this._imapFolder.SearchAsync(
                             MailKit.Search.SearchOptions.All,
-                            MailKit.Search.SearchQuery.DeliveredAfter(lastDate.DateTime),
+                            MailKit.Search.SearchQuery.DeliveredAfter(lastDate),
                             cancellationToken);
                     return new Queue<UniqueId>(result.UniqueIds);
                 }

@@ -7,8 +7,8 @@ namespace Backend.Services;
 public interface IOAuthCredentialsService
 {
     public Task<OAuthCredentials?> GetCredentialsById(int id);
-    public Task<OAuthCredentials> CreateNewCredentials(ImapProvider provider, string accessToken, string refreshToken, int mailboxId, string? email=null);
-    public Task<MailBox> CreateNewMailboxWithCredentials(ImapProvider provider, string accessToken, string refreshToken, AppUser owner, string? email=null);
+    public Task<OAuthCredentials> CreateNewCredentials(ImapProvider provider, string accessToken, DateTime validityEnd, string refreshToken, int mailboxId, string? email=null);
+    public Task<MailBox> CreateNewMailboxWithCredentials(ImapProvider provider, string accessToken, DateTime validityEnd, string refreshToken, AppUser owner, string? email=null);
     public Task<OAuthCredentials?> RefreshCredentials(OAuthCredentials credentials);
 }
 
@@ -23,7 +23,7 @@ public class OAuthCredentialsService : IOAuthCredentialsService
         this._context = context;
     }
 
-    public async Task<MailBox> CreateNewMailboxWithCredentials(ImapProvider provider, string accessToken, string refreshToken, AppUser owner, string? email=null)
+    public async Task<MailBox> CreateNewMailboxWithCredentials(ImapProvider provider, string accessToken, DateTime validityEnd, string refreshToken, AppUser owner, string? email=null)
     {
         var mailbox = this._context.MailBox.Add(new MailBox(){
             Owner = owner,
@@ -34,6 +34,7 @@ public class OAuthCredentialsService : IOAuthCredentialsService
 
         var credentials = this._context.OAuthCredentials.Add(new(){
             AccessToken = accessToken,
+            AccessTokenValidity = validityEnd,
             RefreshToken = refreshToken,
             Provider = provider,
             OwnerMailbox = mailbox.Entity
@@ -46,7 +47,7 @@ public class OAuthCredentialsService : IOAuthCredentialsService
         return mailbox.Entity;
     }
 
-    public async Task<OAuthCredentials> CreateNewCredentials(ImapProvider provider, string accessToken, string refreshToken, int mailboxId, string? email=null)
+    public async Task<OAuthCredentials> CreateNewCredentials(ImapProvider provider, string accessToken, DateTime validityEnd, string refreshToken, int mailboxId, string? email=null)
     {
         MailBox mailbox = await this._context.MailBox.Where(mb => mb.Id == mailboxId)
                                                  .Include(mb=> mb.OAuthCredentials)
@@ -57,6 +58,7 @@ public class OAuthCredentialsService : IOAuthCredentialsService
         {
             entry = this._context.OAuthCredentials.Add(new(){
                 AccessToken = accessToken,
+                AccessTokenValidity = validityEnd,
                 RefreshToken = refreshToken,
                 Provider = provider,
                 OwnerMailboxId = mailboxId,
@@ -71,6 +73,7 @@ public class OAuthCredentialsService : IOAuthCredentialsService
             var oauthCredentials = mailbox.OAuthCredentials;
             oauthCredentials.AccessToken = accessToken;
             oauthCredentials.RefreshToken = refreshToken;
+            oauthCredentials.AccessTokenValidity = validityEnd;
             if ((email ??=await this._oAuthService.GetEmail(oauthCredentials)) == mailbox.Username)
                 entry = this._context.OAuthCredentials.Update(oauthCredentials);
             else

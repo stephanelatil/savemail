@@ -11,7 +11,7 @@ namespace Backend.Services
                                             CancellationToken cancellationToken=default);
         public Task<Folder> CreateFolderAsync(Folder folder, MailBox mailbox,
                                             CancellationToken cancellationToken=default);
-        public Task UpdateLastPullDataAsync(Folder folder, UniqueId lastMailUid, DateTimeOffset lastMailDate,
+        public Task UpdateLastPullDataAsync(Folder folder, UniqueId lastMailUid, DateTime lastMailDate,
                                             CancellationToken cancellationToken=default);
         public Task DeleteFolderAsync(Folder folder,
                                             CancellationToken cancellationToken=default);
@@ -111,7 +111,7 @@ namespace Backend.Services
 
         public async Task UpdateLastPullDataAsync(Folder folder,
                                             UniqueId lastMailUid,
-                                            DateTimeOffset lastMailDate,
+                                            DateTime lastMailDate,
                                             CancellationToken cancellationToken=default)
         {
             this._context.TrackEntry(folder);
