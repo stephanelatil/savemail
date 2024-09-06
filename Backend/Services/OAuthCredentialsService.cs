@@ -34,7 +34,7 @@ public class OAuthCredentialsService : IOAuthCredentialsService
 
         var credentials = this._context.OAuthCredentials.Add(new(){
             AccessToken = accessToken,
-            AccessTokenValidity = validityEnd,
+            AccessTokenValidity = validityEnd.ToUniversalTime(),
             RefreshToken = refreshToken,
             Provider = provider,
             OwnerMailbox = mailbox.Entity
@@ -58,7 +58,7 @@ public class OAuthCredentialsService : IOAuthCredentialsService
         {
             entry = this._context.OAuthCredentials.Add(new(){
                 AccessToken = accessToken,
-                AccessTokenValidity = validityEnd,
+                AccessTokenValidity = validityEnd.ToUniversalTime(),
                 RefreshToken = refreshToken,
                 Provider = provider,
                 OwnerMailboxId = mailboxId,
