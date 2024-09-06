@@ -1,4 +1,5 @@
 using System.Linq.Expressions;
+using System.Net.Sockets;
 using Backend.Controllers;
 using Backend.Models;
 using Backend.Models.DTO;
@@ -45,6 +46,7 @@ public class MailboxImapCheck : IMailBoxImapCheck
             await client.AuthenticateAsync(mailbox.Username, mailbox.Password, cancellationToken);
         }
         catch(ArgumentException){ return ImapCheckResult.InvalidValue;}
+        catch(SocketException){ return ImapCheckResult.ConnectionToServerError;}
         catch(IOException){ return ImapCheckResult.ConnectionToServerError;}
         catch(ImapProtocolException){ return ImapCheckResult.ConnectionToServerError;}
         catch(AuthenticationException){ return ImapCheckResult.AuthenticationError;}
