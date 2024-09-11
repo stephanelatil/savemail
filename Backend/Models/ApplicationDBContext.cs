@@ -50,6 +50,8 @@ namespace Backend.Models
             modelBuilder.Entity<MailBox>().HasOne(mb => mb.OAuthCredentials)
                                           .WithOne(c => c.OwnerMailbox)
                                           .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<MailBox>().Navigation(mb => mb.OAuthCredentials).AutoInclude();
         }
 
         protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
