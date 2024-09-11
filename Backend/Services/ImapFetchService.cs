@@ -50,9 +50,12 @@ namespace Backend.Services
                         folders.Add(new Folder(imapFolder));
                 }
             }
+            catch(MailKit.Security.AuthenticationException){
+                await this._oAuthService.SetNeedReauth(mailbox.OAuthCredentials);
+                this._logger.LogWarning(e, "Unable to connect to connect and authenticate for mailbox {}", mailbox.Id);
+            }
             catch(Exception e)
             {
-                await this._oAuthService.SetNeedReauth(mailbox.OAuthCredentials);
                 this._logger.LogWarning(e, "Unable to connect to imap service for mailbox {}", mailbox.Id);
             }
             finally
@@ -148,7 +151,11 @@ namespace Backend.Services
                                     MailKit.Security.SecureSocketOptions.Auto,
                                     cancellationToken);
                 await mailbox.ImapAuthenticateAsync(this.imapClient, this._oAuthService, cancellationToken);
-            }catch (Exception e){
+            }catch(MailKit.Security.AuthenticationException){
+                await this._oAuthService.SetNeedReauth(mailbox.OAuthCredentials);
+                this._logger.LogWarning(e, "Unable to connect to connect and authenticate for mailbox {}", mailbox.Id);
+            }
+            catch (Exception e){
                 this._logger.LogWarning(e, "Unable to connect to connect and authenticate for mailbox {}", mailbox.Id);
             }
             this.Prepared = true;
