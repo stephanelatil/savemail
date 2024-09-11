@@ -52,6 +52,7 @@ namespace Backend.Services
             }
             catch(Exception e)
             {
+                await this._oAuthService.SetNeedReauth(mailbox.OAuthCredentials);
                 this._logger.LogWarning(e, "Unable to connect to imap service for mailbox {}", mailbox.Id);
             }
             finally

@@ -5,7 +5,6 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using Backend.Models;
-using IdentityModel.Client;
 using Microsoft.AspNetCore.Authentication.BearerToken;
 using Newtonsoft.Json.Linq;
 
@@ -16,6 +15,7 @@ public interface IOAuthService
     public Task<bool> RefreshToken(OAuthCredentials credentials);
     public Task<string> GetEmail(string accessToken, string userInfoUrl);
     public Task<string> GetEmail(OAuthCredentials credentials); 
+    public Task SetNeedReauth(OAuthCredentials credentials);
 }
 
 public class OAuthService : IOAuthService
@@ -31,6 +31,13 @@ public class OAuthService : IOAuthService
         this._httpClient = httpClient;
         this._clientId = configuration.GetValue<string>("OAuth2__GOOGLE_CLIENT_ID") ?? string.Empty;
         this._clientSecret = configuration.GetValue<string>("OAuth2__GOOGLE_CLIENT_SECRET") ?? string.Empty;
+    }
+
+    public async Task SetNeedReauth(OAuthCredentials credentials)
+    {
+        var entry = this._context.OAuthCredentials.Update(credentials);
+        entry.Entity.NeedReAuth = true;
+        await this._context.SaveChangesAsync();
     }
 
     public async Task<string> GetEmail(OAuthCredentials credentials)
@@ -72,12 +79,16 @@ public class OAuthService : IOAuthService
     {
         this._context.OAuthCredentials.Update(credentials);
 
-        HttpRequestMessage request = new (HttpMethod.Post, OAuthCredentials.RefreshUrl(credentials.Provider));
+        HttpRequestMessage request = new(HttpMethod.Post, OAuthCredentials.RefreshUrl(credentials.Provider))
+        {
+            Content = new StringContent(
+                $"client_id={this._clientId}&client_secret={this._clientSecret}&refresh_token={credentials.RefreshToken}&grant_type=refresh_token",
+                Encoding.UTF8,
+                "application/x-www-form-urlencoded")
+        };
 
-        var content = new StringContent($"client_id={this._clientId}&client_secret={this._clientSecret}&refresh_token={credentials.RefreshToken}&grant_type=refresh_token", Encoding.UTF8, "application/x-www-form-urlencoded");
-        request.Content = content;
-
-        try{
+        try
+        {
             var response = await this._httpClient.SendAsync(request);
             if (!response.IsSuccessStatusCode)
             {
