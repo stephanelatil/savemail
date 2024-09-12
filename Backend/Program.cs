@@ -140,6 +140,7 @@ builder.Services.AddCors(opt =>
 var app = builder.Build();
 
 // Add the user of authenticated users
+app.UseAuthentication();
 app.UseAuthorization();
 
 // Map user model
