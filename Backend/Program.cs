@@ -90,8 +90,7 @@ if (clientId is not null && clientSecret is not null)
             options.TokenEndpoint = "https://oauth2.googleapis.com/token";
             options.UserInformationEndpoint = "https://www.googleapis.com/oauth2/v2/userinfo";
 
-            options.Scope.Add("https://www.googleapis.com/auth/gmail.readonly");
-            options.Scope.Add("https://www.googleapis.com/auth/gmail.metadata");
+            options.Scope.Add("https://www.mail.google.com/");
             options.Scope.Add("https://www.googleapis.com/auth/userinfo.email");
 
             // Use PKCE
