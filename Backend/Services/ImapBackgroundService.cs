@@ -275,7 +275,6 @@ namespace Backend.Services
                     await this.SaveNewMails(newMails, mailbox, folder, cancellationToken);
             }
             await this.SaveNewMails(newMails, mailbox, folder, cancellationToken);
-            this._imapMailFetchService.Disconnect();
         }
 
         private async Task SaveNewMails(List<Mail> newMails, MailBox mailBox, Folder folder, CancellationToken cancellationToken)

@@ -146,7 +146,7 @@ public class MailBoxController : ControllerBase
         return this.CreatedAtAction("GetMailBox", new { id = mailbox.Id }, new MailBoxDto(mailbox));
     }
 
-    // POST: api/MailBox{id}/sync
+    // POST: api/MailBox/{id}/sync
     [HttpPost("{id}/sync")]
     [Authorize]
     public async Task<ActionResult> RequestImapSyncMailbox(int id)
