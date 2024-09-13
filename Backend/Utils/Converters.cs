@@ -11,3 +11,14 @@ public class UniqueIdConverter : ValueConverter<UniqueId, ulong>
             combined => new UniqueId((uint)(combined >> 32), (uint)(combined & 0xFFFFFFFF)))
     {}
 }
+
+
+public class DateTimeConverter : ValueConverter<DateTime, long>
+{
+    public DateTimeConverter()
+        : base(
+            datetime => datetime.ToUniversalTime().Ticks,
+            ticks => new DateTime(ticks, DateTimeKind.Utc)
+        )
+    {}
+}

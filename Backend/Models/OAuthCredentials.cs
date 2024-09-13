@@ -7,7 +7,6 @@ public class OAuthCredentials
     public int Id { get; set; }
     public bool NeedReAuth { get; set; } = false;
     public string AccessToken { get; set; } = string.Empty;
-    [DataType(DataType.DateTime)]
     public DateTime AccessTokenValidity { get; set; } = DateTime.Now;
     public string RefreshToken { get; set; } = string.Empty;
     [Required]

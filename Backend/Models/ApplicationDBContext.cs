@@ -59,6 +59,8 @@ namespace Backend.Models
             base.ConfigureConventions(configurationBuilder);
             configurationBuilder.Properties<UniqueId>()
                                 .HaveConversion<UniqueIdConverter>();
+            configurationBuilder.Properties<DateTime>()
+                                .HaveConversion<DateTimeConverter>();
         }
 
         public virtual DbSet<Attachment> Attachment { get; set; }
