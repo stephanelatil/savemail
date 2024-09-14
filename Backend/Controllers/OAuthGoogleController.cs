@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Backend.Models;
-using Backend.Models.DTO;
 using Microsoft.AspNetCore.Identity;
 using Backend.Services;
 using Microsoft.EntityFrameworkCore;
@@ -13,7 +12,7 @@ using Microsoft.AspNetCore.WebUtilities;
 [Route("oauth/google")]
 public class OAuthGoogleController : Controller
 {
-    private readonly IMailBoxService _mailboxService;
+    private readonly ITaskManager _taskManager;
     private readonly ApplicationDBContext _context;
 
     private readonly IOAuthService _oAuthService;
@@ -21,14 +20,14 @@ public class OAuthGoogleController : Controller
     private readonly UserManager<AppUser> _userManager;
     private readonly ILogger<OAuthGoogleController> _logger;
 
-    public OAuthGoogleController(IMailBoxService mailboxService,
+    public OAuthGoogleController(ITaskManager taskManager,
                                 UserManager<AppUser> userManager,
                                 ILogger<OAuthGoogleController> logger,
                                 IOAuthCredentialsService oAuthCredentialsService,
                                 ApplicationDBContext context,
                                 IOAuthService oAuthService)
     {
-        this._mailboxService = mailboxService;
+        this._taskManager = taskManager;
         this._oAuthCredentialsService = oAuthCredentialsService;
         this._userManager = userManager;
         this._oAuthService = oAuthService;
@@ -52,7 +51,7 @@ public class OAuthGoogleController : Controller
         };
 
         if (mailboxId.HasValue){
-            var mb = await this._mailboxService.GetMailboxByIdAsync(mailboxId.Value, false);
+            var mb = await this._context.MailBox.Where(mb => mb.Id == mailboxId.Value).SingleOrDefaultAsync();
             if (mb is null)
                 return this.NotFound("This mailbox does not exist");
             if (mb.OwnerId != user.Id)
@@ -126,6 +125,8 @@ public class OAuthGoogleController : Controller
                             validUntil,
                             refreshToken,
                             mailbox.Id);
+        //Enqueues mailbox for sync
+        this._taskManager.EnqueueTask(mailbox.Id);
         if (next is not null)
             return this.Redirect($"{next.TrimEnd('/')}/{mailbox.Id}");
         else
