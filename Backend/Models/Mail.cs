@@ -7,6 +7,7 @@ using System.Text.Json.Serialization;
 using MailKit;
 using Microsoft.EntityFrameworkCore;
 using MimeKit;
+using NpgsqlTypes;
 
 namespace Backend.Models
 {
@@ -38,7 +39,10 @@ namespace Backend.Models
         public string Body { get; set; } = string.Empty;
 
         // This field will store the tsvector for full-text search
-        public NpgsqlTypes.NpgsqlTsVector SearchVector { get; set; }
+        private NpgsqlTsVector? _searchVector;
+
+        // Property with only a getter
+        public NpgsqlTsVector SearchVector => this._searchVector!;
         [ReadOnly(true)]
         public ICollection<Attachment> Attachments { get; set; } = [];
         [ReadOnly(true)]
