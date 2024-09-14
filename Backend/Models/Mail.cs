@@ -36,6 +36,9 @@ namespace Backend.Models
         public string Subject { get; set; } = string.Empty;
         [ReadOnly(true)]
         public string Body { get; set; } = string.Empty;
+
+        // This field will store the tsvector for full-text search
+        public NpgsqlTypes.NpgsqlTsVector SearchVector { get; set; }
         [ReadOnly(true)]
         public ICollection<Attachment> Attachments { get; set; } = [];
         [ReadOnly(true)]

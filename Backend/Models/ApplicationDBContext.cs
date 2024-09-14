@@ -23,7 +23,7 @@ namespace Backend.Models
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-            modelBuilder.HasPostgresExtension("pg_trgm").HasPostgresExtension("btree_gin");
+            modelBuilder.HasPostgresExtension("btree_gin");
 
             modelBuilder.Entity<Mail>().HasOne(m => m.Sender).WithMany(em => em.MailsSent);
             modelBuilder.Entity<Mail>().HasMany(m => m.Recipients).WithMany(em => em.MailsReceived);
@@ -32,10 +32,14 @@ namespace Backend.Models
 
             // Create composite GIN index on Mails
             modelBuilder.Entity<Mail>()
-                .HasIndex(m => new { m.Subject, m.Body })
-                .HasMethod("GIN")
-                .HasOperators("gin_trgm_ops")
-                .IsCreatedConcurrently();
+                .Property(m => m.SearchVector)
+                .HasColumnType("tsvector")
+                .HasComputedColumnSql("to_tsvector('english', coalesce(\"Subject\", '') || ' ' || coalesce(\"Body\", ''))", stored: true);
+
+            // Create GIN index on the computed tsvector column
+            modelBuilder.Entity<Mail>()
+                .HasIndex(m => m.SearchVector)
+                .HasMethod("GIN");
 
             // Ensure hash is calculated and stored
             modelBuilder
