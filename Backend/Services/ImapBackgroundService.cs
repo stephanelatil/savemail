@@ -226,7 +226,7 @@ namespace Backend.Services
 
             //get new undiscovered folders
             List<Folder> folders = await this._imapFolderFetchService.GetNewFolders(mailbox, cancellationToken);
-            this._logger.LogDebug("Folders To Add: " + string.Join(", ", folders.Select(f=> $"{f.Id}: {f.Name}")));
+            this._logger.LogDebug("Folders To Add: {}", string.Join(", ", folders.Select(f => f.Name)));
             foreach(var folder in folders)
                 await this._folderService.CreateFolderAsync(folder, mailbox, cancellationToken);
 
@@ -252,6 +252,9 @@ namespace Backend.Services
 
         private async Task PopulateFolder(MailBox mailbox, Folder folder, CancellationToken cancellationToken)
         {
+            if (folder.Name == "[Gmail]")
+                return; //this folder is a Gmail specific folder that contains all folders except "Inbox"
+                        // it is a virtual folder and does not really exist or contain anything. Opening it leads to an error. Ignoring it is the way to go!
             await this._imapMailFetchService.SelectFolder(folder, cancellationToken);
             
             List<Mail> newMails = [];
