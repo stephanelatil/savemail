@@ -50,18 +50,16 @@ namespace Backend.Services
             {
                 return existing;
             }
-            
-            Folder? parent = null;
+
             if (folder.Path.Contains('/'))
             {
                 string parentPath = folder.Path[0..folder.Path.LastIndexOf('/')];
-                parent = await this.CreateFolderAsync(new Folder(){
+                folder.Parent = await this.CreateFolderAsync(new Folder(){
                     Path = parentPath,
                     MailBoxId = mailbox.Id
                 }, mailbox, false, cancellationToken); //do not save yet wait to add all elements in the tree
             }
 
-            folder.Parent = parent;
             folder.MailBoxId = mailbox.Id; //ensure mailbox parent is set
             var newFolder = this._context.Folder.Add(folder);
             newFolder.State = EntityState.Added;

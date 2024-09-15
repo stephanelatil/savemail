@@ -28,5 +28,5 @@ public class OAuthCredentials
                 ImapProvider.Google => "imap.gmail.com",
                 _ => string.Empty,
             };
-    public bool AccessTokenExpired => DateTime.UtcNow > this.AccessTokenValidity.ToUniversalTime();
+    public bool AccessTokenExpired => DateTime.UtcNow > this.AccessTokenValidity;
 }
