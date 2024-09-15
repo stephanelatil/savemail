@@ -94,6 +94,8 @@ namespace Backend.Services
         public Task SelectFolder(Folder folder, CancellationToken cancellationToken = default);
         public Task<List<Mail>> GetNextMails(int maxFetchPerLoop=20, CancellationToken cancellationToken = default);
         public void Disconnect();
+        public bool IsConnected { get; }
+        public bool IsAuthenticated { get; }
     }
 
     public class ImapMailFetchService : IImapMailFetchService
@@ -105,6 +107,8 @@ namespace Backend.Services
         private Queue<UniqueId>? _uids = null;        
         private bool _disposed = false;
         public bool Prepared { get; private set; } = false;
+        public bool IsConnected => this.imapClient.IsConnected;
+        public bool IsAuthenticated => this.imapClient.IsAuthenticated;
 
         private readonly ILogger<ImapMailFetchService> _logger;
 

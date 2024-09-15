@@ -235,7 +235,12 @@ namespace Backend.Services
             this._logger.LogDebug($"Ran Fixup: got total {mailbox.Folders.Count} folders to handle");
 
             await this._imapMailFetchService.Prepare(mailbox, cancellationToken);
-
+            if (!(this._imapMailFetchService.IsConnected && this._imapMailFetchService.IsAuthenticated))
+            {
+                this._imapMailFetchService.Disconnect();
+                return new IntOrObject<IImapFetchTaskService>(this);
+            }
+            
             foreach(Folder folder in mailbox.Folders)//this._context.Folder.Where(f=>f.MailBoxId == mailboxId))
             {
                 try{
