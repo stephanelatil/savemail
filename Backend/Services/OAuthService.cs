@@ -1,12 +1,9 @@
 using System.Net.Http.Headers;
 using System.Security.Authentication;
 using System.Text;
-using System.Text.Json;
-using System.Text.Json.Nodes;
-using System.Text.Json.Serialization;
 using Backend.Models;
-using Microsoft.AspNetCore.Authentication.BearerToken;
 using Newtonsoft.Json.Linq;
+using NuGet.ProjectModel;
 
 namespace Backend.Services;
 
@@ -29,8 +26,8 @@ public class OAuthService : IOAuthService
     {
         this._context = context;
         this._httpClient = httpClient;
-        this._clientId = configuration.GetValue<string>("OAuth2__GOOGLE_CLIENT_ID") ?? string.Empty;
-        this._clientSecret = configuration.GetValue<string>("OAuth2__GOOGLE_CLIENT_SECRET") ?? string.Empty;
+        this._clientId = configuration.GetValue<string>("OAuth2:GOOGLE_CLIENT_ID") ?? string.Empty;
+        this._clientSecret = configuration.GetValue<string>("OAuth2:GOOGLE_CLIENT_SECRET") ?? string.Empty;
     }
 
     public async Task SetNeedReauth(OAuthCredentials credentials)
@@ -97,20 +94,27 @@ public class OAuthService : IOAuthService
                 return false;
             }
 
-            var tokenResponse = await response.Content.ReadFromJsonAsync<AccessTokenResponse>();
-            if (tokenResponse is null)
+            var tokenResponse = JObject.Parse(await response.Content.ReadAsStringAsync());
+            if (tokenResponse is null || !tokenResponse.ContainsKey("access_token"))
             {
                 credentials.NeedReAuth = true;
                 await this._context.SaveChangesAsync();
                 return false;
             }
 
-            credentials.AccessToken = tokenResponse.AccessToken;
-            credentials.RefreshToken = tokenResponse.RefreshToken;
+            credentials.AccessToken = tokenResponse.GetValue<string>("access_token");
+            if (tokenResponse.ContainsKey("expires_in"))
+                credentials.AccessTokenValidity = DateTime.UtcNow
+                                                    .AddMinutes(-10)
+                                                    .AddSeconds(
+                                                        tokenResponse.GetValue<int>("expires_in"));
+            else
+                credentials.AccessTokenValidity = DateTime.UtcNow.AddMinutes(50);
             credentials.NeedReAuth = false;
         }
         catch {
             credentials.NeedReAuth = true;
+            // TODO add logging here and see what the issue is
             await this._context.SaveChangesAsync();
             return false;
         }
