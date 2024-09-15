@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.IO.Hashing;
 using System.Text;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 using MailKit;
 using Microsoft.EntityFrameworkCore;
 using MimeKit;
@@ -13,7 +14,7 @@ namespace Backend.Models
 {
     [Index(nameof(UniqueHash), IsUnique = false)]
     [Index(nameof(FolderId), IsUnique = false)]
-    public class Mail
+    public partial class Mail
     {
         [Key]
         public long Id { get; set; }
@@ -37,12 +38,14 @@ namespace Backend.Models
         public string Subject { get; set; } = string.Empty;
         [ReadOnly(true)]
         public string Body { get; set; } = string.Empty;
-
-        // This field will store the tsvector for full-text search
-        private NpgsqlTsVector? _searchVector;
-
-        // Property with only a getter
-        public NpgsqlTsVector SearchVector => this._searchVector!;
+        public string BodyText { get {
+            HtmlAgilityPack.HtmlDocument doc = new();
+            doc.LoadHtml(this.Body);
+            string text = RmRedundantNewLinesRegex().Replace(doc.DocumentNode.InnerText.Trim(), "\n");
+            return RmRedundantSpacesRegex().Replace(text, " ");
+        } 
+        private set {} }
+        public NpgsqlTsVector? SearchVector { get; set; }
         [ReadOnly(true)]
         public ICollection<Attachment> Attachments { get; set; } = [];
         [ReadOnly(true)]
@@ -94,7 +97,8 @@ namespace Backend.Models
             this.OwnerMailBox = folder.MailBox;
             this.DateSent = DateTime.SpecifyKind(msg.Date.ToUniversalTime().DateTime, DateTimeKind.Unspecified);
 
-            MailboxAddress? from = (MailboxAddress?) msg.From.FirstOrDefault((MailboxAddress?)null);
+
+            MailboxAddress? from = msg.From.Count > 0 ? (MailboxAddress?) msg.From[0] : null;
             this.Sender = new EmailAddress(){FullName=from?.Name, Address=from?.Address ?? "UNKNOWN"};
 
             this.Recipients = [];
@@ -103,5 +107,10 @@ namespace Backend.Models
             foreach (MailboxAddress recipient in msg.Cc.Cast<MailboxAddress>())
                 this.RecipientsCc.Add(new EmailAddress(){Address = recipient.Address, FullName = recipient.Name});
         }
+
+        [GeneratedRegex(@"\s+\n")]
+        private static partial Regex RmRedundantNewLinesRegex();
+        [GeneratedRegex(@"\s+[ ]")]
+        private static partial Regex RmRedundantSpacesRegex();
     }
 }
