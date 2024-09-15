@@ -43,7 +43,7 @@ namespace Backend.Services
                 throw new DbUpdateException("Unable to delete. Please try again");
         }
         
-        private EmailAddress GetOrCreateEmailAddresses(EmailAddress address)
+        private async Task<EmailAddress> GetOrCreateEmailAddresses(EmailAddress address)
         {
             //try to get address from change tracker
             var addr = this._context.ChangeTracker.Entries<EmailAddress>()
@@ -51,21 +51,27 @@ namespace Backend.Services
                                                     .Select(e => e.Entity)
                                                     .SingleOrDefault();
             //not in change tracker try to find it in the database
-            addr ??= this._context.EmailAddress.SingleOrDefault(e => e.Address == address.Address);
+            addr ??= await this._context.EmailAddress.SingleOrDefaultAsync(e => e.Address == address.Address);
             //not in Db => track new 
             return addr ?? this._context.EmailAddress.Add(address).Entity;
         }
 
-        private void HandleEmailAddresses(Mail mail)
+        private async Task HandleEmailAddresses(Mail mail)
         {
-            mail.Sender = this.GetOrCreateEmailAddresses(mail.Sender ?? new EmailAddress(){Address="UNKNOWN"});
-            mail.Recipients = mail.Recipients.Select(this.GetOrCreateEmailAddresses).ToList();
-            mail.RecipientsCc = mail.RecipientsCc.Select(this.GetOrCreateEmailAddresses).ToList();
+            mail.Sender = await this.GetOrCreateEmailAddresses(mail.Sender ?? new EmailAddress(){Address="UNKNOWN"});
+            List<EmailAddress> tmp = [];
+            foreach (var addr in mail.Recipients)
+                tmp.Add(await this.GetOrCreateEmailAddresses(addr));
+            mail.Recipients = tmp;
+            tmp = [];
+            foreach (var addr in mail.RecipientsCc)
+                tmp.Add(await this.GetOrCreateEmailAddresses(addr));
+            mail.RecipientsCc = tmp;
         }
 
         public async Task SaveMail(List<Mail> mails, CancellationToken cancellationToken = default)
         {
-            this._logger.LogDebug($"Adding {mails.Count} emails");
+            this._logger.LogDebug("Adding {} emails", mails.Count);
             foreach(var mail in mails)
             {
                 if (mail.ImapReplyFromId is not null){
@@ -74,7 +80,7 @@ namespace Backend.Services
                                      ?? await this._context.Mail.Where(m => m.OwnerMailBoxId == mail.OwnerMailBoxId)
                                                         .SingleOrDefaultAsync(x => mail.ImapReplyFromId == x.ImapMailId, cancellationToken);
                 }
-                this.HandleEmailAddresses(mail);
+                await this.HandleEmailAddresses(mail);
             }
             await this._context.Mail.AddRangeAsync(mails, cancellationToken);
             await this._context.SaveChangesAsync(cancellationToken);

@@ -29,6 +29,9 @@ namespace Backend.Models
             modelBuilder.Entity<Mail>().HasMany(m => m.Recipients).WithMany(em => em.MailsReceived);
             modelBuilder.Entity<Mail>().HasMany(m => m.RecipientsCc).WithMany(em => em.MailsCCed);
             modelBuilder.Entity<Mail>().HasOne(m => m.RepliedFrom).WithMany(m => m.Replies);
+            modelBuilder.Entity<Mail>().Navigation(m => m.Sender).AutoInclude();
+            modelBuilder.Entity<Mail>().Navigation(m => m.Recipients).AutoInclude();
+            modelBuilder.Entity<Mail>().Navigation(m => m.RecipientsCc).AutoInclude();
 
             // Create composite GIN index on Mails
             modelBuilder.Entity<Mail>()
