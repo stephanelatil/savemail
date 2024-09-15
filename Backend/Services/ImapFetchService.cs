@@ -46,6 +46,8 @@ namespace Backend.Services
                                                                                 false,
                                                                                 cancellationToken))
                 {
+                    if (mailbox.Provider == ImapProvider.Google && imapFolder.FullName == "[Gmail]/All Mail")
+                        continue; //Ignore this folder which is just inbox+user created folders. Makes duplicate emails
                     if (!mailbox.Folders.Any(f => f.Path == imapFolder.FullName))
                         folders.Add(new Folder(imapFolder));
                 }
@@ -170,7 +172,7 @@ namespace Backend.Services
             ArgumentNullException.ThrowIfNull(this._imapFolder, nameof(this._imapFolder));
             ArgumentNullException.ThrowIfNull(this._folder, nameof(this._folder));
             if (!this.Prepared)
-                throw new ArgumentException(nameof(this.Prepared), "Must prepare the service before getting emails");
+                throw new ArgumentException("Must prepare the service before getting emails", nameof(this.Prepared));
             if (this._uids is null || this._uids.Count == 0) //queue should not be empty
                 throw new InvalidOperationException("Now more UIDs available");
 
