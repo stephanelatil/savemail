@@ -1,6 +1,5 @@
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
-using MailKit.Security;
 
 namespace Backend.Models.DTO;
 
@@ -13,7 +12,7 @@ public class MailBoxDto
     public string Username {get ; set;} = string.Empty;
     public ImapProvider Provider { get; set; } = ImapProvider.Simple;
     [ReadOnly(true)]
-    public ICollection<FolderDto> Folders { get; set;} = [];
+    public List<FolderDto> Folders { get; set;} = [];
 
     public MailBoxDto(){}
 
@@ -24,10 +23,19 @@ public class MailBoxDto
         this.ImapPort = mailBox.ImapPort;
         this.Provider = mailBox.Provider;
         this.Username = mailBox.Username;
-        this.Folders = mailBox.Folders
-                                .Where(f => f.Parent is null)
-                                .Select(f => new FolderDto(f))
-                                .ToList();
+
+        this.Folders = [];
+        foreach (var f in mailBox.Folders.Where(f => f.Parent is null))
+        {
+            if (f.Parent != null)
+                continue;
+            if (f.Path == "[Gmail]")
+                // If gmail Folder: Remove prefix and add children of the folder
+                this.Folders.AddRange(f.Children.Select(f => {f.Path = f.Path[8..]; return new FolderDto(f);}));
+            else
+                this.Folders.Add(new FolderDto(f));
+        }
+        this.Folders = this.Folders.OrderBy(f => f.Id).ToList();
     }
 }
 

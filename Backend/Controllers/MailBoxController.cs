@@ -181,10 +181,20 @@ public class MailBoxController : ControllerBase
         if (self is null || mailbox.OwnerId != self.Id)
             return this.Forbid();
         
-        return this.Ok(mailbox.Folders
-                                .Where(f => f.Parent is null)
-                                .Select(f => new FolderDto(f))
-                                .ToList());
+        List<FolderDto> folders = [];
+
+        foreach (var f in mailbox.Folders.Where(f => f.Parent is null))
+        {
+            if (f.Parent != null)
+                continue;
+            if (f.Path == "[Gmail]")
+                // If gmail Folder: Remove prefix and add children of the folder
+                folders.AddRange(f.Children.Select(f => {f.Path = f.Path[8..]; return new FolderDto(f);}));
+            else
+                folders.Add(new FolderDto(f));
+        }
+        
+        return this.Ok(folders.OrderBy(f => f.Id).ToList());
     }
 
     // DELETE: api/MailBox/5
