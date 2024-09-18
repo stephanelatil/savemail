@@ -55,6 +55,11 @@ public class FolderController : ControllerBase
     {
         var folder = await this._context.Folder.Where(f => f.Id == id)
                                                 .Include(f=>f.MailBox)
+                                                .Select(f => new {
+                                                    f.Id,
+                                                    f.MailBox
+                                                })
+                                                .AsSplitQuery()
                                                 .SingleOrDefaultAsync();
 
         if (folder == null)
