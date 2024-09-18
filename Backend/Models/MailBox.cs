@@ -38,10 +38,10 @@ namespace Backend.Models
                     ArgumentNullException.ThrowIfNull(this.OAuthCredentials, nameof(this.OAuthCredentials));
                     if (this.OAuthCredentials.AccessTokenExpired)
                     {
-                        if (this.OAuthCredentials.NeedReAuth || tokenRefreshService is null)
+                        if (this.OAuthCredentials.NeedReAuth)
                             throw new AuthenticationException("OAuthCredentials expired");
                         //refresh here
-                        if (!await tokenRefreshService.RefreshToken(this.OAuthCredentials))
+                        if (tokenRefreshService is null || !await tokenRefreshService.RefreshToken(this.OAuthCredentials))
                             throw new AuthenticationException("Unable to refresh credentials");
                     }
                     await client.AuthenticateAsync(new SaslMechanismOAuth2(this.Username, this.OAuthCredentials.AccessToken), cancellationToken);
