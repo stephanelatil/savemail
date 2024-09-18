@@ -1,8 +1,10 @@
+using System.Text.RegularExpressions;
+
 namespace Backend.Models.DTO;
 
-public class MailDto
+public partial class MailDto
 {
-    private const int MAX_PARTIAL_FETCH_LEN=200;
+    private const int MAX_PARTIAL_FETCH_LEN=300;
 
     public long Id { get; set; }
     public long? ReplyTo { get; set; } = null;
@@ -36,11 +38,14 @@ public class MailDto
         {
             HtmlAgilityPack.HtmlDocument doc = new();
             doc.LoadHtml(this.Body);
-            this.Body = doc.DocumentNode.InnerText.Trim();
+            this.Body = RmConcurrentHTMLWhiteSpaceRegex().Replace(doc.DocumentNode.InnerText, " ");
             if (this.Body.Length > MAX_PARTIAL_FETCH_LEN)
                 this.Body = this.Body.Remove(MAX_PARTIAL_FETCH_LEN-3)+"...";
         }
         this.Attachments = mail.Attachments.Select(a => new AttachmentDto(a)).ToList();
         this.DateSent = mail.DateSent;
     }
+
+    [GeneratedRegex(@"([&]nbsp[;])(\s+[ ])")]
+    private static partial Regex RmConcurrentHTMLWhiteSpaceRegex();
 }
