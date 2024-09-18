@@ -1,3 +1,4 @@
+using System.Net.Sockets;
 using Backend.Models;
 using MailKit;
 using MailKit.Net.Imap;
@@ -51,6 +52,9 @@ namespace Backend.Services
                     if (!mailbox.Folders.Any(f => f.Path == imapFolder.FullName))
                         folders.Add(new Folder(imapFolder));
                 }
+            }
+            catch (SocketException){
+                this._logger.LogWarning("Unable to connect to imap server '{}' on port {}", mailbox.ImapDomain, mailbox.ImapPort);
             }
             catch(MailKit.Security.AuthenticationException e){
                 if (mailbox.OAuthCredentials is not null)
@@ -158,7 +162,11 @@ namespace Backend.Services
                                     MailKit.Security.SecureSocketOptions.Auto,
                                     cancellationToken);
                 await mailbox.ImapAuthenticateAsync(this.imapClient, this._oAuthService, cancellationToken);
-            }catch(MailKit.Security.AuthenticationException e){
+            }
+            catch (SocketException){
+                this._logger.LogWarning("Unable to connect to imap server '{}' on port {}", mailbox.ImapDomain, mailbox.ImapPort);
+            }
+            catch(MailKit.Security.AuthenticationException e){
                 if (mailbox.OAuthCredentials is not null)
                     await this._oAuthService.SetNeedReauth(mailbox.OAuthCredentials);
                 this._logger.LogWarning(e, "Unable to connect to connect and authenticate for mailbox {}", mailbox.Id);
