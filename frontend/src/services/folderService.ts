@@ -15,8 +15,9 @@ export const getFolder = async (id:number):Promise<Folder> =>{
     return response.json();
 }
 
-export const getFolderMails = async (id:number) : Promise<PaginatedRequest<Mail>> => {
-    const response = await apiFetch(`${FOLDER_ENDPOINT}Mails`);
+export const getFolderMails = async (folderId:number, pageNumber:number=1) : Promise<PaginatedRequest<Mail>> => {
+    const url = `${FOLDER_ENDPOINT}${folderId}/Mails?pageNumber=${pageNumber}&pageSize=25`;
+    const response = await apiFetch(url);
 
     if (response.status == 401 || response.status == 403)
         throw new Error("Forbidden", response.status);
