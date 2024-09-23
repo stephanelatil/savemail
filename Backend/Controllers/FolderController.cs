@@ -48,7 +48,7 @@ public class FolderController : ControllerBase
         return new FolderDto(folder);
     }
 
-    // GET: api/Folder/5
+    // GET: api/Folder/5/Mails
     [HttpGet("{id}/Mails")]
     [Authorize]
     public async Task<ActionResult<PaginatedList<MailDto>>> GetMails(int id, PaginationQueryParameters paginationQueryParameters)
@@ -72,9 +72,10 @@ public class FolderController : ControllerBase
             return this.Forbid();
 
         return this.Ok(await PaginationService.GetPagedResult(
-                        this._context.Mail.Where(m => m.FolderId == folder.Id)
-                                                    .OrderByDescending(m =>m.DateSent)
-                                                    .ThenByDescending(m => m.ImapMailUID),
+                        this._context.Mail.Where(m => m.FolderId == folder.Id && m.HasReply == false)
+                                          .AsSplitQuery()
+                                          .OrderByDescending(m =>m.DateSent)
+                                          .ThenByDescending(m => m.ImapMailUID),
                         paginationQueryParameters,
                         (x)=>new MailDto(x, true),
                         this.Request.PathBase+this.Request.Path
