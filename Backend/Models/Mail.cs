@@ -25,9 +25,13 @@ namespace Backend.Models
         [JsonIgnore]
         public readonly string? ImapReplyFromId;
         [JsonIgnore]
+        public long? RepliedFromId { get; set; }
+        public bool IsAReply => this.RepliedFromId.HasValue && this.RepliedFromId.Value > 0;
         public Mail? RepliedFrom { get; set; } = null;
         [JsonIgnore]
-        public ICollection<Mail> Replies { get; set; } = [];
+        public long? ReplyId { get; set; } = null;
+        public Mail? Reply { get; set; } = null;
+        public bool HasReply { get; set; } = false;
         [ReadOnly(true)]
         public EmailAddress? Sender {get; set; } = null;
         [ReadOnly(true)]
