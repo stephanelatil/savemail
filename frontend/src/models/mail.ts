@@ -4,8 +4,10 @@ import { EmailAddress } from "./emailAddress"
 
 export interface Mail {
   id: number,
-  replyTo: number|null,
-  replies:Mail[],
+  repliedFromId: number|null,
+  repliedFrom: Mail|null,
+  replyId:number|null,
+  reply:Mail|null,
   sender:EmailAddress,
   recipients:EmailAddress[],
   recipientsCc:EmailAddress[],
