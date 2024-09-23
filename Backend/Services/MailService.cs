@@ -69,6 +69,24 @@ namespace Backend.Services
             mail.RecipientsCc = tmp;
         }
 
+        private async Task InsertReply(Mail reply, Mail? parent)
+        {
+            if (parent is null)
+                return;
+            if (parent.HasReply && parent.Reply is not null)
+                //keep going down the reply list (in chronological order) until the bottom
+                await this.InsertReply(reply, 
+                        await this._context.Mail.Where(m => m.Id == parent.Reply.Id).Include(m => m.Reply).SingleOrDefaultAsync());
+            else
+            {
+                //bottom of reply list hit :
+                parent.HasReply = true;
+                parent.Reply = reply;
+                this._context.Mail.Update(parent);
+                reply.RepliedFrom = parent;
+            }
+        }
+
         public async Task SaveMail(List<Mail> mails, CancellationToken cancellationToken = default)
         {
             this._logger.LogDebug("Adding {} emails", mails.Count);
@@ -77,8 +95,11 @@ namespace Backend.Services
                 if (mail.ImapReplyFromId is not null){
                     mail.RepliedFrom = mails.Where(m => m.OwnerMailBoxId == mail.OwnerMailBoxId)
                                                         .SingleOrDefault(x => mail.ImapReplyFromId == x.ImapMailId)
-                                     ?? await this._context.Mail.Where(m => m.OwnerMailBoxId == mail.OwnerMailBoxId)
+                                     ?? await this._context.Mail.Include(m => m.Reply)
+                                                        .Where(m => m.OwnerMailBoxId == mail.OwnerMailBoxId)
                                                         .SingleOrDefaultAsync(x => mail.ImapReplyFromId == x.ImapMailId, cancellationToken);
+                    if (mail.RepliedFrom is not null)
+                        await this.InsertReply(mail, mail.RepliedFrom);
                 }
                 await this.HandleEmailAddresses(mail);
             }
