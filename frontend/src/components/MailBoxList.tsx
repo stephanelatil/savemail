@@ -55,7 +55,7 @@ const FolderListItem: React.FC<PartialFolderInfo> = ({id, name, children, folder
         <Collapse in={open} timeout='auto' unmountOnExit>
             <List>
                 {children.map(f => 
-                    <FolderListItem key={'FOLDER_LI_'+f.id} id={f.id} name={f.name} children={f.children}/>
+                    <FolderListItem key={'FOLDER_LI_'+f.id} id={f.id} name={f.name} children={f.children} indent={(indent|| 0) +1}/>
                 )}
             </List>
         </Collapse>
@@ -144,14 +144,19 @@ const MailBoxList: React.FC = () => {
             if (mailboxes.length == 0)
                 setMailboxesList(<></>);
             else
-                setMailboxesList(<>{mailboxes.map(mb => <MailBoxListItem key={'MAILBOX_LI_'+mb.id} id={mb.id} username={mb.username}/>)}</>);
+                setMailboxesList(<>{mailboxes.map(mb => <MailBoxListItem key={'MAILBOX_LI_'+mb.id} id={mb.id} folders={mb.folders} username={mb.username}/>)}</>);
         }
         if (mailboxesList?.key === 'MAILBOX_LOADING')
             populateMailboxes();
     }, []);
 
     return (
-        <List sx={{height:'100%', display:'flex', flexDirection:'column', flex:'1 1 auto', overflowY:'auto', overflowX:'hidden'}}>
+        <List sx={{ height:'100%',
+                    display:'flex',
+                    flexDirection:'column',
+                    flex:'1 1 auto',
+                    overflowY:'auto',
+                    overflowX:'hidden'}}>
             <NewMailboxListItem key={'NEW_LI'}/>
             {mailboxesList}
         </List>
