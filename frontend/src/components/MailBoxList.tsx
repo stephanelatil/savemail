@@ -4,7 +4,7 @@ import { useMailboxes } from "@/hooks/useMailboxes";
 import { Folder } from "@/models/folder";
 import { Archive as ArchiveIcon, CreateNewFolder, Delete as DeleteIcon, Email as EmailIcon, ExpandLess, ExpandMore, Folder as FolderIcon, Send as SendIcon } from "@mui/icons-material";
 import { CircularProgress, Collapse, Divider, List, ListItem, ListItemButton, ListItemIcon, ListItemText } from "@mui/material";
-import { usePathname } from "next/navigation";
+import { useParams, usePathname } from "next/navigation";
 import React, { useEffect, useState } from "react";
 
 const mapFolderIcon = (name:string) =>{
@@ -23,17 +23,24 @@ const mapFolderIcon = (name:string) =>{
 interface PartialFolderInfo{
     id:number,
     name:string,
-    children:Folder[]
+    folderPathId?:string,
+    children:Folder[],
+    indent?:number
 }
 
-const FolderListItem: React.FC<PartialFolderInfo> = ({id, name, children}) => {
+const FolderListItem: React.FC<PartialFolderInfo> = ({id, name, children, folderPathId, indent}) => {
     const hasChildren:boolean = children.length > 0;
-    const pathname = usePathname();
-    const open = RegExp("/mailbox/([0-9]+)/?").test(pathname) && RegExp("[0-9]+").exec(pathname)?.at(0) == (id+'');
+    function idInSubfolders(folder:Folder, id:string): boolean {
+        if (!folder || !folderPathId)
+            return false;
+        return folder.id+"" == folderPathId || folder.children?.some(f => idInSubfolders(f, folderPathId));
+    };
 
+    const open = !!folderPathId && (id+"" == folderPathId || !!children?.some(f => idInSubfolders(f, folderPathId)));
+    
     return (
     <>
-    <ListItem sx={{alignSelf:'center', px:0.5}}>
+    <ListItem sx={{alignSelf:'center', px:0.5, paddingLeft: (indent || 0)}}>
         <ListItemButton key={'FOLDER_'+id}  href={`/folder/${id}`}>
             <ListItemIcon>
                 {mapFolderIcon(name)}
@@ -59,16 +66,33 @@ const FolderListItem: React.FC<PartialFolderInfo> = ({id, name, children}) => {
 interface PartialMailbox{
     id:number,
     username:string,
-    folders?:Folder[]|null
+    folders?:Folder[]|null,
+    indent?:number
 }
 
-const MailBoxListItem : React.FC<PartialMailbox> = ({id, username, folders}) =>{
+const MailBoxListItem : React.FC<PartialMailbox> = ({id, username, folders, indent}) =>{
     const pathname = usePathname();
-    const open = RegExp("/mailbox/([0-9]+)/?").test(pathname) && RegExp("[0-9]+").exec(pathname)?.at(0) == (id+'');
+    const {id:pageId}:{id:string} = useParams();
+    
+    function idInSubfolders(folder:Folder, id:string): boolean {
+        if (!folder)
+            return false;
+        return folder.id+"" == id || folder.children?.some(f => idInSubfolders(f, id));
+    };
+
+    let open = (RegExp("/mailbox/([0-9]+)").test(pathname)
+                    && pageId == (id+''));
+    let folderId:string = "";
+    if (RegExp("/folder/([0-9]+)").test(pathname))
+    {
+        folderId = pageId;
+        if (folderId)
+            open = !!folders?.some(f => idInSubfolders(f, folderId));
+    }
 
     return (
         <>
-        <ListItem key={'MAILBOX_'+id} sx={{alignSelf:'center', py:0, px:0.5}} >
+        <ListItem key={'MAILBOX_'+id} sx={{alignSelf:'center', py:0, px:0.5, paddingLeft:indent|| 0}}>
             <ListItemButton href={`/mailbox/${id}`}
                 sx={{
                     justifyContent:'space-between',
@@ -83,7 +107,7 @@ const MailBoxListItem : React.FC<PartialMailbox> = ({id, username, folders}) =>{
         {
             open ? 
                 <List>
-                    { !!folders && folders.length > 0 ? folders?.map(f => <FolderListItem key={'FOLDER_LI_'+f.id} id={f.id} name={f.name} children={f.children} />) : <></>}
+                    { !!folders && folders.length > 0 ? folders?.map(f => <FolderListItem key={'FOLDER_LI_'+f.id} id={f.id} name={f.name} children={f.children} folderPathId={folderId} indent={(indent||0)+1}/>) : <></>}
                 </List> 
                 : <></>
         }
