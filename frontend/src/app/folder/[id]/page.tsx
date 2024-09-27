@@ -1,11 +1,14 @@
 import MailListPage from '@/components/MailList';
-import NotFound from '@/components/NotFound';
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'View Emails'
+}
 
 const MailsInFolder:React.FC = () =>{
-    try{
-        return <MailListPage />;
-    }catch{}
-    return <NotFound />
+        return (<>
+            <MailListPage />
+        </>);
 }
 
 export default MailsInFolder;
