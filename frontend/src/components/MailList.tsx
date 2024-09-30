@@ -4,7 +4,7 @@ import { useFolder } from "@/hooks/useFolder";
 import { EmailAddress } from "@/models/emailAddress";
 import { Mail } from "@/models/mail";
 import { AttachFile, SkipNext, SkipPrevious } from "@mui/icons-material";
-import { Card, CardContent, Stack, Typography, Box, ListItem, CircularProgress, Button, List, ListItemButton } from "@mui/material";
+import { Stack, Typography, Box, ListItem, CircularProgress, Button, List, ListItemButton } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useParams } from 'next/navigation';
 import NotFound from "./NotFound";
@@ -17,14 +17,16 @@ interface MailParts{
     subject:string,
     body:string,
     hasAttachments:boolean,
-    dateSent:Date
+    dateSent:Date,
+    setSelectedId:(id:number)=>void,
+    setOpenOverlay:(open:boolean)=>void
 }
 
-const MailListItem: React.FC<MailParts> = ({id,repliedFromId,sender,subject,body,hasAttachments,dateSent}) => {
+const MailListItem: React.FC<MailParts> = ({id,repliedFromId,sender,subject,body,hasAttachments,dateSent,setSelectedId,setOpenOverlay}) => {
     return (
         <ListItem key={"MAIL_"+id}>
             {/* Find a way to open mail overlay on click */}
-            <ListItemButton >
+            <ListItemButton onClick={() => {setSelectedId(id); setOpenOverlay(true);}}>
                 <Stack flexDirection="column" spacing={1} justifyContent="space-between">
                     <Stack flexDirection="row" spacing={2} justifyContent={"space-between"}>
                         <Typography variant="body1" color="textSecondary" maxWidth={'10em'} minWidth={"10%"}>
@@ -54,10 +56,11 @@ interface MailListPageInfo {
 
 const MailListBox : React.FC<MailListPageInfo> = ({hasNext, hasPrev, pageNum, setPageNum, mails}) => {
     const [open, setOpen] = useState(false);
+    const [mailId, setMailId] = useState(0);
 
     return (
         <Box overflow='hidden'>
-            <MailOverlay open={open} setOpen={setOpen} id={0}/>
+            <MailOverlay open={open} setOpen={setOpen} id={mailId}/>
             <Stack direction='row' justifyContent='right'>
                 <Button onClick={() => setPageNum(pageNum-1)} disabled={!hasPrev}>
                     <SkipPrevious />
@@ -78,6 +81,8 @@ const MailListBox : React.FC<MailListPageInfo> = ({hasNext, hasPrev, pageNum, se
                                     sender={m.sender}
                                     hasAttachments={m.attachments.length > 0}
                                     dateSent={m.dateSent}
+                                    setOpenOverlay={setOpen}
+                                    setSelectedId={setMailId}
                                           />)}
         </List>
     </Box>);
