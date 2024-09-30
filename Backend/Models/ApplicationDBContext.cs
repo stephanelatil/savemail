@@ -29,9 +29,9 @@ namespace Backend.Models
             modelBuilder.Entity<Mail>().HasMany(m => m.Recipients).WithMany(em => em.MailsReceived);
             modelBuilder.Entity<Mail>().HasMany(m => m.RecipientsCc).WithMany(em => em.MailsCCed);
             modelBuilder.Entity<Mail>().HasOne(m => m.RepliedFrom).WithOne(m => m.Reply)
-                                       .OnDelete(DeleteBehavior.Cascade).HasForeignKey("RepliedFromId");
+                                       .OnDelete(DeleteBehavior.Cascade).HasForeignKey<Mail>(m => m.RepliedFromId);
             modelBuilder.Entity<Mail>().HasOne(m => m.Reply).WithOne(m => m.RepliedFrom)
-                                       .OnDelete(DeleteBehavior.Cascade).HasForeignKey("ReplyId");
+                                       .OnDelete(DeleteBehavior.Cascade).HasForeignKey<Mail>(m => m.ReplyId);
             modelBuilder.Entity<Mail>().Navigation(m => m.Sender).AutoInclude();
             modelBuilder.Entity<Mail>().Navigation(m => m.Recipients).AutoInclude();
             modelBuilder.Entity<Mail>().Navigation(m => m.RecipientsCc).AutoInclude();
