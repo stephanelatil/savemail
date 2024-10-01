@@ -23,9 +23,7 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
           <AppRouterCacheProvider>
             <LightDarkMode>
               <NotificationSnackbar>
-                <PageBaseWithSidebar>
                   {children}
-                </PageBaseWithSidebar>
               </NotificationSnackbar>
             </LightDarkMode>
           </AppRouterCacheProvider>
