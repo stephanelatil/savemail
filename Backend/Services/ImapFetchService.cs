@@ -49,6 +49,8 @@ namespace Backend.Services
                 {
                     if (mailbox.Provider == ImapProvider.Google && imapFolder.FullName == "[Gmail]/All Mail")
                         continue; //Ignore this folder which is just inbox+user created folders. Makes duplicate emails
+                    if (imapFolder.Name == "Trash") //ignore trash folder: should not be synced. TODO: edited in settings
+                        continue;
                     if (!mailbox.Folders.Any(f => f.Path == imapFolder.FullName))
                         folders.Add(new Folder(imapFolder));
                 }
