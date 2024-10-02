@@ -1,4 +1,6 @@
+import Sidebar from '@/components/SideBar';
 import UserSettings from '@/components/UserSettings';
+import React from 'react';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -6,7 +8,10 @@ export const metadata: Metadata = {
 }
 
 const UserSettingsPage: React.FC = () => {
-    return <UserSettings />;
+    return  <>
+                <Sidebar />
+                <UserSettings />
+            </>;
 }
 
 export default UserSettingsPage;
