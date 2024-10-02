@@ -3,8 +3,9 @@
 import { useFolder } from "@/hooks/useFolder";
 import { EmailAddress } from "@/models/emailAddress";
 import { Mail } from "@/models/mail";
+import React from 'react';
 import { AttachFile, SkipNext, SkipPrevious } from "@mui/icons-material";
-import { Stack, Typography, Box, ListItem, CircularProgress, Button, List, ListItemButton } from "@mui/material";
+import { Stack, Typography, Box, ListItem, CircularProgress, Button, List, ListItemButton, Paper, BottomNavigation, BottomNavigationAction, PaginationItem, TablePagination, Pagination } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useParams } from 'next/navigation';
 import NotFound from "./NotFound";
@@ -59,33 +60,35 @@ const MailListBox : React.FC<MailListPageInfo> = ({hasNext, hasPrev, pageNum, se
     const [mailId, setMailId] = useState(0);
 
     return (
-        <Box overflow='hidden'>
-            <MailOverlay open={open} setOpen={setOpen} id={mailId}/>
-            <Stack direction='row' justifyContent='right'>
-                <Button onClick={() => setPageNum(pageNum-1)} disabled={!hasPrev}>
-                    <SkipPrevious />
-                </Button>
-                <Typography variant='h6'>
-                    {pageNum}
-                </Typography>
-                <Button onClick={() => setPageNum(pageNum+1)} disabled={!hasNext}>
-                    <SkipNext />
-                </Button>
+        <>
+            <Stack overflow='hidden'>
+                <List>
+                    {mails.map(m => <MailListItem   
+                                            key={"MAIL_LI_"+m.id}
+                                            id={m.id}
+                                            subject={m.subject}
+                                            body={m.body}
+                                            sender={m.sender}
+                                            hasAttachments={m.attachments.length > 0}
+                                            dateSent={m.dateSent}
+                                            setOpenOverlay={setOpen}
+                                            setSelectedId={setMailId}
+                                                />)}
+                    </List>
+                    <Stack direction='row' justifyContent='center' position='sticky'>
+                        <Button onClick={() => setPageNum(pageNum-1)} disabled={!hasPrev}>
+                            <SkipPrevious />
+                        </Button>
+                        <Typography variant='h6'>
+                            {pageNum}
+                        </Typography>
+                        <Button onClick={() => setPageNum(pageNum+1)} disabled={!hasNext}>
+                            <SkipNext />
+                        </Button>
+                    </Stack>
+                <MailOverlay open={open} setOpen={setOpen} id={mailId}/>
             </Stack>
-        <List>
-            {mails.map(m => <MailListItem   
-                                    key={"MAIL_LI_"+m.id}
-                                    id={m.id}
-                                    subject={m.subject}
-                                    body={m.body}
-                                    sender={m.sender}
-                                    hasAttachments={m.attachments.length > 0}
-                                    dateSent={m.dateSent}
-                                    setOpenOverlay={setOpen}
-                                    setSelectedId={setMailId}
-                                          />)}
-        </List>
-    </Box>);
+        </>);
 }
 
 const MailListPage : React.FC = () => {
@@ -102,8 +105,8 @@ const MailListPage : React.FC = () => {
                 setMailList(<NotFound/>);
                 return;
             }
-            const hasPrev = !!paginatedMail?.previousPage;
-            const hasNext = !!paginatedMail?.nextPage;
+            const hasPrev = !!paginatedMail?.prev;
+            const hasNext = !!paginatedMail?.next;
             setMailList(<MailListBox mails={paginatedMail.items} hasNext={hasNext} hasPrev={hasPrev} pageNum={pageNum} setPageNum={setPageNum}/>);
         }
         fetchEmails();
