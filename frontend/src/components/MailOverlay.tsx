@@ -95,7 +95,7 @@ const MailElement:React.FC<{id?:number|null,
                                 </List> :
                                 <></> }
                         </Collapse>
-                        <Box dangerouslySetInnerHTML={{ __html: purify.sanitize(mail.body)}} />
+                        <Box dangerouslySetInnerHTML={{ __html: purify.sanitize(mail.body)}}/>
                         {/* TODO Add attachments here! */}
                         <Divider />
                     </Box>
@@ -126,21 +126,36 @@ const MailOverlay:React.FC<MailModalProps> = ({id, open, setOpen}) => {
                }}>
             <Box sx={{alignItems:'center',
                       alignSelf:'center',
-                      position:'absolute',
+                      left:'0.5em',
+                      p:'1em',
+                      maxHeight:'90%',
+                      width:'fit-content',
+                      maxWidth:'95%',
                       overflow:'scroll',
-                      height:'100%',
-                      display:'block',
-                      maxWidth:'96%',
-                      minWidth:'80%',
-                      bgcolor: 'background.paper',
+                      bgcolor: 'white',
                       border: '2px solid #000',
                 }}>
-                <Button onClick={handleClose} sx={{alignSelf:'start'}}><Close /></Button>
-                <Paper elevation={0} variant="outlined" square={false}>
-                    <MailElement id={id} loadedMails={loadedMails} setLoadedMails={setLoadedMails}/>
+                <Paper elevation={0} variant="outlined" square>
+                    <Button onClick={handleClose} disabled={!open}
+                            sx={{
+                                position:'sticky',
+                                alignSelf:'end',
+                                alignContent:'end'
+                            }}>
+                            <Close />
+                    </Button>
+                    <Paper  elevation={1}
+                            square
+                            sx={{
+                                display:'flex',
+                                overflow:'scroll'
+                                }}>
+                        <MailElement id={id} loadedMails={loadedMails} setLoadedMails={setLoadedMails}/>
+                    </Paper>
                 </Paper>
             </Box>
         </Modal>
+        // TODO fix it not being centered
     );
 }
 
