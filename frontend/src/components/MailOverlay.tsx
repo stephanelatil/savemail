@@ -5,7 +5,7 @@ import { Mail } from "@/models/mail";
 import { ArrowDropDown, ChevronRight, Close } from "@mui/icons-material";
 import React from 'react';
 import purify from 'dompurify'
-import { Box, Button,  Collapse, Divider, List, ListItem, ListItemText, Modal, Paper, Skeleton, Stack, Typography } from "@mui/material";
+import { Box, Button,  Collapse, Divider, IconButton, List, ListItem, ListItemText, Modal, Paper, Skeleton, Stack, Typography, useTheme } from "@mui/material";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 
 
@@ -20,6 +20,7 @@ const MailElement:React.FC<{id?:number|null,
     const { loading, getMail } = useMails();
     const [ toFromOpen, setToFromOpen ] = useState(false);
     const [ mail, setMail ] = useState<Mail|null>();
+    const theme = useTheme();
 
     // only requery on first render and when mailID changes. Fill with error if not allowed
     useEffect(()=>{
@@ -41,71 +42,101 @@ const MailElement:React.FC<{id?:number|null,
 
         populateMail();
     },[id]);
-    return (<>
-            {!mail ? <></> : //if mail is null do nothing. Most likely already loaded
-            (
-                loading ? <LoadingMailElement />: //show loading 
-                <>
-                    <MailElement id={mail.repliedFromId} loadedMails={loadedMails} setLoadedMails={setLoadedMails}/> {/*parent here*/}
-                    <Box>
-                        <Stack flexDirection='row'>
-                            <Typography variant="h6" maxWidth='90%' flexWrap='wrap'>
-                                {mail.subject}
-                            </Typography>
-                            <Typography variant='body1' minWidth='10em'>
-                                {mail.dateSent.toLocaleString("en-Us", {
-                                        dateStyle:"medium",
-                                        timeStyle:"medium",
-                                        dayPeriod:"short",
-                                        hour:'2-digit',
-                                        hourCycle:'h24',
-                                    } as Intl.DateTimeFormatOptions)
-                                }
-                            </Typography>
-                        </Stack>
-                        <Button onClick={() => setToFromOpen(prev => !prev)} variant='text'>
-                            <Typography variant="body1">
-                                From: {mail.sender.fullName ?? "" + mail.sender.address}
-                            </Typography>
-                            { toFromOpen ? <ArrowDropDown /> : <ChevronRight /> }
-                        </Button>
+      
+    if (!mail) return <></>;
+    if (loading) return <LoadingMailElement />;
 
-                        <Collapse in={toFromOpen}>
-                            <List>
-                                {mail.recipients.map(r => (
-                                            <ListItem key={r.address}>
-                                                <ListItemText>
-                                                    <Typography variant="body2">
-                                                        {r.fullName ?? "" + r.address}
-                                                    </Typography>
-                                                </ListItemText>
-                                            </ListItem>
-                                        ))}
-                            </List>
-                            { mail.recipientsCc?.length ?? 0 > 0 ?
-                                <List>
-                                    {mail.recipientsCc.map(r => (
-                                        <ListItem key={r.address}>
-                                            <ListItemText>
-                                                <Typography variant="body2">
-                                                    {r.fullName ?? "" + r.address}
-                                                </Typography>
-                                            </ListItemText>
-                                        </ListItem> ))}
-                                </List> :
-                                <></> }
-                        </Collapse>
-                        <Box dangerouslySetInnerHTML={{ __html: purify.sanitize(mail.body)}}/>
-                        {/* TODO Add attachments here! */}
-                        <Divider />
-                    </Box>
-                    {/*child (reply) here. Removed to avoid recursive loading*/}
-                    {/* <MailElement id={mail.replyId} loadedMails={loadedMails} setLoadedMails={setLoadedMails}/>  */}
+    return (
+        <Paper 
+        elevation={0} 
+        sx={{ 
+            mb: 2, 
+            p: 2, 
+            borderRadius: 2, 
+            bgcolor: theme.palette.background.paper,
+            color: theme.palette.text.primary
+        }}
+        >
+        <MailElement id={mail.repliedFromId} loadedMails={loadedMails} setLoadedMails={setLoadedMails} />
+        <Box>
+            <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1}>
+            <Typography variant="h6" sx={{ fontWeight: 'bold', color: theme.palette.primary.main }}>
+                {mail.subject}
+            </Typography>
+            <Typography variant="body2" sx={{ color: theme.palette.text.secondary }}>
+                {mail.dateSent.toLocaleString("en-US", {
+                dateStyle: "medium",
+                timeStyle: "short",
+                })}
+            </Typography>
+            </Stack>
+            
+            <Button 
+            onClick={() => setToFromOpen(prev => !prev)} 
+            variant='text' 
+            sx={{ mb: 1, color: theme.palette.text.primary }}
+            startIcon={toFromOpen ? <ArrowDropDown /> : <ChevronRight />}
+            >
+            <Typography variant="body2">
+                From: {mail.sender.fullName || mail.sender.address}
+            </Typography>
+            </Button>
+
+            <Collapse in={toFromOpen}>
+            <Box sx={{ bgcolor: theme.palette.action.hover, borderRadius: 1, p: 1, mb: 1 }}>
+                <Typography variant="subtitle2" sx={{ mb: 1 }}>To:</Typography>
+                <List dense disablePadding>
+                {mail.recipients.map(r => (
+                    <ListItem key={r.address} disableGutters>
+                    <ListItemText 
+                        primary={r.fullName || r.address} 
+                        primaryTypographyProps={{ variant: 'body2' }}
+                    />
+                    </ListItem>
+                ))}
+                </List>
+                {mail.recipientsCc?.length > 0 && (
+                <>
+                    <Typography variant="subtitle2" sx={{ mt: 1, mb: 1 }}>CC:</Typography>
+                    <List dense disablePadding>
+                    {mail.recipientsCc.map(r => (
+                        <ListItem key={r.address} disableGutters>
+                        <ListItemText 
+                            primary={r.fullName || r.address} 
+                            primaryTypographyProps={{ variant: 'body2' }}
+                        />
+                        </ListItem>
+                    ))}
+                    </List>
                 </>
-            )
-            }
-            </>);
-}
+                )}
+            </Box>
+            </Collapse>
+            
+            <Box 
+            dangerouslySetInnerHTML={{ __html: purify.sanitize(mail.body) }}
+            sx={{ 
+                '& *': { 
+                color: `${theme.palette.text.primary} !important`,
+                backgroundColor: `${theme.palette.background.paper} !important`,
+                },
+                '& a': { 
+                color: `${theme.palette.primary.main} !important`, 
+                textDecoration: 'none' 
+                },
+                '& a:hover': { 
+                textDecoration: 'underline' 
+                },
+            }}
+            />
+            
+            {/* TODO: Add attachments here */}
+            
+            <Divider sx={{ my: 2 }} />
+        </Box>
+        </Paper>
+    );
+};
 
 interface MailModalProps {
     id:number,
@@ -113,49 +144,54 @@ interface MailModalProps {
     setOpen:(value:boolean)=>void
 }
 
-const MailOverlay:React.FC<MailModalProps> = ({id, open, setOpen}) => {
+const MailOverlay: React.FC<MailModalProps> = ({ id, open, setOpen }) => {
     const handleClose = () => setOpen(false);
     const [loadedMails, setLoadedMails] = useState<number[]>([]);
 
     return (
-        <Modal open={open}
-               onClose={handleClose}
-               closeAfterTransition
-               slotProps={{
-                backdrop:''
-               }}>
-            <Box sx={{alignItems:'center',
-                      alignSelf:'center',
-                      left:'0.5em',
-                      p:'1em',
-                      maxHeight:'90%',
-                      width:'fit-content',
-                      maxWidth:'95%',
-                      overflow:'scroll',
-                      bgcolor: 'white',
-                      border: '2px solid #000',
-                }}>
-                <Paper elevation={0} variant="outlined" square>
-                    <Button onClick={handleClose} disabled={!open}
-                            sx={{
-                                position:'sticky',
-                                alignSelf:'end',
-                                alignContent:'end'
-                            }}>
-                            <Close />
-                    </Button>
-                    <Paper  elevation={1}
-                            square
-                            sx={{
-                                display:'flex',
-                                overflow:'scroll'
-                                }}>
-                        <MailElement id={id} loadedMails={loadedMails} setLoadedMails={setLoadedMails}/>
-                    </Paper>
+        <Modal
+        open={open}
+        onClose={handleClose}
+        closeAfterTransition
+        sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+        }}
+        >
+            <Box
+                sx={{
+                width: '90%',
+                maxWidth: '800px',
+                maxHeight: '90vh',
+                bgcolor: 'background.paper',
+                borderRadius: 2,
+                boxShadow: 24,
+                overflow: 'hidden',
+                display: 'flex',
+                flexDirection: 'column',
+                }}
+            >
+                <Paper
+                elevation={0}
+                sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    p: 2,
+                    borderBottom: '1px solid #e0e0e0',
+                }}
+                >
+                <Typography variant="h6">Email</Typography>
+                <IconButton onClick={handleClose} size="small">
+                    <Close />
+                </IconButton>
                 </Paper>
+                <Box sx={{ flexGrow: 1, overflow: 'auto', p: 2 }}>
+                <MailElement id={id} loadedMails={loadedMails} setLoadedMails={setLoadedMails} />
+                </Box>
             </Box>
         </Modal>
-        // TODO fix it not being centered
     );
 }
 
