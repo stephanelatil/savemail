@@ -2,10 +2,9 @@ using System.Text;
 using System.Text.Json.Serialization;
 using Backend.Models;
 using Backend.Services;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddSingleton(TimeProvider.System);
@@ -31,6 +30,8 @@ builder.Services.AddSwaggerGen();
 //insert DBContext
 builder.Services.AddDbContext<ApplicationDBContext>(opt =>{
     var connectionString = new StringBuilder();
+    if (builder.Environment.IsDevelopment())
+        opt.ConfigureWarnings(w => w.Throw(RelationalEventId.MultipleCollectionIncludeWarning));
     
     connectionString.Append($"Host={builder.Configuration.GetConnectionString("Host")};");
     connectionString.Append($"Username={builder.Configuration.GetConnectionString("Username")};");
