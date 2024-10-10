@@ -19,15 +19,19 @@ public class OAuthService : IOAuthService
 {
     private readonly HttpClient _httpClient;
     private readonly ApplicationDBContext _context;
-    private readonly string _clientId;
-    private readonly string _clientSecret;
+    private readonly Dictionary<ImapProvider, string> _clientId;
+    private readonly Dictionary<ImapProvider, string> _clientSecret;
 
     public OAuthService(HttpClient httpClient, IConfiguration configuration, ApplicationDBContext context)
     {
         this._context = context;
         this._httpClient = httpClient;
-        this._clientId = configuration.GetValue<string>("OAuth2:GOOGLE_CLIENT_ID") ?? string.Empty;
-        this._clientSecret = configuration.GetValue<string>("OAuth2:GOOGLE_CLIENT_SECRET") ?? string.Empty;
+
+        this._clientId = [];
+        this._clientSecret = [];
+        this._clientId[ImapProvider.Google] = configuration.GetValue<string>("OAuth2:GOOGLE_CLIENT_ID") ?? string.Empty;
+        this._clientSecret[ImapProvider.Google] = configuration.GetValue<string>("OAuth2:GOOGLE_CLIENT_SECRET") ?? string.Empty;
+        //add other client id/secrets here with other providers
     }
 
     public async Task SetNeedReauth(OAuthCredentials credentials)
@@ -75,11 +79,15 @@ public class OAuthService : IOAuthService
     public async Task<bool> RefreshToken(OAuthCredentials credentials)
     {
         this._context.OAuthCredentials.Update(credentials);
+        string? clientId = this._clientSecret.GetValueOrDefault(credentials.Provider);
+        string? clientSecret = this._clientSecret.GetValueOrDefault(credentials.Provider);
+        if (clientId is null || clientSecret is null)
+            return false;
 
         HttpRequestMessage request = new(HttpMethod.Post, OAuthCredentials.RefreshUrl(credentials.Provider))
         {
             Content = new StringContent(
-                $"client_id={this._clientId}&client_secret={this._clientSecret}&refresh_token={credentials.RefreshToken}&grant_type=refresh_token",
+                $"client_id={clientId}&client_secret={clientSecret}&refresh_token={credentials.RefreshToken}&grant_type=refresh_token",
                 Encoding.UTF8,
                 "application/x-www-form-urlencoded")
         };
@@ -114,7 +122,6 @@ public class OAuthService : IOAuthService
         }
         catch {
             credentials.NeedReAuth = true;
-            // TODO add logging here and see what the issue is
             await this._context.SaveChangesAsync();
             return false;
         }
