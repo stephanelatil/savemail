@@ -9,10 +9,38 @@ import { Box, Button,  Collapse, Divider, IconButton, List, ListItem, ListItemTe
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 
 
-const LoadingMailElement:React.FC<{mail?:Mail}> = ({mail}) => {
-    return (<Box>
-        </Box>);
-}
+const LoadingMailElement: React.FC = () => {
+    const theme = useTheme();
+    
+    return (
+      <Paper 
+        elevation={0} 
+        sx={{ 
+          mb: 2, 
+          p: 2, 
+          borderRadius: 2, 
+          bgcolor: theme.palette.background.paper,
+        }}
+      >
+        <Stack spacing={2}>
+          {/* Subject and Date */}
+          <Stack direction="row" justifyContent="space-between" alignItems="center">
+            <Skeleton variant="text" width="60%" height={32} />
+            <Skeleton variant="text" width="20%" height={24} />
+          </Stack>
+          
+          {/* From */}
+          <Skeleton variant="text" width="40%" height={24} />
+          
+          {/* Email body paragraphs */}
+          <Skeleton variant="text" width="100%" height={20} />
+          <Skeleton variant="text" width="95%" height={20} />
+          <Skeleton variant="text" width="98%" height={20} />
+          <Skeleton variant="text" width="90%" height={20} />
+        </Stack>
+      </Paper>
+    );
+  };
 
 const MailElement:React.FC<{id?:number|null,
                             loadedMails:number[],
