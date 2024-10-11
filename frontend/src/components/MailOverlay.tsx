@@ -71,8 +71,8 @@ const MailElement:React.FC<{id?:number|null,
         populateMail();
     },[id]);
       
-    if (!mail) return <></>;
     if (loading) return <LoadingMailElement />;
+    if (!mail) return <></>;
 
     return (
         <Paper 
@@ -92,10 +92,10 @@ const MailElement:React.FC<{id?:number|null,
                 {mail.subject}
             </Typography>
             <Typography variant="body2" sx={{ color: theme.palette.text.secondary }}>
-                {mail.dateSent.toLocaleString("en-US", {
+                {mail.dateSent?.toLocaleString("en-US", {
                 dateStyle: "medium",
                 timeStyle: "short",
-                })}
+                }) ?? "?"}
             </Typography>
             </Stack>
             
@@ -106,7 +106,7 @@ const MailElement:React.FC<{id?:number|null,
             startIcon={toFromOpen ? <ArrowDropDown /> : <ChevronRight />}
             >
             <Typography variant="body2">
-                From: {mail.sender.fullName || mail.sender.address}
+                From: {(mail.sender?.fullName || mail.sender?.address) ?? "UNKNOWN"}
             </Typography>
             </Button>
 
@@ -114,7 +114,7 @@ const MailElement:React.FC<{id?:number|null,
             <Box sx={{ bgcolor: theme.palette.action.hover, borderRadius: 1, p: 1, mb: 1 }}>
                 <Typography variant="subtitle2" sx={{ mb: 1 }}>To:</Typography>
                 <List dense disablePadding>
-                {mail.recipients.map(r => (
+                {mail.recipients?.map(r => (
                     <ListItem key={r.address} disableGutters>
                     <ListItemText 
                         primary={r.fullName || r.address} 
@@ -123,21 +123,21 @@ const MailElement:React.FC<{id?:number|null,
                     </ListItem>
                 ))}
                 </List>
-                {mail.recipientsCc?.length > 0 && (
-                <>
-                    <Typography variant="subtitle2" sx={{ mt: 1, mb: 1 }}>CC:</Typography>
-                    <List dense disablePadding>
-                    {mail.recipientsCc.map(r => (
-                        <ListItem key={r.address} disableGutters>
-                        <ListItemText 
-                            primary={r.fullName || r.address} 
-                            primaryTypographyProps={{ variant: 'body2' }}
-                        />
-                        </ListItem>
-                    ))}
-                    </List>
-                </>
-                )}
+                {mail.recipientsCc?.length > 0 ? (
+                    <>
+                        <Typography variant="subtitle2" sx={{ mt: 1, mb: 1 }}>CC:</Typography>
+                        <List dense disablePadding>
+                        {mail.recipientsCc?.map(r => (
+                            <ListItem key={r.address} disableGutters>
+                            <ListItemText 
+                                primary={r.fullName || r.address} 
+                                primaryTypographyProps={{ variant: 'body2' }}
+                            />
+                            </ListItem>
+                        ))}
+                        </List>
+                    </>
+                ) : <></>}
             </Box>
             </Collapse>
             
