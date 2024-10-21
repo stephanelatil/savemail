@@ -30,6 +30,10 @@ interface PartialFolderInfo{
 }
 
 const FolderListItem: React.FC<PartialFolderInfo> = ({id, name, children, folderPathId, indent}) => {
+    const pathname = usePathname();
+    const {id:pageId}:{id:string} = useParams();
+    let folderSelected:boolean = RegExp("/folder/([0-9]+)").test(pathname) && (pageId == id+'');
+
     const hasChildren:boolean = children.length > 0;
     function idInSubfolders(folder:Folder, id:string): boolean {
         if (!folder || !folderPathId)
@@ -42,7 +46,7 @@ const FolderListItem: React.FC<PartialFolderInfo> = ({id, name, children, folder
     return (
     <>
     <ListItem sx={{alignSelf:'center', px:0.5, paddingLeft: (indent || 0)}}>
-        <ListItemButton key={'FOLDER_'+id}  href={`/folder/${id}`}>
+        <ListItemButton key={'FOLDER_'+id}  href={`/folder/${id}`} selected={folderSelected}>
             <ListItemIcon>
                 {mapFolderIcon(name)}
             </ListItemIcon>
@@ -71,9 +75,11 @@ interface PartialMailbox{
     indent?:number
 }
 
+//TODO: On click do not reload sidebar just inner page
 const MailBoxListItem : React.FC<PartialMailbox> = ({id, username, folders, indent}) =>{
     const pathname = usePathname();
     const {id:pageId}:{id:string} = useParams();
+    let mbSelected:boolean = false;
     
     function idInSubfolders(folder:Folder, id:string): boolean {
         if (!folder)
@@ -83,6 +89,8 @@ const MailBoxListItem : React.FC<PartialMailbox> = ({id, username, folders, inde
 
     let open = (RegExp("/mailbox/([0-9]+)").test(pathname)
                     && pageId == (id+''));
+    if (open)
+        mbSelected = true;
     let folderId:string = "";
     if (RegExp("/folder/([0-9]+)").test(pathname))
     {
@@ -95,6 +103,7 @@ const MailBoxListItem : React.FC<PartialMailbox> = ({id, username, folders, inde
         <>
         <ListItem key={'MAILBOX_'+id} sx={{alignSelf:'center', py:0, px:0.5, paddingLeft:indent|| 0}}>
             <ListItemButton href={`/mailbox/${id}`}
+                selected={mbSelected}
                 sx={{
                     justifyContent:'space-between',
                     paddingLeft:0
