@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import LightDarkMode from '@/components/LightDarkMode';
 import NotificationSnackbar from '@/components/NotificationSnackbarProvider';
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v14-appRouter'
-import PersistentMailboxesProvider from '@/components/context/SidebarMailBoxListContext';
+import PageBaseWithSidebar from '@/components/PageBase';
 
 export const metadata: Metadata = {
   title: 'SaveMail',
@@ -22,11 +22,9 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
         <body>
           <AppRouterCacheProvider>
             <LightDarkMode>
-              <PersistentMailboxesProvider>
-                <NotificationSnackbar>
-                    {children}
-                </NotificationSnackbar>
-              </PersistentMailboxesProvider>
+              <NotificationSnackbar>
+                  {children}
+              </NotificationSnackbar>
             </LightDarkMode>
           </AppRouterCacheProvider>
         </body>

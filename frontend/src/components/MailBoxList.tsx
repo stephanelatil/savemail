@@ -1,12 +1,11 @@
-// 'use client'
+'use client'
 
-// import { useMailboxes } from "@/hooks/useMailboxes";
+import { useMailboxes } from "@/hooks/useMailboxes";
 import { Folder } from "@/models/folder";
 import { Archive as ArchiveIcon, CreateNewFolder, Delete as DeleteIcon, Email as EmailIcon, ExpandLess, ExpandMore, Folder as FolderIcon, Send as SendIcon } from "@mui/icons-material";
 import { CircularProgress, Collapse, Divider, List, ListItem, ListItemButton, ListItemIcon, ListItemText } from "@mui/material";
 import { useParams, usePathname } from "next/navigation";
-import React from "react";
-import { usePersistentMailboxesState } from "./context/SidebarMailBoxListContext";
+import React, { useEffect, useState } from "react";
 
 const mapFolderIcon = (name:string) =>{
     switch (name.toLowerCase()) {
@@ -145,21 +144,20 @@ const NewMailboxListItem:React.FC = () => {
 }
 
 const MailBoxList: React.FC = () => {
-    // const {getMailboxList} = useMailboxes();
-    // const [mailboxesList, setMailboxesList] = useState(<CircularProgress size={20} key='MAILBOX_LOADING' sx={{ alignSelf:'center'}}/>)
+    const {getMailboxList} = useMailboxes();
+    const [mailboxesList, setMailboxesList] = useState(<CircularProgress size={20} key='MAILBOX_LOADING' sx={{ alignSelf:'center'}}/>)
 
-    // useEffect(()=> {
-    //     async function populateMailboxes() {
-    //         const mailboxes = await getMailboxList();
-    //         if (mailboxes.length == 0)
-    //             setMailboxesList(<></>);
-    //         else
-    //             setMailboxesList(<>{mailboxes.map(mb => <MailBoxListItem key={'MAILBOX_LI_'+mb.id} id={mb.id} folders={mb.folders} username={mb.username}/>)}</>);
-    //     }
-    //     if (mailboxesList?.key === 'MAILBOX_LOADING')
-    //         populateMailboxes();
-    // }, []);
-    const {mailboxes} = usePersistentMailboxesState();
+    useEffect(()=> {
+        async function populateMailboxes() {
+            const mailboxes = await getMailboxList();
+            if (mailboxes.length == 0)
+                setMailboxesList(<></>);
+            else
+                setMailboxesList(<>{mailboxes.map(mb => <MailBoxListItem key={'MAILBOX_LI_'+mb.id} id={mb.id} folders={mb.folders} username={mb.username}/>)}</>);
+        }
+        if (mailboxesList?.key === 'MAILBOX_LOADING')
+            populateMailboxes();
+    }, []);
 
     return (
         <List sx={{ height:'100%',
@@ -169,7 +167,7 @@ const MailBoxList: React.FC = () => {
                     overflowY:'auto',
                     overflowX:'hidden'}}>
             <NewMailboxListItem key={'NEW_LI'}/>
-            {mailboxes.map(mb => <MailBoxListItem key={'MAILBOX_LI_'+mb.id} id={mb.id} folders={mb.folders} username={mb.username}/>)}
+            {mailboxesList}
         </List>
     );
 }
