@@ -17,14 +17,14 @@ const UserCardListItem :React.FC = () => {
 
     useEffect(() =>{
         async function populateUserNameOrEmail() {
-            const {email, firstName, lastName} = await getCurrentlyLoggedInUser() ?? {email:"ERROR", firstName:null, lastName:null};
+            const {email, firstName, lastName} = (await getCurrentlyLoggedInUser()) ?? {email:"ERROR", firstName:null, lastName:null};
             let name = `${firstName??''} ${lastName??''}`.trim();
             name = name.length > 1 ? name : email;
             setUsername(<Typography key='USERNAME'>{ name }</Typography>);
         }
         if (username.key === 'USERNAME_LOADING')
             populateUserNameOrEmail();
-    },[]);
+    });
 
     function onLogout(){
         const doLogout = async ()=>{

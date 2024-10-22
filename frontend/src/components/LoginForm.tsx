@@ -90,7 +90,7 @@ const LoginForm: React.FC = () => {
         </Button>
         <Divider />
         <Typography textAlign="center">
-          Don't have an account?{' '}
+          {"Don't have an account? "}
           <Link href='/auth/register' underline="hover">
             Register
           </Link>

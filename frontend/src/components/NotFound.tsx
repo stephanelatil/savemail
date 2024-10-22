@@ -18,11 +18,6 @@ const NotFound:React.FC<{objectName?:string}> = ({objectName}) => {
       </Box>
       <Box sx={{ mt: 5 }}>
         <SearchOff titleAccess='404' fontSize='large' />
-        {/* <img 
-          src="/static/404-illustration.svg" // Replace with your illustration or image path
-          alt="404 Illustration"
-          style={{ maxWidth: '100%', height: 'auto' }}
-        /> */}
       </Box>
     </Container>
   );

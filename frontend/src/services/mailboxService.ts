@@ -28,7 +28,7 @@ export const editMailBox = async (editMailBox:EditMailBox) : Promise<null> => {
     const response = await apiFetchWithBody(`${MAILBOX_ENDPOINT}${id}`, 'PATCH', editMailBox);
 
     if (response.status == 400)
-        throw new Error("Invalid or missing values: "+await response.text(), response.status);
+        throw new Error("Invalid or missing values: "+(await response.text()), response.status);
     if (response.status == 401 || response.status == 403)
         throw new Error("Forbidden", response.status);
     if (response.status == 404)
@@ -41,7 +41,7 @@ export const createMailBox = async (editMailBox:EditMailBox) : Promise<MailBox> 
     const response = await apiFetchWithBody(MAILBOX_ENDPOINT, "POST", editMailBox);
 
     if (response.status == 400)
-        throw new Error("Invalid or missing values: "+await response.text(), response.status);
+        throw new Error("Invalid or missing values: "+(await response.text()), response.status);
     if (response.status == 401 || response.status == 403)
         throw new Error("Forbidden", response.status);
     if (response.status >= 500)
@@ -54,7 +54,7 @@ export const getMailboxFolders = async (id:number) : Promise<Folder[]> => {
     const response = await apiFetch(`${MAILBOX_ENDPOINT}Folders`);
 
     if (response.status == 400)
-        throw new Error("Invalid or missing values: "+await response.text(), response.status);
+        throw new Error("Invalid or missing values: "+(await response.text()), response.status);
     if (response.status == 401 || response.status == 403)
         throw new Error("Forbidden", response.status);
     if (response.status == 404)

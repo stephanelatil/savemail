@@ -4,7 +4,7 @@ import { useMails } from "@/hooks/useMails";
 import { Mail } from "@/models/mail";
 import { ArrowDropDown, ChevronRight, Close } from "@mui/icons-material";
 import React from 'react';
-import purify from 'dompurify'
+import purify from 'dompurify';
 import { Box, Button,  Collapse, Divider, IconButton, List, ListItem, ListItemText, Modal, Paper, Skeleton, Stack, Typography, useTheme } from "@mui/material";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 
