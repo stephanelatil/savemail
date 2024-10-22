@@ -3,8 +3,7 @@ import './tailwind.css'
 import type { Metadata } from "next";
 import LightDarkMode from '@/components/LightDarkMode';
 import NotificationSnackbar from '@/components/NotificationSnackbarProvider';
-import { AppRouterCacheProvider } from '@mui/material-nextjs/v14-appRouter'
-import PageBaseWithSidebar from '@/components/PageBase';
+import { AppRouterCacheProvider } from '@mui/material-nextjs/v14-appRouter';
 
 export const metadata: Metadata = {
   title: 'SaveMail',

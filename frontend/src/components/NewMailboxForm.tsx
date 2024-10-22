@@ -3,7 +3,7 @@
 import { useMailboxes } from "@/hooks/useMailboxes";
 import { EditMailBox } from "@/models/mailBox";
 import { Google } from "@mui/icons-material";
-import { Box, Button, CircularProgress, Divider, Stack, TextField, Typography } from "@mui/material";
+import { Box, Button, CircularProgress, Divider, TextField, Typography } from "@mui/material";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
