@@ -15,20 +15,25 @@
     "@mui/icons-material": "^5.16.6",
     "@mui/material": "^5.15.20",
     "@mui/material-nextjs": "^5.16.6",
+    "@types/dompurify": "^3.0.5",
     "autoprefixer": "^10.4.19",
     "dompurify": "^3.1.7",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-hook-form": "^7.52.2"
+    "react-hook-form": "^7.52.2",
+    "swr": "^2.2.5"
   },
   "devDependencies": {
     "@types/node": "^20.14.9",
-    "@types/react": "^18.3.3",
-    "@types/react-dom": "^18.3.0",
+    "@types/react": "^18.3.1",
+    "@types/react-dom": "^18.3.1",
     "eslint": "^8.57.0",
     "eslint-config-next": "14.2.4",
     "postcss": "^8.4.38",
     "tailwindcss": "^3.4.4",
     "typescript": "^5.5.2"
+  },
+  "overrides": {
+    "rimraf": "^4.0.0"
   }
 }
