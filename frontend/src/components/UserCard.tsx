@@ -3,10 +3,11 @@
 import { useAppUserData } from '@/hooks/useAppUserData';
 import { useAuthentication } from '@/hooks/useAuthentication';
 import { useLightDarkModeSwitch } from '@/hooks/useLightDarkModeSwitch';
+import { useMountEffect } from '@/utils/utils';
 import { DarkMode, LightMode, Logout, ManageAccounts } from '@mui/icons-material';
 import { CircularProgress, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Typography } from "@mui/material";
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 const UserCardListItem :React.FC = () => {
     const { mode, toggleMode } = useLightDarkModeSwitch();
@@ -15,7 +16,7 @@ const UserCardListItem :React.FC = () => {
     const router = useRouter();
     const [username, setUsername] = useState(<CircularProgress key='USERNAME_LOADING'/>)
 
-    useEffect(() =>{
+    useMountEffect(() =>{
         async function populateUserNameOrEmail() {
             const {email, firstName, lastName} = (await getCurrentlyLoggedInUser()) ?? {email:"ERROR", firstName:null, lastName:null};
             let name = `${firstName??''} ${lastName??''}`.trim();

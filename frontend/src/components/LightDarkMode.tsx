@@ -2,8 +2,9 @@
 
 import { ColorMode } from "@/models/helpers";
 import { createTheme, CssBaseline, ThemeProvider } from "@mui/material";
-import React, { PropsWithChildren, useEffect } from "react";
+import React, { PropsWithChildren } from "react";
 import { ColorModeContext } from "./context/ColorModeContext";
+import { useMountEffect } from "@/utils/utils";
 
 
 const lightTheme = createTheme({
@@ -37,7 +38,7 @@ const LightDarkMode:React.FC<PropsWithChildren> = ({children}) => {
   
     // Update the theme only if the mode changes
     const theme = React.useMemo(() => getActiveTheme(mode), [mode]);
-    useEffect(()=>{
+    useMountEffect(()=>{
         var wantedMode = window?.localStorage?.getItem(MODE_KEY) as ColorMode;
         if (!!mode && mode !== wantedMode)
             setMode(wantedMode);

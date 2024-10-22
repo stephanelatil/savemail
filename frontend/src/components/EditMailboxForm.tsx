@@ -2,10 +2,11 @@
 
 import { useMailboxes } from "@/hooks/useMailboxes";
 import { EditMailBox, ImapProvider } from "@/models/mailBox";
+import { useMountEffect } from "@/utils/utils";
 import { Google } from "@mui/icons-material";
 import { Box, Button, CircularProgress, Divider, TextField, Typography } from "@mui/material";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 
 
@@ -25,7 +26,7 @@ const EditMailboxForm:React.FC = () =>{
     const [ errorText, setErrorText ] = useState("");
     const { register, handleSubmit, formState: { errors } } = useForm<EditMailBox>({defaultValues:defaultValues});
 
-    useEffect(() => {
+    useMountEffect(() => {
         const loadDefaults = async () => {
             const mb = await getMailbox(mailboxPageId);
             if(mb)
@@ -44,7 +45,7 @@ const EditMailboxForm:React.FC = () =>{
         }
 
         loadDefaults();
-    }, []);
+    });
 
     const onSubmit: SubmitHandler<EditMailBox> = async (mb) => {
         try {
