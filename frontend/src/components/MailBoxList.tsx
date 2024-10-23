@@ -2,10 +2,13 @@
 
 import { useMailboxes } from "@/hooks/useMailboxes";
 import { Folder } from "@/models/folder";
-import { Archive as ArchiveIcon, CreateNewFolder, Delete as DeleteIcon, Email as EmailIcon, ExpandLess, ExpandMore, Folder as FolderIcon, Send as SendIcon } from "@mui/icons-material";
-import { CircularProgress, Collapse, Divider, List, ListItem, ListItemButton, ListItemIcon, ListItemText } from "@mui/material";
+import { MailBox } from "@/models/mailBox";
+import { Archive as ArchiveIcon, CreateNewFolder, Delete as DeleteIcon, Email as EmailIcon, ExpandLess, ExpandMore, Folder as FolderIcon, Refresh, Send as SendIcon } from "@mui/icons-material";
+import { Button, CircularProgress, Collapse, Divider, IconButton, List, ListItem, ListItemButton, ListItemIcon, ListItemText } from "@mui/material";
 import { useParams, usePathname } from "next/navigation";
 import React, { useEffect, useState } from "react";
+import useSWR, {} from 'swr';
+import useSWRImmutable from "swr/immutable";
 
 const mapFolderIcon = (name:string) =>{
     switch (name.toLowerCase()) {
@@ -24,23 +27,23 @@ interface PartialFolderInfo{
     id:number,
     name:string,
     folderPathId?:string,
-    children:Folder[],
+    child_folders:Folder[],
     indent?:number
 }
 
-const FolderListItem: React.FC<PartialFolderInfo> = ({id, name, children, folderPathId, indent}) => {
+const FolderListItem: React.FC<PartialFolderInfo> = ({id, name, child_folders, folderPathId, indent}) => {
     const pathname = usePathname();
     const {id:pageId}:{id:string} = useParams();
     let folderSelected:boolean = RegExp("/folder/([0-9]+)").test(pathname) && (pageId == id+'');
 
-    const hasChildren:boolean = children.length > 0;
+    const hasChildren:boolean = child_folders.length > 0;
     function idInSubfolders(folder:Folder, id:string): boolean {
         if (!folder || !folderPathId)
             return false;
         return folder.id+"" == folderPathId || folder.children?.some(f => idInSubfolders(f, folderPathId));
     };
 
-    const open = !!folderPathId && (id+"" == folderPathId || !!children?.some(f => idInSubfolders(f, folderPathId)));
+    const open = !!folderPathId && (id+"" == folderPathId || !!child_folders?.some(f => idInSubfolders(f, folderPathId)));
     
     return (
     <>
@@ -58,8 +61,8 @@ const FolderListItem: React.FC<PartialFolderInfo> = ({id, name, children, folder
     {hasChildren ? 
         <Collapse in={open} timeout='auto' unmountOnExit>
             <List>
-                {children.map(f => 
-                    <FolderListItem key={'FOLDER_LI_'+f.id} id={f.id} name={f.name} children={f.children} indent={(indent|| 0) +1}/>
+                {child_folders.map(f => 
+                    <FolderListItem key={'FOLDER_LI_'+f.id} id={f.id} name={f.name} child_folders={f.children} indent={(indent|| 0) +1}></FolderListItem>
                 )}
             </List>
         </Collapse>
@@ -116,7 +119,7 @@ const MailBoxListItem : React.FC<PartialMailbox> = ({id, username, folders, inde
         {
             open ? 
                 <List>
-                    { !!folders && folders.length > 0 ? folders?.map(f => <FolderListItem key={'FOLDER_LI_'+f.id} id={f.id} name={f.name} children={f.children} folderPathId={folderId} indent={(indent||0)+1}/>) : <></>}
+                    { !!folders && folders.length > 0 ? folders?.map(f => <FolderListItem key={'FOLDER_LI_'+f.id} id={f.id} name={f.name} child_folders={f.children} folderPathId={folderId} indent={(indent||0)+1}/>) : <></>}
                 </List> 
                 : <></>
         }
@@ -144,31 +147,39 @@ const NewMailboxListItem:React.FC = () => {
 }
 
 const MailBoxList: React.FC = () => {
-    const {getMailboxList} = useMailboxes();
-    const [mailboxesList, setMailboxesList] = useState(<CircularProgress size={20} key='MAILBOX_LOADING' sx={{ alignSelf:'center'}}/>)
+    const { getMailboxList } = useMailboxes();
 
-    useEffect(()=> {
-        async function populateMailboxes() {
-            const mailboxes = await getMailboxList();
-            if (mailboxes.length == 0)
-                setMailboxesList(<></>);
-            else
-                setMailboxesList(<>{mailboxes.map(mb => <MailBoxListItem key={'MAILBOX_LI_'+mb.id} id={mb.id} folders={mb.folders} username={mb.username}/>)}</>);
-        }
-        if (mailboxesList?.key === 'MAILBOX_LOADING')
-            populateMailboxes();
-    }, []);
-
+    const {mutate, data:mailboxes, isLoading:loading} = useSWR('/api/MailBox',
+                                                                getMailboxList,
+                                                                {
+                                                                    refreshWhenOffline:false,
+                                                                    revalidateOnFocus:false,
+                                                                    refreshWhenHidden:false,
+                                                                    shouldRetryOnError:false,
+                                                                    fallbackData:[],
+                                                                    errorRetryCount:0
+                                                                });
+    
     return (
-        <List sx={{ height:'100%',
-                    display:'flex',
-                    flexDirection:'column',
-                    flex:'1 1 auto',
-                    overflowY:'auto',
-                    overflowX:'hidden'}}>
-            <NewMailboxListItem key={'NEW_LI'}/>
-            {mailboxesList}
-        </List>
+        <>
+            <List sx={{ height:'100%',
+                        display:'flex',
+                        flexDirection:'column',
+                        flex:'1 1 auto',
+                        overflowY:'auto',
+                        overflowX:'hidden'}}>
+                <NewMailboxListItem key={'NEW_LI'}/>
+                {!loading ? mailboxes?.map(mb => <MailBoxListItem key={'MAILBOX_LI_'+mb.id} id={mb.id} folders={mb.folders} username={mb.username}/>)
+                          : <CircularProgress size={20} sx={{  alignContent:'center' ,
+                                    mb: 2, 
+                                    p: 2, 
+                                    borderRadius: 2, }}/>
+                }
+            </List>
+                <IconButton onClick={() => mutate()} disabled={!!loading}>
+                        <Refresh/>
+                </IconButton>
+        </>
     );
 }
 
