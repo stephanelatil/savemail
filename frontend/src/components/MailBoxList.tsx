@@ -2,13 +2,10 @@
 
 import { useMailboxes } from "@/hooks/useMailboxes";
 import { Folder } from "@/models/folder";
-import { MailBox } from "@/models/mailBox";
 import { Archive as ArchiveIcon, CreateNewFolder, Delete as DeleteIcon, Email as EmailIcon, ExpandLess, ExpandMore, Folder as FolderIcon, Refresh, Send as SendIcon } from "@mui/icons-material";
-import { Button, CircularProgress, Collapse, Divider, IconButton, List, ListItem, ListItemButton, ListItemIcon, ListItemText } from "@mui/material";
-import { useParams, usePathname } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import { CircularProgress, Collapse, Divider, IconButton, List, ListItem, ListItemButton, ListItemIcon, ListItemText } from "@mui/material";
+import { useParams, usePathname, useRouter } from "next/navigation";
 import useSWR, {} from 'swr';
-import useSWRImmutable from "swr/immutable";
 
 const mapFolderIcon = (name:string) =>{
     switch (name.toLowerCase()) {
@@ -33,6 +30,7 @@ interface PartialFolderInfo{
 
 const FolderListItem: React.FC<PartialFolderInfo> = ({id, name, child_folders, folderPathId, indent}) => {
     const pathname = usePathname();
+    const router = useRouter();
     const {id:pageId}:{id:string} = useParams();
     let folderSelected:boolean = RegExp("/folder/([0-9]+)").test(pathname) && (pageId == id+'');
 
@@ -48,7 +46,9 @@ const FolderListItem: React.FC<PartialFolderInfo> = ({id, name, child_folders, f
     return (
     <>
     <ListItem sx={{alignSelf:'center', px:0.5, paddingLeft: (indent || 0)}}>
-        <ListItemButton key={'FOLDER_'+id}  href={`/folder/${id}`} selected={folderSelected}>
+        <ListItemButton key={'FOLDER_'+id} 
+                onClick={() => router.push(`/folder/${id}`)}
+                selected={folderSelected}>
             <ListItemIcon>
                 {mapFolderIcon(name)}
             </ListItemIcon>
@@ -80,6 +80,7 @@ interface PartialMailbox{
 //TODO: On click do not reload sidebar just inner page
 const MailBoxListItem : React.FC<PartialMailbox> = ({id, username, folders, indent}) =>{
     const pathname = usePathname();
+    const router = useRouter();
     const {id:pageId}:{id:string} = useParams();
     let mbSelected:boolean = false;
     
@@ -104,7 +105,8 @@ const MailBoxListItem : React.FC<PartialMailbox> = ({id, username, folders, inde
     return (
         <>
         <ListItem key={'MAILBOX_'+id} sx={{alignSelf:'center', py:0, px:0.5, paddingLeft:indent|| 0}}>
-            <ListItemButton href={`/mailbox/${id}`}
+            <ListItemButton 
+                onClick={() => router.push(`/mailbox/${id}`)}
                 selected={mbSelected}
                 sx={{
                     justifyContent:'space-between',
@@ -129,10 +131,12 @@ const MailBoxListItem : React.FC<PartialMailbox> = ({id, username, folders, inde
 }
 
 const NewMailboxListItem:React.FC = () => {
+    const router = useRouter();
+
     return (
         <ListItem sx={{alignSelf:'center', px:0.5}}>
             <ListItemButton key={'NEW'} 
-                href="/mailbox/new"
+                onClick={() => router.push('/mailbox/new')}
                 sx={{
                     minHeight:'3em',
                     justifyContent:'space-between',
@@ -151,14 +155,7 @@ const MailBoxList: React.FC = () => {
 
     const {mutate, data:mailboxes, isLoading:loading} = useSWR('/api/MailBox',
                                                                 getMailboxList,
-                                                                {
-                                                                    refreshWhenOffline:false,
-                                                                    revalidateOnFocus:false,
-                                                                    refreshWhenHidden:false,
-                                                                    shouldRetryOnError:false,
-                                                                    fallbackData:[],
-                                                                    errorRetryCount:0
-                                                                });
+                                                                { fallbackData:[] });
     
     return (
         <>

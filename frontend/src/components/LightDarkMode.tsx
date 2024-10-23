@@ -50,10 +50,12 @@ const LightDarkMode:React.FC<PropsWithChildren> = ({children}) => {
             <ThemeProvider theme={theme}>
                 <CssBaseline />
                 <SWRConfig value={{
-                        revalidateOnFocus: false, // Prevent refetching when switching tabs
+                        refreshWhenOffline:false,
+                        revalidateOnFocus:false,
+                        refreshWhenHidden:false,
+                        shouldRetryOnError:false,
                         dedupingInterval: 60000,  // Cache data for 60 seconds
                         refreshInterval:0,
-                        shouldRetryOnError: false, // Avoid retrying on errors by default
                   }}>
                   {children}
                 </SWRConfig>

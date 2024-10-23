@@ -3,33 +3,30 @@
 import { useAppUserData } from '@/hooks/useAppUserData';
 import { useAuthentication } from '@/hooks/useAuthentication';
 import { useLightDarkModeSwitch } from '@/hooks/useLightDarkModeSwitch';
-import { useMountEffect } from '@/utils/utils';
 import { DarkMode, LightMode, Logout, ManageAccounts } from '@mui/icons-material';
 import { CircularProgress, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Typography } from "@mui/material";
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import useSWR from 'swr';
 
 const UserCardListItem :React.FC = () => {
     const { mode, toggleMode } = useLightDarkModeSwitch();
     const { getCurrentlyLoggedInUser } = useAppUserData();
     const { logout } = useAuthentication();
     const router = useRouter();
-    const [username, setUsername] = useState(<CircularProgress key='USERNAME_LOADING'/>)
 
-    useMountEffect(() =>{
-        async function populateUserNameOrEmail() {
-            const {email, firstName, lastName} = (await getCurrentlyLoggedInUser()) ?? {email:"ERROR", firstName:null, lastName:null};
-            let name = `${firstName??''} ${lastName??''}`.trim();
-            name = name.length > 1 ? name : email;
-            setUsername(<Typography key='USERNAME'>{ name }</Typography>);
-        }
-        if (username.key === 'USERNAME_LOADING')
-            populateUserNameOrEmail();
-    });
+    const {mutate, data:user, isLoading:loading} = useSWR('/api/AppUser/me',
+                                                    getCurrentlyLoggedInUser,
+                                                    { fallbackData:null });
 
     function onLogout(){
         const doLogout = async ()=>{
             await logout();
+            mutate(null, {
+                rollbackOnError:false,
+                revalidate:true,
+                throwOnError:false,
+                populateCache:true
+            });
             router.push('/auth/login');
         }
         doLogout();
@@ -38,12 +35,19 @@ const UserCardListItem :React.FC = () => {
     return (
         <List sx={{ bottom:0, flexShrink: 0 }}>
             <ListItem sx={{alignSelf:'center', px:0.5}}>
-                <ListItemButton href={'/me'}>
-                    <ListItemIcon >
-                        <ManageAccounts />
-                    </ListItemIcon>
-                    <ListItemText primary={ username } />
-                </ListItemButton>
+                {!loading ? 
+                    <ListItemButton 
+                        onClick={() => router.push('/me')}
+                        >
+                        <ListItemIcon >
+                            <ManageAccounts />
+                        </ListItemIcon>
+                        <ListItemText primary={ `${user?.firstName??''} ${user?.lastName??''}`.trim().length > 1?
+                                                    `${user?.firstName??''} ${user?.lastName??''}`.trim()
+                                                    :user?.email
+                        } />
+                    </ListItemButton>
+                    : <CircularProgress/>}
             </ListItem>
             <ListItem sx={{alignSelf:'center', px:0.5}}>
                 <ListItemButton onClick={toggleMode}>
@@ -54,7 +58,7 @@ const UserCardListItem :React.FC = () => {
                 </ListItemButton>
             </ListItem>
             <ListItem sx={{alignSelf:'center', px:0.5}}>
-                <ListItemButton onClick={onLogout}>
+                <ListItemButton onClick={onLogout} disabled={!!loading}>
                     <ListItemIcon>
                         <Logout />
                     </ListItemIcon>
