@@ -5,6 +5,7 @@ import { createTheme, CssBaseline, ThemeProvider } from "@mui/material";
 import React, { PropsWithChildren } from "react";
 import { ColorModeContext } from "./context/ColorModeContext";
 import { useMountEffect } from "@/utils/utils";
+import { SWRConfig } from "swr";
 
 
 const lightTheme = createTheme({
@@ -48,7 +49,14 @@ const LightDarkMode:React.FC<PropsWithChildren> = ({children}) => {
         <ColorModeContext.Provider value={{mode, toggleMode}}>
             <ThemeProvider theme={theme}>
                 <CssBaseline />
-                {children}
+                <SWRConfig value={{
+                        revalidateOnFocus: false, // Prevent refetching when switching tabs
+                        dedupingInterval: 60000,  // Cache data for 60 seconds
+                        refreshInterval:0,
+                        shouldRetryOnError: false, // Avoid retrying on errors by default
+                  }}>
+                  {children}
+                </SWRConfig>
             </ThemeProvider>
         </ColorModeContext.Provider>);
 }
