@@ -19,15 +19,14 @@ interface MailParts{
     body:string,
     hasAttachments:boolean,
     dateSent:Date,
-    setSelectedId:(id:number)=>void,
-    setOpenOverlay:(open:boolean)=>void
+    onClick:()=>void,
 }
 
-const MailListItem: React.FC<MailParts> = ({id,repliedFromId,sender,subject,body,hasAttachments,dateSent,setSelectedId,setOpenOverlay}) => {
+const MailListItem: React.FC<MailParts> = ({id,repliedFromId,sender,subject,body,hasAttachments,dateSent,onClick}) => {
     return (
         <ListItem key={"MAIL_"+id}>
             {/* Find a way to open mail overlay on click */}
-            <ListItemButton onClick={() => {setSelectedId(id); setOpenOverlay(true);}}>
+            <ListItemButton onClick={onClick}>
                 <Stack flexDirection="column" spacing={1} justifyContent="space-between">
                     <Stack flexDirection="row" spacing={2} justifyContent={"space-between"}>
                         <Typography variant="body1" color="textSecondary" maxWidth={'10em'} minWidth={"10%"}>
@@ -35,7 +34,7 @@ const MailListItem: React.FC<MailParts> = ({id,repliedFromId,sender,subject,body
                         </Typography>
                         <Typography variant="h6" width='100%'>{((repliedFromId ?? 0) > 0 ? "RE: ": "") + subject}</Typography>
                         <Typography variant="body1" color="textSecondary">
-                            {new Date(dateSent).toLocaleString() /*TODO convert utc date to local time*/ }
+                            {new Date(dateSent).toLocaleString()}
                         </Typography>
                     </Stack>
                     <Stack flexDirection="row" justifyContent="space-between">
@@ -71,8 +70,7 @@ const MailListBox : React.FC<MailListPageInfo> = ({hasNext, hasPrev, pageNum, se
                                             sender={m.sender}
                                             hasAttachments={m.attachments.length > 0}
                                             dateSent={m.dateSent}
-                                            setOpenOverlay={setOpen}
-                                            setSelectedId={setMailId}
+                                            onClick={() => {setMailId(m.id); setOpen(true); console.log("clicked on "+m.id);}}
                                                 />)}
                     </List>
                     <Stack direction='row' justifyContent='center' position='sticky'>
