@@ -7,6 +7,7 @@ import React from 'react';
 import purify from 'dompurify';
 import { Box, Button,  Collapse, Divider, IconButton, List, ListItem, ListItemText, Modal, Paper, Skeleton, Stack, Typography, useTheme } from "@mui/material";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import useSWR from "swr";
 
 
 const LoadingMailElement: React.FC = () => {
@@ -45,31 +46,16 @@ const LoadingMailElement: React.FC = () => {
 const MailElement:React.FC<{id?:number|null,
                             loadedMails:number[],
                             setLoadedMails: Dispatch<SetStateAction<number[]>>}> = ({id, loadedMails, setLoadedMails}) => {
-    const { loading, getMail } = useMails();
+    const { getMail } = useMails();
     const [ toFromOpen, setToFromOpen ] = useState(false);
-    const [ mail, setMail ] = useState<Mail|null>();
     const theme = useTheme();
 
     // only requery on first render and when mailID changes. Fill with error if not allowed
-    useEffect(()=>{
-        setMail(null);
-        const populateMail = async () => {
-            //dot not fetch if id is invalid or if mail is already fetched
-            if (!id || id <= 0 || (!!mail && mail.id == id))
-                return;
-            if (loadedMails.includes(id))
-                return;
-            const fetchedMail:Mail|null = await getMail(id);
-
-            //recheck in case another handled it
-            if (!loadedMails.includes(id)){
-                setMail(fetchedMail);
-                setLoadedMails(loadedMails.concat([id]));
-            }
-        };
-
-        populateMail();
-    },[id]);
+    const { data:mail, isLoading:loading} = useSWR(`/api/Mail/${id}`, () => {
+        if (!id)
+            return null;
+        return getMail(id);
+    });
       
     if (loading) return <LoadingMailElement />;
     if (!mail) return <></>;
