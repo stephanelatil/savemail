@@ -60,6 +60,22 @@ const NewMailboxForm:React.FC = () =>{
                 {errorText}
             </Typography>
             <TextField
+                label="Username (Email address)"
+                defaultValue=""
+                {...register('username', { required: 'Username is required' })}
+                error={!!errors.username}
+                helperText={errors.username?.message}
+                fullWidth
+            />
+            <TextField
+                label="Password"
+                type="password"
+                {...register('password', { required: 'Password is required' })}
+                error={!!errors.password}
+                helperText={errors.password?.message}
+                fullWidth
+            />
+            <TextField
             label="Imap Domain"
             defaultValue=""
             {...register('imapDomain', { required: 'IMAP Domain is required' })}
@@ -77,22 +93,6 @@ const NewMailboxForm:React.FC = () =>{
             error={!!errors.imapPort}
             helperText={errors.imapPort?.message}
             fullWidth
-            />
-            <TextField
-                label="Username (Email address)"
-                defaultValue=""
-                {...register('username', { required: 'Username is required' })}
-                error={!!errors.username}
-                helperText={errors.username?.message}
-                fullWidth
-            />
-            <TextField
-                label="Password"
-                type="password"
-                {...register('password', { required: 'Password is required' })}
-                error={!!errors.password}
-                helperText={errors.password?.message}
-                fullWidth
             />
             <Button
             type="submit"
