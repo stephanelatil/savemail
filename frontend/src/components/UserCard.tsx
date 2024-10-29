@@ -5,13 +5,14 @@ import { useAuthentication } from '@/hooks/useAuthentication';
 import { useLightDarkModeSwitch } from '@/hooks/useLightDarkModeSwitch';
 import { DarkMode, LightMode, Logout, ManageAccounts } from '@mui/icons-material';
 import { CircularProgress, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Typography } from "@mui/material";
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import useSWR from 'swr';
 
 const UserCardListItem :React.FC = () => {
     const { mode, toggleMode } = useLightDarkModeSwitch();
     const { getCurrentlyLoggedInUser } = useAppUserData();
     const { logout } = useAuthentication();
+    const pathname = usePathname();
     const router = useRouter();
 
     const {mutate, data:user, isLoading:loading} = useSWR('/api/AppUser/me',
@@ -37,7 +38,8 @@ const UserCardListItem :React.FC = () => {
             <ListItem sx={{alignSelf:'center', px:0.5}}>
                 {!loading ? 
                     <ListItemButton 
-                        onClick={() => router.push('/me')}
+                        selected={pathname == "/me"}
+                        onClick={() => {pathname != "/me" && router.push('/me');}}
                         >
                         <ListItemIcon >
                             <ManageAccounts />

@@ -131,11 +131,13 @@ const MailBoxListItem : React.FC<PartialMailbox> = ({id, username, folders, inde
 
 const NewMailboxListItem:React.FC = () => {
     const router = useRouter();
+    const pathname = usePathname();
 
     return (
         <ListItem sx={{alignSelf:'center', px:0.5}}>
             <ListItemButton key={'NEW'} 
-                onClick={() => router.push('/mailbox/new')}
+                selected={pathname == '/mailbox/new'}
+                onClick={() => {pathname != '/mailbox/new' && router.push('/mailbox/new');}}
                 sx={{
                     minHeight:'3em',
                     justifyContent:'space-between',
