@@ -77,7 +77,6 @@ interface PartialMailbox{
     indent?:number
 }
 
-//TODO: On click do not reload sidebar just inner page
 const MailBoxListItem : React.FC<PartialMailbox> = ({id, username, folders, indent}) =>{
     const pathname = usePathname();
     const router = useRouter();
