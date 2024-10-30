@@ -31,3 +31,8 @@ export interface Response2FA{
     isTwoFactorEnabled:boolean,
     isMachineRemembered:boolean
 }
+
+export interface EmailConfirmed {
+    email:string,
+    isEmailConfirmed:boolean
+}
