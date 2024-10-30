@@ -64,10 +64,12 @@ public class AppUserController : ControllerBase
     [Authorize]
     public async Task<IActionResult> PatchUser(string id, [FromBody] UpdateAppUser updateAppUser)
     {
+        AppUser? self = await this._userManager.GetUserAsync(this.User);
+        if (self is null || self.Id != id)
+            return this.Forbid();
         if (updateAppUser == null || updateAppUser.Id != id)
-        {
             return this.BadRequest();
-        }
+            
         try
         {
             await this._userService.UpdateUserAsync(updateAppUser);
@@ -88,12 +90,12 @@ public class AppUserController : ControllerBase
     public async Task<ActionResult> DeleteAppUser(string id)
     {
         var appUser = await this._userService.GetUserByIdAsync(id);
-        if (appUser == null)
+        if (appUser == null || id is null)
         {
             return this.NotFound();
         }
 
-        if (await this._userManager.GetUserAsync(this.User) != appUser)
+        if ((await this._userManager.GetUserAsync(this.User))?.Id != id)
             this.Forbid();
 
         try
