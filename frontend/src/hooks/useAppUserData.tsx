@@ -1,7 +1,7 @@
 'use client'
 
-import { getLoggedInUser } from '@/services/appUserService'
-import { AppUser } from '@/models/appUser'
+import { getLoggedInUser, editUser as editUserService, deleteUser as deleteUserService } from '@/services/appUserService'
+import { AppUser, EditAppUser } from '@/models/appUser'
 import { useState } from 'react'
 import { useNotification } from './useNotification'
 import { useRouter } from 'next/navigation'
@@ -28,10 +28,56 @@ export const useAppUserData = () => {
     }
   }
 
-  //TODO add other functions to manage user here (to be used on the settings page)
+  const editUser = async (user:EditAppUser): Promise<boolean> => {
+    try{
+      setLoading(true);
+      return await editUserService(user);
+    }
+    catch(error){
+      if (error instanceof FetchError)
+      {
+        if (error.statusCode == 500) // 500 error backend issue notify user
+          showNotification("Backend issue: "+error.message, 'error');
+        if (error.statusCode == 400)
+          showNotification("Missing or invalid values: "+error.message, 'error');
+        if (error.statusCode == 403)
+          showNotification("Cannot edit another user's data: "+error.message, 'error');
+        if (error.statusCode == 404)
+          showNotification("Unknown user"+error.message, 'error');
+      }
+    }
+    finally{
+      setLoading(false);
+    }
+    return false;
+  }
+
+  const deleteUser = async (id:string) => {
+    try{
+      setLoading(true);
+      return await deleteUserService(id);
+    }
+    catch(error){
+      if (error instanceof FetchError)
+      {
+        if (error.statusCode == 500) // 500 error backend issue notify user
+          showNotification("Backend issue: "+error.message, 'error');
+        if (error.statusCode == 403)
+          showNotification("Cannot edit another user's data: "+error.message, 'error');
+        if (error.statusCode == 404)
+          showNotification("Unknown user"+error.message, 'error');
+      }
+    }
+    finally{
+      setLoading(false);
+    }
+    return false;
+  }
 
   return {
     loading,
-    getCurrentlyLoggedInUser
+    getCurrentlyLoggedInUser,
+    editUser,
+    deleteUser
   };
 }

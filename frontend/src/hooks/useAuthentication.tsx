@@ -1,13 +1,18 @@
 'use client'
 
-import { AppUser } from '@/models/appUser'
 import { Credentials } from '@/models/credentials'
 import {
   login as loginService,
   logout as logoutService,
   register as registerService,
+  resendConfirmationEmail as resendConfirmationEmailService,
+  changeAccountEmail as changeAccountEmailService,
+  changePassword as changePasswordService,
+  disable2FA as disable2FAService,
+  enable2FA as enable2FAService,
+  init2FA as init2FAService,
+  reset2FARecoveryCodes as reset2FARecoveryCodesService
 } from '@/services/authenticationService'
-import { getLoggedInUser } from '@/services/appUserService'
 import { useState } from 'react'
 import { useNotification } from './useNotification'
 
@@ -66,24 +71,56 @@ export const useAuthentication = () => {
     return false;
   }
 
-  const updateLoggedInUser = async (): Promise<void> => {
-    try {
-      setLoading(true);
-      const user: AppUser = await getLoggedInUser();
-      // setLoggedInUser(user);
-    } catch (error: unknown) {
-      showNotification(error+'', 'error');
-      console.error(error + ': failed to fetch logged in user');
+  const resendConfirmationEmail = async (email:string):Promise<void> => {
+    try{
+      await resendConfirmationEmailService(email);
+    }catch (error){
+      if (error instanceof Error) {
+        showNotification("Unable to send email", 'warning');
+      }
     } finally {
       setLoading(false);
     }
+  }
+
+  /**
+   * Disabled 2FA for the user
+   * @returns true/false depending if the action was successful
+   */
+  const disable2FA = async ():Promise<boolean> => {
+    try{
+      await disable2FAService();
+      return true;
+    }catch (error){
+      if (error instanceof Error) {
+        showNotification("Unable to disable 2FA: "+ error.message, 'warning');
+      }
+    } finally {
+      setLoading(false);
+    }
+    return false;
+  }
+
+  const reset2FARecoveryCodes = async (): Promise<boolean> =>{
+    try{
+      await reset2FARecoveryCodesService();
+      return true;
+    }catch (error){
+      if (error instanceof Error) {
+        showNotification("Unable to reset codes: "+ error.message+"\nYour old ones are still valid", 'warning');
+      }
+    } finally {
+      setLoading(false);
+    }
+    return false;
   }
 
   return {
     login,
     register,
     logout,
-    loading,
-    updateLoggedInUser,
+    resendConfirmationEmail,
+    disable2FA,
+    loading
   };
 }
