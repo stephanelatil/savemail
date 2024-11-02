@@ -1,3 +1,5 @@
+'use client'
+
 import { AlertColor } from "@mui/material";
 import { createContext } from "react";
 
