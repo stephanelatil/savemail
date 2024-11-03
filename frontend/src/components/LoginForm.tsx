@@ -10,12 +10,13 @@ import { DarkMode, LightMode } from '@mui/icons-material';
 import { useLightDarkModeSwitch } from '@/hooks/useLightDarkModeSwitch';
 
 const LoginForm: React.FC = () => {
-  const { register, handleSubmit, formState: { errors } } = useForm<Credentials>();
+  const { register, watch, handleSubmit, formState: { errors } } = useForm<Credentials>();
   const { login:loginService, loading } = useAuthentication();
   const { mode, toggleMode } = useLightDarkModeSwitch();
   const router = useRouter();
   const [errorText, setErrorText] = useState("");
   const [ rememberMe, setRememberMe ] = useState(false);
+  const email = watch('email', '');
 
   const onSubmit: SubmitHandler<Credentials> = async (data) => {
     try {
@@ -91,9 +92,15 @@ const LoginForm: React.FC = () => {
         <Divider />
         <Typography textAlign="center">
           {"Don't have an account? "}
-          <Link href='/auth/register' underline="hover">
+          <Button onClick={() => {router.push('/auth/register');}}>
             Register
-          </Link>
+          </Button>
+        </Typography>
+        <Typography textAlign="center">
+          {'Forgot Login? '}
+          <Button variant='text' onClick={() => {router.push('/auth/forgotten?email='+email);}}>
+            Reset Password
+          </Button>
         </Typography>
       </Box>
       <IconButton onClick={toggleMode} sx={{
