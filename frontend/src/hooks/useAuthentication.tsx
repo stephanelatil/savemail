@@ -1,6 +1,6 @@
 'use client'
 
-import { Credentials } from '@/models/credentials'
+import { Credentials, Response2FA } from '@/models/credentials'
 import {
   login as loginService,
   logout as logoutService,
@@ -11,7 +11,8 @@ import {
   disable2FA as disable2FAService,
   enable2FA as enable2FAService,
   init2FA as init2FAService,
-  reset2FARecoveryCodes as reset2FARecoveryCodesService
+  reset2FARecoveryCodes as reset2FARecoveryCodesService,
+  sendPasswordReset as sendPasswordResetService
 } from '@/services/authenticationService'
 import { useState } from 'react'
 import { useNotification } from './useNotification'
@@ -73,6 +74,7 @@ export const useAuthentication = () => {
 
   const resendConfirmationEmail = async (email:string):Promise<void> => {
     try{
+      setLoading(true);
       await resendConfirmationEmailService(email);
     }catch (error){
       if (error instanceof Error) {
@@ -89,6 +91,7 @@ export const useAuthentication = () => {
    */
   const disable2FA = async ():Promise<boolean> => {
     try{
+      setLoading(true);
       await disable2FAService();
       return true;
     }catch (error){
@@ -101,8 +104,57 @@ export const useAuthentication = () => {
     return false;
   }
 
+  /**
+   * First step to the flow enabling 2FA 
+   * @returns true/false depending if the action was successful
+   */
+  const init2FA = async ():Promise<Response2FA> => {
+    try{
+      setLoading(true);
+      let result = await init2FAService({});
+      return result;
+    }catch (error){
+      if (error instanceof Error) {
+        showNotification("Unable to initialize 2FA flow: \n"+ error.message, 'error');
+      }
+    } finally {
+      setLoading(false);
+    }
+    return {
+        sharedKey:'',
+        recoveryCodesLeft:-1,
+        recoveryCodes:[],
+        isTwoFactorEnabled:false,
+        isMachineRemembered:false };
+  }
+
+  /**
+   * First step to the flow enabling 2FA 
+   * @returns true/false depending if the action was successful
+   */
+  const enable2FA = async (totp:string):Promise<Response2FA> => {
+    try{
+      setLoading(true);
+      let result = await enable2FAService({enable:true, twoFactorCode:totp});
+      return result;
+    }catch (error){
+      if (error instanceof Error) {
+        showNotification("Unable to enable 2FA: "+ error.message, 'error');
+      }
+    } finally {
+      setLoading(false);
+    }
+    return {
+        sharedKey:'',
+        recoveryCodesLeft:-1,
+        recoveryCodes:[],
+        isTwoFactorEnabled:false,
+        isMachineRemembered:false };
+  }
+
   const reset2FARecoveryCodes = async (): Promise<boolean> =>{
     try{
+      setLoading(true);
       await reset2FARecoveryCodesService();
       return true;
     }catch (error){
@@ -115,12 +167,63 @@ export const useAuthentication = () => {
     return false;
   }
 
+  const sendPasswordReset = async (email:string): Promise<boolean> =>{
+    try{
+      setLoading(true);
+      await sendPasswordResetService(email);
+      return true;
+    }catch (error){
+      if (error instanceof Error) {
+        showNotification("Unable to send password rest: "+ error.message, 'warning');
+      }
+    } finally {
+      setLoading(false);
+    }
+    return false;
+  }
+
+  const changeAccountEmail = async (newEmail:string) :Promise<boolean> => {
+    try{
+      setLoading(true);
+      await changeAccountEmailService(newEmail);
+      return true;
+    }catch (error){
+      if (error instanceof Error) {
+        showNotification("Unable change email (the old one is still in use): \n"+ error.message, 'warning');
+      }
+    } finally {
+      setLoading(false);
+    }
+    return false;
+  }
+
+  const changePassword = async (oldPassword:string, newPassword:string) :Promise<boolean> => {
+    try{
+      setLoading(true);
+      await changePasswordService({oldPassword:oldPassword, newPassword:newPassword});
+      return true;
+    }catch (error){
+      if (error instanceof Error) {
+        showNotification("Unable change email (the old one is still in use): \n"+ error.message, 'warning');
+      }
+    } finally {
+      setLoading(false);
+    }
+    return false;
+  }
+
   return {
     login,
     register,
     logout,
     resendConfirmationEmail,
+    reset2FARecoveryCodes,
     disable2FA,
+    init2FA,
+    enable2FA,
+    changeAccountEmail,
+    changePassword,
+    sendPasswordReset,
     loading
   };
 }
