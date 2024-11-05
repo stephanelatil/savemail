@@ -15,8 +15,7 @@ const ForgotPasswordForm: React.FC = () => {
   const { sendPasswordReset, loading } = useAuthentication();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [successMessage, setSuccessMessage] = useState("");
-  const [errorText, setErrorText] = useState("");
+  const [errBlock, setErrBlock] = useState(<></>);
 
   // Get email from URL if it was passed from login page
   const defaultEmail = searchParams.get('email') || '';
@@ -24,16 +23,17 @@ const ForgotPasswordForm: React.FC = () => {
   const onSubmit: SubmitHandler<ForgotPasswordFormData> = async (data) => {
     try {
       const success = await sendPasswordReset(data.email);
-      if (success) {
-        setSuccessMessage("A Password reset link has been sent to your email.");
-        setErrorText("");
-      }
+      if (success)
+        setErrBlock(
+            <Typography variant='body1' color='success' textAlign="center">
+              A Password reset link has been sent to your email.
+            </Typography>);
     } catch (err) {
       console.error('Password reset request failed:', err);
-      if (err instanceof Error) {
-        setErrorText(err.message);
-        setSuccessMessage("");
-      }
+      setErrBlock(
+          <Typography variant='body1' color='error' textAlign="center">
+            {'Unable to send email: '+err}
+          </Typography>);
     }
   };
 
@@ -50,21 +50,11 @@ const ForgotPasswordForm: React.FC = () => {
         gap: '1rem',
       }}
     >
-      <Typography variant="h3" component="h1" textAlign="center">
+      <Typography variant="h3" textAlign="center">
         Forgot Password
       </Typography>
-      
-      {successMessage && (
-        <Typography variant="body1" color="success.main" textAlign="center">
-          {successMessage}
-        </Typography>
-      )}
-      
-      {errorText && (
-        <Typography variant="body1" color="error.main" textAlign="center">
-          {errorText}
-        </Typography>
-      )}
+
+      {errBlock}
 
       <Typography variant="body1" textAlign="center">
         Enter your email address and we'll send you instructions to reset your password.
