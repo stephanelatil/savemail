@@ -13,6 +13,7 @@ public class MailBoxDto
     public ImapProvider Provider { get; set; } = ImapProvider.Simple;
     [ReadOnly(true)]
     public List<FolderDto> Folders { get; set;} = [];
+    public bool NeedsReauth { get; set; } = false;
 
     public MailBoxDto(){}
 
@@ -23,6 +24,7 @@ public class MailBoxDto
         this.ImapPort = mailBox.ImapPort;
         this.Provider = mailBox.Provider;
         this.Username = mailBox.Username;
+        this.NeedsReauth = mailBox.NeedsReauth;
 
         this.Folders = [];
         foreach (var f in mailBox.Folders.Where(f => f.Parent is null))

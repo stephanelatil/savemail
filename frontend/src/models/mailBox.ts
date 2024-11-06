@@ -11,7 +11,8 @@ export interface MailBox {
   imapPort:number,
   provider:ImapProvider,
   username:string,
-  folders:Folder[]
+  folders:Folder[],
+  needsReauth:boolean
 }
 
 export interface EditMailBox{
