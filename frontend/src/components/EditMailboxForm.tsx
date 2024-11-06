@@ -14,12 +14,12 @@ const EditMailboxForm:React.FC = () =>{
     const router = useRouter();
     const params = useParams();
     const mailboxPageId = parseInt(params.id as string ?? '0', 10);
-    const [defaultValues, setDefaultValues] = useState<EditMailBox>({
+    const [defaultValues, setDefaultValues] = useState({
         id:mailboxPageId,
         imapDomain:"",
         imapPort:993,
         username:"",
-        password:""});
+        needsReauth:false});
 
     const [ provider, setProvider ] = useState<ImapProvider|null>(null);
     const { loading, editMailBox, getMailbox, synchronizeMailbox } = useMailboxes();
@@ -36,12 +36,12 @@ const EditMailboxForm:React.FC = () =>{
                     imapDomain:mb.imapDomain,
                     imapPort:mb.imapPort,
                     username:mb.username,
-                    password:""
+                    needsReauth:mb.needsReauth
                 });
                 setProvider(mb.provider);
             }
             else
-                router.push("/404")
+                router.push("/404");
         }
 
         loadDefaults();
@@ -69,34 +69,25 @@ const EditMailboxForm:React.FC = () =>{
         flexDirection: 'column',
         gap: '1rem',
         }}>
-            <Typography variant="h3" component="h1" textAlign="center">
+            <Typography variant="h3" textAlign="center">
                 Edit Mailbox
             </Typography>
-            <Typography variant='h6' textAlign="left">
+            <Typography variant='h6' textAlign="center" color='error'>
                 {errorText}
             </Typography>
-            <TextField
-            disabled={provider !== ImapProvider.Simple}
-            label="Imap Domain"
-            {...register('imapDomain', { required: 'IMAP Domain is required' })}
-            error={!!errors.imapDomain}
-            helperText={errors.imapDomain?.message}
-            fullWidth
-            />
-            <TextField
-            disabled={provider !== ImapProvider.Simple}
-            label="Imap Port"
-            type='number'
-            {...register('imapPort', { required: 'Port is required',
-            max:{value:65535, message:"Port must be less than 65535"},
-            min:{value:1, message: "Port must be greater than 0"}})}
-            error={!!errors.imapPort}
-            helperText={errors.imapPort?.message}
-            fullWidth
-            />
+            {
+                defaultValues.needsReauth &&
+                <Typography variant='h5' textAlign="center">
+                    To continue syncing you need to update your credentials!
+                    {provider === ImapProvider.Simple ? "\nPlease check that your Username and Password are still valid and that the Imap info is correct."
+                                                      : "\nPlease Refresh your OAuth credentials with the button below."
+                    }
+                </Typography>
+            }
             <TextField
                 disabled={provider !== ImapProvider.Simple}
                 label="Username (Email address)"
+                defaultValue={defaultValues.username}
                 {...register('username', { required: 'Username is required' })}
                 error={!!errors.username}
                 helperText={errors.username?.message}
@@ -127,6 +118,27 @@ const EditMailboxForm:React.FC = () =>{
                     }
                 })()
             }
+            <TextField
+            disabled={provider !== ImapProvider.Simple}
+            label="Imap Domain"
+            defaultValue={defaultValues.imapDomain}
+            {...register('imapDomain', { required: 'IMAP Domain is required' })}
+            error={!!errors.imapDomain}
+            helperText={errors.imapDomain?.message}
+            fullWidth
+            />
+            <TextField
+            disabled={provider !== ImapProvider.Simple}
+            label="Imap Port"
+            defaultValue={defaultValues.imapPort}
+            type='number'
+            {...register('imapPort', { required: 'Port is required',
+            max:{value:65535, message:"Port must be less than 65535"},
+            min:{value:1, message: "Port must be greater than 0"}})}
+            error={!!errors.imapPort}
+            helperText={errors.imapPort?.message}
+            fullWidth
+            />
 
             <Button
             type="submit"
@@ -147,7 +159,7 @@ const EditMailboxForm:React.FC = () =>{
                 color='info'
                 onClick={async (e) => {await synchronizeMailbox(mailboxPageId)}}
             >
-                Synchronize mailbox
+                Synchronize mailbox now
             </Button>
         </Box>
     </>);

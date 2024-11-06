@@ -1,7 +1,7 @@
 'use client'
 
 import { useForm, SubmitHandler } from 'react-hook-form';
-import { TextField, Button, Typography, Link, CircularProgress, Box } from '@mui/material';
+import { TextField, Button, Typography, Link, CircularProgress, Box, Divider } from '@mui/material';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { useAuthentication } from '@/hooks/useAuthentication';
@@ -53,12 +53,14 @@ const ForgotPasswordForm: React.FC = () => {
       <Typography variant="h3" textAlign="center">
         Forgot Password
       </Typography>
-
-      {errBlock}
+      <span/>
 
       <Typography variant="body1" textAlign="center">
         Enter your email address and we'll send you instructions to reset your password.
       </Typography>
+
+      <span/>
+      {errBlock}
 
       <TextField
         label="Email"
@@ -86,6 +88,8 @@ const ForgotPasswordForm: React.FC = () => {
       >
         {loading ? <CircularProgress size={24} color="inherit" /> : 'Reset Password'}
       </Button>
+
+      <Divider variant='middle'/>
 
       <Typography textAlign="center">
         {"Remember your password? "}
