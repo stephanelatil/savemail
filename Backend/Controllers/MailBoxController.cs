@@ -160,6 +160,10 @@ public class MailBoxController : ControllerBase
         AppUser? self = await this._userManager.GetUserAsync(this.User);
         if (self is null || mailBox.OwnerId != self.Id)
             return this.Forbid();
+
+        if (mailBox.NeedsReauth)
+            return this.BadRequest("Credentials are invalid or have expired. Please re-login");
+        
         this._taskManager.EnqueueTask(id);
         return this.Ok();
     }
