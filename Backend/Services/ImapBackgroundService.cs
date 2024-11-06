@@ -225,19 +225,25 @@ namespace Backend.Services
                 return new IntOrObject<IImapFetchTaskService>(this);
 
             //get new undiscovered folders
-            List<Folder> folders = await this._imapFolderFetchService.GetNewFolders(mailbox, cancellationToken);
-            this._logger.LogDebug("Folders To Add: {}", string.Join(", ", folders.Select(f => f.Name)));
-            foreach(var folder in folders)
-                await this._folderService.CreateFolderAsync(folder, mailbox, cancellationToken);
+            List<Folder>? folders = await this._imapFolderFetchService.GetNewFolders(mailbox, cancellationToken);
+            if (folders is not null){
+                this._logger.LogDebug("Folders To Add: {}", string.Join(", ", folders.Select(f => f.Name)));
+                foreach(var folder in folders)
+                    await this._folderService.CreateFolderAsync(folder, mailbox, cancellationToken);
 
-            //run fixup to map folders to mailbox correctly
-            this._context.ChangeTracker.DetectChanges();
-            this._logger.LogDebug($"Ran Fixup: got total {mailbox.Folders.Count} folders to handle");
-
+                //run fixup to map folders to mailbox correctly
+                this._context.ChangeTracker.DetectChanges();
+                this._logger.LogDebug("Ran Fixup: got total {} folders to handle", mailbox.Folders.Count);
+            }
+            //Prepare Imapclient to fetch new mails
             await this._imapMailFetchService.Prepare(mailbox, cancellationToken);
             if (!(this._imapMailFetchService.IsConnected && this._imapMailFetchService.IsAuthenticated))
             {
                 this._imapMailFetchService.Disconnect();
+                this._context.MailBox.Update(mailbox);
+                if (mailbox.OAuthCredentials is not null)
+                    this._context.OAuthCredentials.Update(mailbox.OAuthCredentials);
+                await this._context.SaveChangesAsync(cancellationToken);
                 return new IntOrObject<IImapFetchTaskService>(this);
             }
             

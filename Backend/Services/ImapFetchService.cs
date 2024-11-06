@@ -7,7 +7,7 @@ namespace Backend.Services
 {
     public interface IImapFolderFetchService : IDisposable
     {
-        public Task<List<Folder>> GetNewFolders(MailBox mailbox, CancellationToken cancellationToken = default);
+        public Task<List<Folder>?> GetNewFolders(MailBox mailbox, CancellationToken cancellationToken = default);
     }
 
     public class ImapFolderFetchService : IImapFolderFetchService
@@ -31,7 +31,7 @@ namespace Backend.Services
         /// </summary>
         /// <param name="cancellationToken"></param>
         /// <returns>A list of Folder instances. They should still be added to the database with the FolderService!</returns>
-        public async Task<List<Folder>> GetNewFolders(MailBox mailbox, CancellationToken cancellationToken = default)
+        public async Task<List<Folder>?> GetNewFolders(MailBox mailbox, CancellationToken cancellationToken = default)
         {
             ObjectDisposedException.ThrowIf(this._disposed, this);
             List<Folder> folders = [];
@@ -61,7 +61,9 @@ namespace Backend.Services
             catch(MailKit.Security.AuthenticationException e){
                 if (mailbox.OAuthCredentials is not null)
                     await this._oAuthService.SetNeedReauth(mailbox.OAuthCredentials);
+                mailbox.NeedsReauth = true;
                 this._logger.LogWarning(e, "Unable to connect to connect and authenticate for mailbox {}", mailbox.Id);
+                return null;
             }
             catch(Exception e)
             {
@@ -171,6 +173,7 @@ namespace Backend.Services
             catch(MailKit.Security.AuthenticationException e){
                 if (mailbox.OAuthCredentials is not null)
                     await this._oAuthService.SetNeedReauth(mailbox.OAuthCredentials);
+                mailbox.NeedsReauth = true;
                 this._logger.LogWarning(e, "Unable to connect to connect and authenticate for mailbox {}", mailbox.Id);
             }
             catch (Exception e){
