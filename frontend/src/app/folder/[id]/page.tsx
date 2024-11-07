@@ -13,7 +13,7 @@ const MailsInFolder:React.FC = () =>{
           <Stack flexDirection='row'>
             <Sidebar />
             <MailListPage />
-        </Stack>);
+          </Stack>);
 }
 
 export default MailsInFolder;
