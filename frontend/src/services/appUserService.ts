@@ -33,7 +33,7 @@ export const getLoggedInUser = async () : Promise<AppUser> => {
 /**
  * Edits the details of a user.
  * @param user The user object containing updates. Will only update names and two factor
- * @returns A promise that resolves to the updated `User` object.
+ * @returns true on success (throws on error)
  * @throws An error if the edit operation fails or if the user is not authorized to make the edit.
  */
 export const editUser = async (user: EditAppUser): Promise<boolean> => {
@@ -50,7 +50,7 @@ export const editUser = async (user: EditAppUser): Promise<boolean> => {
             throw new Error("Invalid or missing values", response.status);
         throw new Error(`Failed to edit the user`, response.status);
     }
-    return response.json()
+    return true;
 }
 
 
