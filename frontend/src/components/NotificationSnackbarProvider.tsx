@@ -17,7 +17,7 @@ const NotificationSnackbar : React.FC<PropsWithChildren> = ({children}) => {
     setNotification({ message, severity, isShown: true });
   }, []);
 
-  const handleClose = useCallback(()=>setNotification({ message:'', severity:'info', isShown: false }),[]);
+  const handleClose = useCallback(()=>setNotification((prev) => {return {...prev, isShown:false};}),[]);
 
     const action = (
           <IconButton
@@ -43,7 +43,7 @@ const NotificationSnackbar : React.FC<PropsWithChildren> = ({children}) => {
         <Alert onClose={handleClose} severity={notification.severity} sx={{ width: {
             xs: '100%', // 100% width for extra-small screens
             sm: '25em', // 20em width for small screens and up
-            xl: '40em', // 20em width for small screens and up
+            lg: '40em', // 20em width for small screens and up
           } }}>
           {notification.message}
         </Alert>
