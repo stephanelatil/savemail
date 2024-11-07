@@ -51,10 +51,9 @@ namespace Backend.Services
             ArgumentNullException.ThrowIfNull(updateUserDto.Id);
             AppUser? user = await this.GetUserByIdAsync(updateUserDto.Id) ?? throw new KeyNotFoundException();
 
-            this._context.TrackEntry(user);
-            
             user.FirstName = updateUserDto.FirstName ?? user.FirstName;
             user.LastName = updateUserDto.LastName ?? user.LastName;
+            this._context.Users.Update(user);
 
             if (await this._context.SaveChangesAsync() == 0)
                 throw new DbUpdateException();
