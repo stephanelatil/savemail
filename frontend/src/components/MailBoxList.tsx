@@ -2,6 +2,7 @@
 
 import { useMailboxes } from "@/hooks/useMailboxes";
 import { Folder } from "@/models/folder";
+import { MailBox } from "@/models/mailBox";
 import { Archive as ArchiveIcon, CreateNewFolder, Delete as DeleteIcon, Email as EmailIcon, ExpandLess, ExpandMore, Folder as FolderIcon, Refresh, Send as SendIcon } from "@mui/icons-material";
 import { CircularProgress, Collapse, Divider, IconButton, List, ListItem, ListItemButton, ListItemIcon, ListItemText } from "@mui/material";
 import { useParams, usePathname, useRouter } from "next/navigation";
@@ -151,13 +152,8 @@ const NewMailboxListItem:React.FC = () => {
         </ListItem>);
 }
 
-const MailBoxList: React.FC = () => {
-    const { getMailboxList } = useMailboxes();
-
-    const {mutate, data:mailboxes, isLoading:loading} = useSWR('/api/MailBox',
-                                                                getMailboxList,
-                                                                { fallbackData:[] });
-    
+// TODO convert to a dynamic tree
+const MailBoxList: React.FC<{loading?:boolean, mailboxes?:MailBox[]}> = ({loading, mailboxes}) => {
     return (
         <>
             <List sx={{ height:'100%',
@@ -174,9 +170,6 @@ const MailBoxList: React.FC = () => {
                                     borderRadius: 2, }}/>
                 }
             </List>
-                <IconButton onClick={() => mutate()} disabled={!!loading}>
-                        <Refresh/>
-                </IconButton>
         </>
     );
 }
