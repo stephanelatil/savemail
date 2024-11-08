@@ -1,33 +1,22 @@
 'use client'
 
-import { useAppUserData } from '@/hooks/useAppUserData';
 import { useAuthentication } from '@/hooks/useAuthentication';
 import { useLightDarkModeSwitch } from '@/hooks/useLightDarkModeSwitch';
+import { AppUser } from '@/models/appUser';
 import { DarkMode, LightMode, Logout, ManageAccounts } from '@mui/icons-material';
 import { CircularProgress, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Typography } from "@mui/material";
 import { usePathname, useRouter } from 'next/navigation';
-import useSWR from 'swr';
 
-const UserCardListItem :React.FC = () => {
+const UserCardListItem: React.FC<{loading?:boolean, user?:AppUser|null, onLogout?:()=>void}> = ({onLogout, loading, user}) => {
     const { mode, toggleMode } = useLightDarkModeSwitch();
-    const { getCurrentlyLoggedInUser } = useAppUserData();
     const { logout } = useAuthentication();
     const pathname = usePathname();
     const router = useRouter();
 
-    const {mutate, data:user, isLoading:loading} = useSWR('/api/AppUser/me',
-                                                    getCurrentlyLoggedInUser,
-                                                    { fallbackData:null });
-
-    function onLogout(){
+    function onLogoutCallback(){
         const doLogout = async ()=>{
             await logout();
-            mutate(null, {
-                rollbackOnError:false,
-                revalidate:true,
-                throwOnError:false,
-                populateCache:true
-            });
+            onLogout && onLogout();
             router.push('/auth/login');
         }
         doLogout();
@@ -60,7 +49,7 @@ const UserCardListItem :React.FC = () => {
                 </ListItemButton>
             </ListItem>
             <ListItem sx={{alignSelf:'center', px:0.5}}>
-                <ListItemButton onClick={onLogout} disabled={!!loading}>
+                <ListItemButton onClick={onLogoutCallback} disabled={!!loading}>
                     <ListItemIcon>
                         <Logout />
                     </ListItemIcon>
