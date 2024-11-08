@@ -8,6 +8,9 @@ import { Credentials } from '@/models/credentials';
 import { useState } from 'react';
 import { DarkMode, LightMode } from '@mui/icons-material';
 import { useLightDarkModeSwitch } from '@/hooks/useLightDarkModeSwitch';
+import { useMailboxes } from '@/hooks/useMailboxes';
+import { useAppUserData } from '@/hooks/useAppUserData';
+import useSWR from 'swr';
 
 const LoginForm: React.FC = () => {
   const { register, watch, handleSubmit, formState: { errors } } = useForm<Credentials>();
@@ -17,11 +20,24 @@ const LoginForm: React.FC = () => {
   const [errorText, setErrorText] = useState("");
   const [ rememberMe, setRememberMe ] = useState(false);
   const email = watch('email', '');
+  const { getMailboxList } = useMailboxes();
+  const { getCurrentlyLoggedInUser } = useAppUserData();
+
+  const {mutate:mutateUser} = useSWR('/api/AppUser/me',
+                                      getCurrentlyLoggedInUser,
+                                      { fallbackData:null });
+  const {mutate: mutateMb} = useSWR('/api/MailBox',
+                                    getMailboxList,
+                                    { fallbackData:[] });
 
   const onSubmit: SubmitHandler<Credentials> = async (data) => {
     try {
-      if (await loginService(data, rememberMe))
+      if (await loginService(data, rememberMe)){
+        //force SWR refresh on login
+        mutateMb();
+        mutateUser();
         router.push('/'); // Redirect to home after successful login
+      }
     } catch (err) {
       console.error('Login failed:', err);
       if (err instanceof Error)
