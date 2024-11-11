@@ -21,7 +21,7 @@ const AfterRegisterInfo:React.FC = () => {
       <Typography sx={{py:5}}>
         If email verification is enabled, verification email sent to <i>{params.get('email')}</i>
         
-        Check your email and confirm your email address. Then you can go to the login page
+        Check your email and confirm your email address. Then go to the login page
       </Typography>
       <Typography textAlign="center" variant='h4'>
         <Link href={'/auth/login'}  underline="hover">
