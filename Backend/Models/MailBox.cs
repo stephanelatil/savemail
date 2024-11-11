@@ -6,6 +6,7 @@ using System.Text.Json.Serialization;
 using Backend.Services;
 using MailKit.Net.Imap;
 using MailKit.Security;
+using Microsoft.IdentityModel.Tokens;
 
 public class MailBox
 {
@@ -40,7 +41,7 @@ public class MailBox
                 if (this.OAuthCredentials.AccessTokenExpired)
                 {
                     if (this.OAuthCredentials.NeedReAuth)
-                        throw new AuthenticationException("OAuthCredentials expired");
+                        throw new SecurityTokenExpiredException("OAuthCredentials expired");
                     //refresh here
                     if (tokenRefreshService is null || !await tokenRefreshService.RefreshToken(this.OAuthCredentials))
                         throw new AuthenticationException("Unable to refresh credentials");

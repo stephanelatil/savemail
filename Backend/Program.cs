@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using Backend.Models;
 using Backend.Services;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 
@@ -44,7 +45,7 @@ builder.Services.AddDbContext<ApplicationDBContext>(opt =>{
 
 
 //Setup SendGrid
-//string a = builder.Configuration.GetRequiredSection("SendGrid")['SendGridKey'];
+builder.Services.AddTransient<IEmailSender, SendGridEmailSender>();
 
 builder.Services.AddProblemDetails();
 // Add User auth

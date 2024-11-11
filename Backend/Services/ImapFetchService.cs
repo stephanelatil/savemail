@@ -2,6 +2,7 @@ using System.Net.Sockets;
 using Backend.Models;
 using MailKit;
 using MailKit.Net.Imap;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Backend.Services
 {
@@ -65,6 +66,7 @@ namespace Backend.Services
                 this._logger.LogWarning(e, "Unable to connect to connect and authenticate for mailbox {}", mailbox.Id);
                 return null;
             }
+            catch(SecurityTokenExpiredException){}
             catch(Exception e)
             {
                 this._logger.LogWarning(e, "Unable to connect to imap service for mailbox {}", mailbox.Id);
@@ -112,7 +114,7 @@ namespace Backend.Services
         private readonly IOAuthService _oAuthService;
         private Folder? _folder;
         private IMailFolder? _imapFolder;
-        private Queue<UniqueId>? _uids = null;        
+        private Queue<MailKit.UniqueId>? _uids = null;        
         private bool _disposed = false;
         public bool Prepared { get; private set; } = false;
         public bool IsConnected => this.imapClient.IsConnected;
@@ -127,11 +129,11 @@ namespace Backend.Services
             this._oAuthService = oAuthService;
         }
 
-        private async Task<Queue<UniqueId>> GetUidsToFetchAsync(UniqueId? lastUid, DateTime lastDate,
+        private async Task<Queue<MailKit.UniqueId>> GetUidsToFetchAsync(MailKit.UniqueId? lastUid, DateTime lastDate,
                                                                 CancellationToken cancellationToken = default)
         {
             ArgumentNullException.ThrowIfNull(this._imapFolder);
-            UniqueId? start = null;
+            MailKit.UniqueId? start = null;
             //Gets the latest mails starting at the 
             if (lastUid.HasValue && this._imapFolder.UidValidity == lastUid.Value.Validity)
                 start = lastUid.Value;
@@ -142,15 +144,15 @@ namespace Backend.Services
                             MailKit.Search.SearchOptions.All,
                             MailKit.Search.SearchQuery.DeliveredAfter(lastDate),
                             cancellationToken);
-                    return new Queue<UniqueId>(result.UniqueIds);
+                    return new Queue<MailKit.UniqueId>(result.UniqueIds);
                 }
                 catch {}//Doesn't support ESEARCH
             }
             if (!start.HasValue)
-                start = UniqueId.MinValue;
+                start = MailKit.UniqueId.MinValue;
 
-            UniqueIdRange range = new(start.Value, UniqueId.MaxValue);
-            return new Queue<UniqueId>(
+            UniqueIdRange range = new(start.Value, MailKit.UniqueId.MaxValue);
+            return new Queue<MailKit.UniqueId>(
                             await this._imapFolder.SearchAsync(
                                     range, MailKit.Search.SearchQuery.NotDraft, cancellationToken));
         }
@@ -167,6 +169,7 @@ namespace Backend.Services
                                     cancellationToken);
                 await mailbox.ImapAuthenticateAsync(this.imapClient, this._oAuthService, cancellationToken);
             }
+            catch(SecurityTokenExpiredException){}
             catch (SocketException){
                 this._logger.LogWarning("Unable to connect to imap server '{}' on port {}", mailbox.ImapDomain, mailbox.ImapPort);
             }
@@ -196,7 +199,7 @@ namespace Backend.Services
             List<Mail> mails = new(maxFetchPerLoop);
             for (int i = 0; i < maxFetchPerLoop; ++i)
             {
-                if (!this._uids.TryDequeue(out UniqueId uid))
+                if (!this._uids.TryDequeue(out MailKit.UniqueId uid))
                     break; //done if end of queue reached
                 
                 mails.Add(new Mail(await this._imapFolder.GetMessageAsync(uid),
