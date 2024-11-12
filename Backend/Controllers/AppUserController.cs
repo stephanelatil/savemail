@@ -5,6 +5,7 @@ using Backend.Models.DTO;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Backend.Services;
+using Microsoft.AspNetCore.Identity.UI.Services;
 
 namespace Backend.Controllers;
 
@@ -17,8 +18,8 @@ public class AppUserController : ControllerBase
     private readonly IUserService _userService;
 
     public AppUserController(ApplicationDBContext context,
-                                UserManager<AppUser> userManager,
-                                IUserService userService)
+                             UserManager<AppUser> userManager,
+                             IUserService userService)
     {
         this._context = context;
         this._userManager = userManager;
@@ -60,6 +61,7 @@ public class AppUserController : ControllerBase
             return new AppUserDto(self);
     }
 
+    // PATCH: api/AppUser/5
     [HttpPatch("{id}")]
     [Authorize]
     public async Task<IActionResult> PatchUser(string id, [FromBody] UpdateAppUser updateAppUser)
@@ -82,6 +84,27 @@ public class AppUserController : ControllerBase
         {return this.Problem("Database saving issue: Please try again.");}
 
         return this.NoContent();
+    }
+
+    // POST: api/AppUser/ForgotPassword
+    [HttpPost("ForgotPassword")]
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordObject forgotPassword,
+                                                    [FromServices] IEmailSender emailSender)
+    {
+        string? email = forgotPassword.Email;
+        if (email is null)
+            return this.BadRequest("Email is invalid");
+        AppUser? user = await this._userService.GetUserByEmailAsync(email);
+        if (user is null || !user.EmailConfirmed)
+            return this.Ok();
+        string resetCode = await this._userManager.GeneratePasswordResetTokenAsync(user);
+        
+        string message = $"To reset your password <a href='{forgotPassword.RedirectTo}?resetCode={resetCode}&email={email}'>"+
+                         $"click here</a>.\n\nOr you can go to the <a href='{forgotPassword.RedirectTo}>reset page</a>"+
+                         $"and give this reset code: \n<i>{resetCode}</i>";
+
+        await emailSender.SendEmailAsync(email, "PasswordReset", message);
+        return this.Ok();
     }
 
     // DELETE: api/AppUser/5

@@ -25,3 +25,8 @@ public class UpdateAppUser
     public string? FirstName { get; set; }
     public string? LastName { get; set; }
 }
+
+public class ForgotPasswordObject{
+    public string? Email { get; set; }
+    public string? RedirectTo { get; set; }
+}
