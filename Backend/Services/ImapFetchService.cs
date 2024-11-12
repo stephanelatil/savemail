@@ -15,16 +15,19 @@ namespace Backend.Services
     {
         private ImapClient imapClient;
         private readonly ILogger<ImapFolderFetchService> _logger;
+        private readonly TokenEncryptionService _tokenEncryptionService;
         private readonly IOAuthService _oAuthService;
         private bool _disposed = false;
 
 
         public ImapFolderFetchService(ILogger<ImapFolderFetchService> logger,
-                                      IOAuthService oAuthService)
+                                      IOAuthService oAuthService,
+                                      TokenEncryptionService tokenEncryptionService)
         {
             this.imapClient = new();
             this._logger = logger;
             this._oAuthService = oAuthService;
+            this._tokenEncryptionService = tokenEncryptionService;
         }
 
         /// <summary>
@@ -42,7 +45,7 @@ namespace Backend.Services
                                         mailbox.ImapPort,
                                         MailKit.Security.SecureSocketOptions.Auto,
                                         cancellationToken);
-                await mailbox.ImapAuthenticateAsync(this.imapClient, this._oAuthService, cancellationToken);
+                await mailbox.ImapAuthenticateAsync(this.imapClient, this._tokenEncryptionService, this._oAuthService, cancellationToken);
 
                 foreach (var imapFolder in await this.imapClient.GetFoldersAsync(this.imapClient.PersonalNamespaces[0],
                                                                                 false,
@@ -112,6 +115,7 @@ namespace Backend.Services
     {
         private ImapClient imapClient = new();
         private readonly IOAuthService _oAuthService;
+        private readonly TokenEncryptionService _tokenEncryptionService;
         private Folder? _folder;
         private IMailFolder? _imapFolder;
         private Queue<MailKit.UniqueId>? _uids = null;        
@@ -123,10 +127,12 @@ namespace Backend.Services
         private readonly ILogger<ImapMailFetchService> _logger;
 
         public ImapMailFetchService(ILogger<ImapMailFetchService> logger,
-                                    IOAuthService oAuthService) 
+                                    IOAuthService oAuthService,
+                                    TokenEncryptionService tokenEncryptionService) 
         {
             this._logger = logger;
             this._oAuthService = oAuthService;
+            this._tokenEncryptionService = tokenEncryptionService;
         }
 
         private async Task<Queue<MailKit.UniqueId>> GetUidsToFetchAsync(MailKit.UniqueId? lastUid, DateTime lastDate,
@@ -167,7 +173,8 @@ namespace Backend.Services
                                     mailbox.ImapPort,
                                     MailKit.Security.SecureSocketOptions.Auto,
                                     cancellationToken);
-                await mailbox.ImapAuthenticateAsync(this.imapClient, this._oAuthService, cancellationToken);
+                await mailbox.ImapAuthenticateAsync(this.imapClient, this._tokenEncryptionService,
+                                                    this._oAuthService, cancellationToken);
             }
             catch(SecurityTokenExpiredException){}
             catch (SocketException){

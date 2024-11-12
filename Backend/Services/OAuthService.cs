@@ -65,7 +65,7 @@ public class OAuthService : IOAuthService
     public async Task<string> GetEmail(string decryptedAccessToken, string userInfoUrl)
     {
         HttpRequestMessage request = new (HttpMethod.Get, userInfoUrl);
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", decryptedAccessToken);
 
         using HttpResponseMessage response = await this._httpClient.SendAsync(request);
 

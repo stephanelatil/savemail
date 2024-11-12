@@ -101,7 +101,7 @@ public class OAuthCredentialsService : IOAuthCredentialsService
 
     public async Task<OAuthCredentials?> RefreshCredentials(OAuthCredentials credentials, string ownerId)
     {
-        if (!await this._oAuthService.RefreshToken(credentials))
+        if (!await this._oAuthService.RefreshToken(credentials, ownerId))
             return null;
         return credentials;
     }
