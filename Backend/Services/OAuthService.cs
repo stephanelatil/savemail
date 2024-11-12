@@ -9,9 +9,9 @@ namespace Backend.Services;
 
 public interface IOAuthService
 {
-    public Task<bool> RefreshToken(OAuthCredentials credentials);
-    public Task<string> GetEmail(string accessToken, string userInfoUrl);
-    public Task<string> GetEmail(OAuthCredentials credentials); 
+    public Task<bool> RefreshToken(OAuthCredentials credentials, string ownerId);
+    public Task<string> GetEmail(string decryptedAccessToken, string userInfoUrl);
+    public Task<string> GetEmail(OAuthCredentials credentials, string ownerId); 
     public Task SetNeedReauth(OAuthCredentials credentials);
 }
 
@@ -19,13 +19,15 @@ public class OAuthService : IOAuthService
 {
     private readonly HttpClient _httpClient;
     private readonly ApplicationDBContext _context;
+    private readonly TokenEncryptionService _tokenEncryptionService;
     private readonly Dictionary<ImapProvider, string> _clientId;
     private readonly Dictionary<ImapProvider, string> _clientSecret;
 
-    public OAuthService(HttpClient httpClient, IConfiguration configuration, ApplicationDBContext context)
+    public OAuthService(HttpClient httpClient, IConfiguration configuration, TokenEncryptionService tokenEncryptionService, ApplicationDBContext context)
     {
         this._context = context;
         this._httpClient = httpClient;
+        this._tokenEncryptionService = tokenEncryptionService;
 
         this._clientId = [];
         this._clientSecret = [];
@@ -41,10 +43,11 @@ public class OAuthService : IOAuthService
         await this._context.SaveChangesAsync();
     }
 
-    public async Task<string> GetEmail(OAuthCredentials credentials)
+    public async Task<string> GetEmail(OAuthCredentials credentials, string ownerId)
     {
         HttpRequestMessage request = new (HttpMethod.Get, OAuthCredentials.UserProfileUrl(credentials.Provider));
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", credentials.AccessToken);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", 
+                                            this._tokenEncryptionService.Decrypt(credentials.AccessToken, credentials.OwnerMailboxId, ownerId));
 
         using HttpResponseMessage response = await this._httpClient.SendAsync(request);
 
@@ -59,7 +62,7 @@ public class OAuthService : IOAuthService
         throw new AuthenticationException("Unable to get user email");
     }
 
-    public async Task<string> GetEmail(string accessToken, string userInfoUrl)
+    public async Task<string> GetEmail(string decryptedAccessToken, string userInfoUrl)
     {
         HttpRequestMessage request = new (HttpMethod.Get, userInfoUrl);
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
@@ -76,7 +79,7 @@ public class OAuthService : IOAuthService
         throw new AuthenticationException("Unable to get user email");
     }
 
-    public async Task<bool> RefreshToken(OAuthCredentials credentials)
+    public async Task<bool> RefreshToken(OAuthCredentials credentials, string ownerId)
     {
         this._context.OAuthCredentials.Update(credentials);
         string? clientId = this._clientSecret.GetValueOrDefault(credentials.Provider);
@@ -110,7 +113,8 @@ public class OAuthService : IOAuthService
                 return false;
             }
 
-            credentials.AccessToken = tokenResponse.GetValue<string>("access_token");
+            credentials.AccessToken = this._tokenEncryptionService.Encrypt(tokenResponse.GetValue<string>("access_token"),
+                                                                            credentials.OwnerMailboxId, ownerId);
             if (tokenResponse.ContainsKey("expires_in"))
                 credentials.AccessTokenValidity = DateTime.UtcNow
                                                     .AddMinutes(-10)

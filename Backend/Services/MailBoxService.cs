@@ -16,9 +16,11 @@ namespace Backend.Services
     public class MailBoxService : IMailBoxService
     {
         private readonly ApplicationDBContext _context;
+        private readonly TokenEncryptionService _tokenEncryptionService;
 
-        public MailBoxService(ApplicationDBContext context)
+        public MailBoxService(ApplicationDBContext context, TokenEncryptionService tokenEncryptionService)
         {
+            this._tokenEncryptionService = tokenEncryptionService;
             this._context = context;
         }
 
@@ -38,7 +40,8 @@ namespace Backend.Services
             this._context.TrackEntry(mailBox);
             
             mailBox.Username = updateMailBox.Username ?? mailBox.Username;
-            mailBox.Password = updateMailBox.Password ?? mailBox.Password;
+            mailBox.Password = updateMailBox.Password is null ? mailBox.Password
+                                            : this._tokenEncryptionService.Encrypt(updateMailBox.Password, mailBox.Id, mailBox.OwnerId);
             mailBox.ImapDomain = updateMailBox.ImapDomain ?? mailBox.ImapDomain;
             mailBox.ImapPort = updateMailBox.ImapPort ?? mailBox.ImapPort;
 
@@ -65,6 +68,9 @@ namespace Backend.Services
             await this._context.MailBox.AddAsync(newmb);
             if (await this._context.SaveChangesAsync() == 0) 
                 throw new DbUpdateException();
+            newmb.Password = this._tokenEncryptionService.Encrypt(newmb.Password, newmb.Id, newmb.OwnerId);
+            this._context.MailBox.Update(newmb);
+            await this._context.SaveChangesAsync();
             return newmb;
         }
 

@@ -10,6 +10,7 @@ namespace Backend.Services
     public interface IUserService
     {
         public Task<AppUser?> GetUserByIdAsync(string id, bool includeMailboxes=false);
+        public Task<AppUser?> GetUserByEmailAsync(string email, bool includeMailboxes=false);
         public Task<AppUser?> GetUserByClaimAsync(ClaimsPrincipal principal, bool includeMailboxes=false);
         public Task UpdateUserAsync(UpdateAppUser? user);
         public Task DeleteUserAsync(AppUser user);
@@ -64,6 +65,14 @@ namespace Backend.Services
             this._context.Users.Remove(user);
             if (await this._context.SaveChangesAsync() == 0)
                 throw new DbUpdateException();
+        }
+
+        public async Task<AppUser?> GetUserByEmailAsync(string email, bool includeMailboxes = false)
+        {
+            var users = this._context.Users;
+            if (includeMailboxes)
+                return await users.Include(u => u.MailBoxes).FirstOrDefaultAsync(u => u.Email == email);
+            return await users.FirstOrDefaultAsync(u => u.Email == email);
         }
     }
 }

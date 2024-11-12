@@ -29,12 +29,15 @@ public class MailBox
     public ICollection<Mail> Mails { get; set; } = [];
     public ICollection<Folder> Folders { get; set; } = [];
 
-    public async Task ImapAuthenticateAsync(ImapClient client, IOAuthService? tokenRefreshService=null, CancellationToken cancellationToken = default)
+    public async Task ImapAuthenticateAsync(ImapClient client,
+                                            TokenEncryptionService tokenEncryptionService,
+                                            IOAuthService? tokenRefreshService=null,
+                                            CancellationToken cancellationToken = default)
     {
         switch (this.Provider)
         {
             case ImapProvider.Simple:
-                await client.AuthenticateAsync(this.Username, this.Password, cancellationToken);
+                await client.AuthenticateAsync(this.Username, tokenEncryptionService.Decrypt(this.Password, this.Id, this.OwnerId), cancellationToken);
                 break;
             case ImapProvider.Google:
                 ArgumentNullException.ThrowIfNull(this.OAuthCredentials, nameof(this.OAuthCredentials));
@@ -43,10 +46,10 @@ public class MailBox
                     if (this.OAuthCredentials.NeedReAuth)
                         throw new SecurityTokenExpiredException("OAuthCredentials expired");
                     //refresh here
-                    if (tokenRefreshService is null || !await tokenRefreshService.RefreshToken(this.OAuthCredentials))
+                    if (tokenRefreshService is null || !await tokenRefreshService.RefreshToken(this.OAuthCredentials, this.OwnerId))
                         throw new AuthenticationException("Unable to refresh credentials");
                 }
-                await client.AuthenticateAsync(new SaslMechanismOAuth2(this.Username, this.OAuthCredentials.AccessToken), cancellationToken);
+                await client.AuthenticateAsync(new SaslMechanismOAuth2(this.Username, tokenEncryptionService.Decrypt(this.OAuthCredentials.AccessToken, this.Id, this.OwnerId)), cancellationToken);
                 break;
             default:
                 await client.AuthenticateAsync(new SaslMechanismAnonymous(this.Username), cancellationToken);
