@@ -46,6 +46,7 @@ builder.Services.AddDbContext<ApplicationDBContext>(opt =>{
 
 //Setup SendGrid
 builder.Services.AddTransient<IEmailSender, SendGridEmailSender>();
+builder.Services.AddSingleton<TokenEncryptionService, TokenEncryptionService>();
 
 builder.Services.AddProblemDetails();
 // Add User auth
