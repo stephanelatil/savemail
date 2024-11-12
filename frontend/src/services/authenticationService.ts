@@ -75,7 +75,11 @@ export const resendConfirmationEmail = async (email:string) : Promise<boolean> =
  * @returns true (always)
  */
 export const sendPasswordReset = async (email:string) : Promise<boolean> => {
-    const response = await apiFetchWithBody(`${AUTH_ENDPOINT}forgotPassword`, 'POST', {"email":email})
+    const response = await apiFetchWithBody(`/api/AppUser/ForgotPassword`, 'POST',
+                                            {
+                                                "email":email,
+                                                "redirectTo":`${process.env.NEXT_PUBLIC_FRONTEND_URL}/auth/reset`
+                                            });
 
     return true;
 }
