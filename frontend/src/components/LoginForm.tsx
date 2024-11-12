@@ -11,15 +11,14 @@ import { useLightDarkModeSwitch } from '@/hooks/useLightDarkModeSwitch';
 import { useMailboxes } from '@/hooks/useMailboxes';
 import { useAppUserData } from '@/hooks/useAppUserData';
 import useSWR from 'swr';
+import { CheckboxElement, PasswordElement, TextFieldElement } from 'react-hook-form-mui';
 
 const LoginForm: React.FC = () => {
-  const { register, watch, handleSubmit, formState: { errors } } = useForm<Credentials>();
+  const { control, handleSubmit, watch } = useForm<Credentials>();
   const { login:loginService, loading } = useAuthentication();
   const { mode, toggleMode } = useLightDarkModeSwitch();
   const router = useRouter();
-  const [errorText, setErrorText] = useState("");
   const [ rememberMe, setRememberMe ] = useState(false);
-  const email = watch('email', '');
   const { getMailboxList } = useMailboxes();
   const { getCurrentlyLoggedInUser } = useAppUserData();
 
@@ -29,20 +28,20 @@ const LoginForm: React.FC = () => {
   const {mutate: mutateMb} = useSWR('/api/MailBox',
                                     getMailboxList,
                                     { fallbackData:[] });
+  const email = watch('email');
 
   const onSubmit: SubmitHandler<Credentials> = async (data) => {
-    try {
+      if ((data.twoFactorCode?.trim()?.length ?? 0) > 6){
+        // Choses whether 2FA code is a recovery code if len>6
+        data.twoFactorRecoveryCode = data.twoFactorCode;
+        delete data.twoFactorCode;
+      }
       if (await loginService(data, rememberMe)){
         //force SWR refresh on login
         mutateMb();
         mutateUser();
         router.push('/'); // Redirect to home after successful login
       }
-    } catch (err) {
-      console.error('Login failed:', err);
-      if (err instanceof Error)
-        setErrorText(err.message);
-    }
   };
 
   return (
@@ -62,29 +61,28 @@ const LoginForm: React.FC = () => {
         <Typography variant="h3" component="h1" textAlign="center">
           Login
         </Typography>
-        <Typography variant='h6' textAlign="left">
-          {errorText}
-        </Typography>
-        <TextField
+
+        <TextFieldElement
           label="Email"
-          {...register('email', { required: 'Username is required' })}
-          error={!!errors.email}
-          helperText={errors.email?.message}
+          name='email'
+          control={control}
+          required
           fullWidth
         />
-        <TextField
+        <PasswordElement
           label="Password"
-          type="password"
-          {...register('password', { required: 'Password is required' })}
-          error={!!errors.password}
-          helperText={errors.password?.message}
+          name='password'
+          control={control}
           fullWidth
         />
-        <TextField
+        <TextFieldElement
           label="Two-Factor Code (if required)"
-          {...register('twoFactorCode')}
+          control={control}
+          name='twoFactorCode'
+          helperText='Your 6 digit TOTP or a single use recovery code'
           fullWidth
         />
+
         <FormControlLabel
           control={
             <Checkbox
@@ -107,7 +105,7 @@ const LoginForm: React.FC = () => {
         </Button>
         <Typography textAlign="center">
           {'Forgot Login? '}
-          <Button variant='text' onClick={() => {router.push('/auth/forgotten?email='+email);}}>
+          <Button variant='text' onClick={() => {router.push('/auth/forgotten' + (!!email ? '?email='+email ? ''));}}>
             Reset Password
           </Button>
         </Typography>

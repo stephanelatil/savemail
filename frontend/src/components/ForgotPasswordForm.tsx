@@ -1,104 +1,95 @@
 'use client'
 
 import { useForm, SubmitHandler } from 'react-hook-form';
-import { TextField, Button, Typography, Link, CircularProgress, Box, Divider } from '@mui/material';
+import { TextField, Button, Typography, Link, CircularProgress, Box, Divider, IconButton } from '@mui/material';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { useAuthentication } from '@/hooks/useAuthentication';
+import { useLightDarkModeSwitch } from '@/hooks/useLightDarkModeSwitch';
+import { DarkMode, LightMode } from '@mui/icons-material';
+import { TextFieldElement } from 'react-hook-form-mui';
 
 interface ForgotPasswordFormData {
   email: string;
 }
 
 const ForgotPasswordForm: React.FC = () => {
-  const { register, handleSubmit, formState: { errors } } = useForm<ForgotPasswordFormData>();
+  const { control, handleSubmit } = useForm<ForgotPasswordFormData>();
   const { sendPasswordReset, loading } = useAuthentication();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [errBlock, setErrBlock] = useState(<></>);
+  const { mode, toggleMode } = useLightDarkModeSwitch();
 
   // Get email from URL if it was passed from login page
   const defaultEmail = searchParams.get('email') || '';
 
   const onSubmit: SubmitHandler<ForgotPasswordFormData> = async (data) => {
-    try {
       const success = await sendPasswordReset(data.email);
-      if (success)
-        setErrBlock(
-            <Typography variant='body1' color='success' textAlign="center">
-              A Password reset link has been sent to your email.
-            </Typography>);
-    } catch (err) {
-      console.error('Password reset request failed:', err);
-      setErrBlock(
-          <Typography variant='body1' color='error' textAlign="center">
-            {'Unable to send email: '+err}
-          </Typography>);
-    }
   };
 
   return (
-    <Box
-      component="form"
-      onSubmit={handleSubmit(onSubmit)}
-      sx={{
-        maxWidth: '400px',
-        margin: '0 auto',
-        padding: '2rem',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '1rem',
-      }}
-    >
-      <Typography variant="h3" textAlign="center">
-        Forgot Password
-      </Typography>
-      <span/>
-
-      <Typography variant="body1" textAlign="center">
-        Enter your email address and we'll send you instructions to reset your password.
-        This will only work if you have confirmed your email address!
-      </Typography>
-
-      <span/>
-      {errBlock}
-
-      <TextField
-        label="Email"
-        defaultValue={defaultEmail}
-        {...register('email', { 
-          required: 'Email is required',
-          pattern: {
-            value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-            message: "Invalid email address"
-          }
-        })}
-        error={!!errors.email}
-        helperText={errors.email?.message}
-        fullWidth
-      />
-
-      <Button
-        type="submit"
-        variant="contained"
-        color="primary"
-        fullWidth
-        disabled={loading}
-        aria-busy={loading}
-        sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+    <>
+      <Box
+        component="form"
+        onSubmit={handleSubmit(onSubmit)}
+        sx={{
+          maxWidth: '400px',
+          margin: '0 auto',
+          padding: '2rem',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '1rem',
+        }}
       >
-        {loading ? <CircularProgress size={24} color="inherit" /> : 'Reset Password'}
-      </Button>
+        <Typography variant="h3" textAlign="center">
+          Forgot Password
+        </Typography>
+        
+        <span/>
 
-      <Divider variant='middle'/>
+        <Typography variant="body1" textAlign="center">
+          Enter your email address and we'll send you instructions to reset your password.
+        </Typography>
+        <Typography variant='body2' textAlign='center' color='warning'>
+          This will only work if you have confirmed your email address!
+        </Typography>
+        
+        <TextFieldElement
+          name='email'
+          label="Email"
+          control={control}
+          defaultValue={defaultEmail}
+          fullWidth
+        />
 
-      <Typography textAlign="center">
-        {"Remember your password? "}
-        <Button onClick={()=>{router.push('/auth/login');}}>
-          Back to Login
+        <Button
+          type="submit"
+          variant="contained"
+          color="primary"
+          fullWidth
+          disabled={loading}
+          aria-busy={loading}
+          sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        >
+          {loading ? <CircularProgress size={24} color="inherit" /> : 'Reset Password'}
         </Button>
-      </Typography>
-    </Box>
+
+        <Divider variant='middle'/>
+
+        <Typography textAlign="center">
+          {"Remember your password? "}
+          <Button onClick={()=>{router.push('/auth/login');}}>
+            Back to Login
+          </Button>
+        </Typography>
+      </Box>
+      <IconButton onClick={toggleMode} sx={{
+        position: 'fixed',
+        bottom: 16, left: 16,
+        zIndex: 1000, /* ensure it stays on top */}}>
+        {mode === 'light' ? <LightMode /> : <DarkMode />}
+      </IconButton>
+    </>
   );
 };
 

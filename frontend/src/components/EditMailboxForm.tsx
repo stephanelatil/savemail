@@ -1,80 +1,44 @@
 'use client'
 
 import { useMailboxes } from "@/hooks/useMailboxes";
-import { EditMailBox, ImapProvider } from "@/models/mailBox";
-import { useMountEffect } from "@/utils/utils";
+import { EditMailBox, ImapProvider, MailBox } from "@/models/mailBox";
 import { Google } from "@mui/icons-material";
-import { Box, Button, CircularProgress, Divider, TextField, Typography } from "@mui/material";
+import { Box, Button, CircularProgress, Divider, Skeleton, TextField, Typography } from "@mui/material";
 import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
+import useSWR from "swr";
+import NotFound from "./NotFound";
+import { PasswordElement, TextFieldElement } from "react-hook-form-mui";
 
 
-const EditMailboxForm:React.FC = () =>{
-    const router = useRouter();
+const EditMailboxFormBase:React.FC<{defaultValues:MailBox}> = ({defaultValues}) =>{
     const params = useParams();
     const mailboxPageId = parseInt(params.id as string ?? '0', 10);
-    const [defaultValues, setDefaultValues] = useState({
-        id:mailboxPageId,
-        imapDomain:"",
-        imapPort:993,
-        username:"",
-        needsReauth:false});
 
-    const [ provider, setProvider ] = useState<ImapProvider|null>(null);
-    const { loading, editMailBox, getMailbox, synchronizeMailbox } = useMailboxes();
-    const [ errorText, setErrorText ] = useState("");
-    const { register, handleSubmit, formState: { errors } } = useForm<EditMailBox>({defaultValues:defaultValues});
-
-    useMountEffect(() => {
-        const loadDefaults = async () => {
-            const mb = await getMailbox(mailboxPageId);
-            if(mb)
-            {
-                setDefaultValues({
-                    id:mailboxPageId,
-                    imapDomain:mb.imapDomain,
-                    imapPort:mb.imapPort,
-                    username:mb.username,
-                    needsReauth:mb.needsReauth
-                });
-                setProvider(mb.provider);
-            }
-            else
-                router.push("/404");
-        }
-
-        loadDefaults();
-    });
+    const { loading, editMailBox, synchronizeMailbox } = useMailboxes();
+    const { control, handleSubmit } = useForm<EditMailBox>({defaultValues:defaultValues});
+    const provider = defaultValues?.provider;
 
     const onSubmit: SubmitHandler<EditMailBox> = async (mb) => {
-        try {
-            await editMailBox(mb);
-        } catch (err) {
-            if (err instanceof Error)
-            setErrorText(err.message);
-        }
+        await editMailBox(mb);
     };
 
     return (
-        <>
         <Box 
-        component="form"
-        onSubmit={handleSubmit(onSubmit)}
-        sx={{
-        maxWidth: '600px',
-        margin: '0 auto',
-        padding: '2rem',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '1rem',
+            component="form"
+            onSubmit={handleSubmit(onSubmit)}
+            sx={{
+            maxWidth: '600px',
+            margin: '0 auto',
+            padding: '2rem',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '1rem',
         }}>
             <Typography variant="h3" textAlign="center">
                 Edit Mailbox
             </Typography>
-            <Typography variant='h6' textAlign="center" color='error'>
-                {errorText}
-            </Typography>
+            
             {
                 defaultValues.needsReauth &&
                 <Typography variant='h5' textAlign="center">
@@ -84,28 +48,26 @@ const EditMailboxForm:React.FC = () =>{
                     }
                 </Typography>
             }
-            <TextField
+
+            <TextFieldElement
                 disabled={provider !== ImapProvider.Simple}
+                name='username'
+                control={control}
                 label="Username (Email address)"
-                defaultValue={defaultValues.username}
-                {...register('username', { required: 'Username is required' })}
-                error={!!errors.username}
-                helperText={errors.username?.message}
+                required
                 fullWidth
             />
-
+ 
             {
                 // return a password field, or a button to reauthenticate
                 (() => {
                     switch(provider)
                     {
                         case ImapProvider.Simple:
-                            return <TextField
+                            return <PasswordElement
                                 label="Password"
-                                type="password"
-                                {...register('password', { required: 'Password is required' })}
-                                error={!!errors.password}
-                                helperText={errors.password?.message}
+                                name="password"
+                                required
                                 fullWidth
                             />
                         case ImapProvider.Google:
@@ -118,38 +80,41 @@ const EditMailboxForm:React.FC = () =>{
                     }
                 })()
             }
-            <TextField
-            disabled={provider !== ImapProvider.Simple}
-            label="Imap Domain"
-            defaultValue={defaultValues.imapDomain}
-            {...register('imapDomain', { required: 'IMAP Domain is required' })}
-            error={!!errors.imapDomain}
-            helperText={errors.imapDomain?.message}
-            fullWidth
+
+            <TextFieldElement
+                disabled={provider !== ImapProvider.Simple}
+                label="Imap Domain"
+                name='imapDomain'
+                defaultValue={defaultValues.imapDomain}
+                control={control}
+                required
+                fullWidth
             />
-            <TextField
-            disabled={provider !== ImapProvider.Simple}
-            label="Imap Port"
-            defaultValue={defaultValues.imapPort}
-            type='number'
-            {...register('imapPort', { required: 'Port is required',
-            max:{value:65535, message:"Port must be less than 65535"},
-            min:{value:1, message: "Port must be greater than 0"}})}
-            error={!!errors.imapPort}
-            helperText={errors.imapPort?.message}
-            fullWidth
+            <TextFieldElement
+                disabled={provider !== ImapProvider.Simple}
+                label="Imap Port"
+                type='number'
+                name='imapPort'
+                defaultValue={defaultValues.imapPort}
+                control={control}
+                rules={{
+                    max:{value:65535, message:"Port must be less than 65535"},
+                    min:{value:1, message: "Port must be greater than 0"}
+                }}
+                required
+                fullWidth
             />
 
             <Button
-            type="submit"
-            variant="contained"
-            color="primary"
-            fullWidth
-            disabled={loading || provider !== ImapProvider.Simple}
-            aria-busy={loading}
-            sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            >
-            {loading ? <CircularProgress size={24} color="inherit" /> : "Update"}
+                type="submit"
+                variant="contained"
+                color="primary"
+                fullWidth
+                disabled={loading || provider !== ImapProvider.Simple}
+                aria-busy={loading}
+                sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                {loading ? <CircularProgress size={24} color="inherit" /> : "Update"}
             </Button>
             <Divider  sx={{my:'2em'}}/>
             <Button 
@@ -161,8 +126,19 @@ const EditMailboxForm:React.FC = () =>{
             >
                 Synchronize mailbox now
             </Button>
-        </Box>
-    </>);
+        </Box>);
+}
+
+const EditMailboxForm: React.FC = () => {
+    const params = useParams();
+    const mailboxPageId = parseInt(params.id as string ?? '0', 10);
+    const { getMailbox } = useMailboxes();
+    const {data, isLoading} = useSWR('/api/MailBox/'+mailboxPageId, () =>getMailbox(mailboxPageId));
+
+    return isLoading
+                ? <Skeleton />
+                : !!data ? <EditMailboxFormBase defaultValues={data}/>
+                         : <NotFound />
 }
 
 export default EditMailboxForm;

@@ -8,28 +8,21 @@ import { Credentials } from '@/models/credentials';
 import { useState } from 'react';
 import { DarkMode, LightMode } from '@mui/icons-material';
 import { useLightDarkModeSwitch } from '@/hooks/useLightDarkModeSwitch';
+import { PasswordElement, PasswordRepeatElement, TextFieldElement } from 'react-hook-form-mui';
 
 const RegisterForm: React.FC = () => {
-  const { register, handleSubmit, formState: { errors }, watch } = useForm<Credentials>();
-  const { register:registerService, loading } = useAuthentication();
+  const { control, handleSubmit } = useForm<Credentials>();
+  const { register, loading } = useAuthentication();
   const { mode, toggleMode } = useLightDarkModeSwitch();
   const router = useRouter();
-  const [errorText, setErrorText] = useState("");
 
   const onSubmit: SubmitHandler<Credentials> = async (data) => {
-    try {
-      if (await registerService(data)){
-        const url = new URL('/auth/register-ok')
-        url.searchParams.set('email', data.email);
-        router.push(url.toString()); //action to run after register is successful
-      }
-    } catch (err) {
-      console.error('Register failed:', err);
-      if (err instanceof Error)
-        setErrorText(err.message);
+    if (await register(data)){
+      const url = new URL('/auth/register-ok')
+      url.searchParams.set('email', data.email);
+      router.push(url.toString()); //action to run after register is successful
     }
   };
-  var passwd = watch('password');
 
   return (
       <Box
@@ -44,39 +37,34 @@ const RegisterForm: React.FC = () => {
           gap: '1rem'
         }}
       >
-        <Typography variant="h3" component="h1" textAlign="center">
+        <Typography variant="h3" textAlign="center">
           Register
         </Typography>
-        <Typography variant='h6' textAlign="left">
-          {errorText}
-        </Typography>
-        <TextField
+        
+        <TextFieldElement
           label="Email"
-          {...register('email', { required: {value:true, message:'Email is required'} })}
-          error={!!errors.email}
-          helperText={errors.email?.message}
+          name='email'
+          control={control}
+          required
           fullWidth
         />
-        <TextField
+        <PasswordElement
+          control={control}
           label="Password"
-          type="password"
-          {...register('password', { required: {value: true, message: 'Password is required'},
-                                     minLength: {value: 6, message: "Password must have at least 6 characters"}
-                                     
-                                   })}
-          error={!!errors.password}
-          helperText={errors.password?.message}
+          name='password'
+          rules={{minLength: {value: 6, message: "Password must have at least 6 characters"},
+                  required:{value: true, message: 'Password is required'}}}
           fullWidth
         />
-        <TextField
+        <PasswordRepeatElement
           label="Confirm Password"
-          type="password"
-          {...register('passwordRepeat', { required: {value: true, message: 'Password is required'},
-                                           validate: cp => passwd === cp || 'Passwords do not match!'})}
-          error={!!errors.passwordRepeat}
-          helperText={errors.passwordRepeat?.message}
+          passwordFieldName='password'
+          control={control}
+          name='passwordRepeat'
+          required
           fullWidth
         />
+
         <Button
           type="submit"
           variant="contained"
@@ -86,7 +74,7 @@ const RegisterForm: React.FC = () => {
           sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           aria-busy={loading}
         >
-          {loading ? <CircularProgress size={24} color="inherit" /> : 'Login'}
+          {loading ? <CircularProgress size={24} color="inherit" /> : 'Register'}
         </Button>
         <Typography textAlign="center">
           Already logged in?{' '}

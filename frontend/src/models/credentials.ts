@@ -9,7 +9,8 @@ export interface Credentials {
 export interface PasswordReset{
     email:string,
     resetCode: string,
-    newPassword: string
+    newPassword: string,
+    newPasswordRepeat?:string
 }
 
 export interface ChangePassword{
