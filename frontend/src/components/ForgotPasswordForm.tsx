@@ -1,9 +1,8 @@
 'use client'
 
 import { useForm, SubmitHandler } from 'react-hook-form';
-import { TextField, Button, Typography, Link, CircularProgress, Box, Divider, IconButton } from '@mui/material';
+import { Button, Typography, Link, CircularProgress, Box, Divider, IconButton } from '@mui/material';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useState } from 'react';
 import { useAuthentication } from '@/hooks/useAuthentication';
 import { useLightDarkModeSwitch } from '@/hooks/useLightDarkModeSwitch';
 import { DarkMode, LightMode } from '@mui/icons-material';
@@ -14,7 +13,6 @@ interface ForgotPasswordFormData {
 }
 
 const ForgotPasswordForm: React.FC = () => {
-  const { control, handleSubmit } = useForm<ForgotPasswordFormData>();
   const { sendPasswordReset, loading } = useAuthentication();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -22,6 +20,7 @@ const ForgotPasswordForm: React.FC = () => {
 
   // Get email from URL if it was passed from login page
   const defaultEmail = searchParams.get('email') || '';
+  const { control, handleSubmit } = useForm<ForgotPasswordFormData>({defaultValues:{email:defaultEmail}});
 
   const onSubmit: SubmitHandler<ForgotPasswordFormData> = async (data) => {
       const success = await sendPasswordReset(data.email);
@@ -58,7 +57,6 @@ const ForgotPasswordForm: React.FC = () => {
           name='email'
           label="Email"
           control={control}
-          defaultValue={defaultEmail}
           fullWidth
         />
 

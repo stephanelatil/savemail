@@ -103,17 +103,17 @@ const LoginForm: React.FC = () => {
         >
           {loading ? <CircularProgress size={24} color="inherit" /> : 'Login'}
         </Button>
-        <Typography textAlign="center">
+        <Typography textAlign="center" variant='body2'>
           {'Forgot Login? '}
-          <Button variant='text' onClick={() => {router.push('/auth/forgotten' + (!!email ? '?email='+email ? ''));}}>
-            Reset Password
+          <Button variant='text' onClick={() => {router.push('/auth/forgotten' + (!!email ? '?email='+email : ''));}}>
+            <Typography variant='body2' textAlign="center">Reset Password</Typography>
           </Button>
         </Typography>
-        <Divider />
-        <Typography textAlign="center">
+        <Divider variant='middle' />
+        <Typography variant='body2' textAlign="center">
           {"Don't have an account? "}
           <Button onClick={() => {router.push('/auth/register');}}>
-            Register
+            <Typography variant='body2' textAlign="center">Register</Typography>
           </Button>
         </Typography>
       </Box>
