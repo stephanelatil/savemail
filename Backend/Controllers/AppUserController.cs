@@ -99,9 +99,9 @@ public class AppUserController : ControllerBase
             return this.Ok();
         string resetCode = await this._userManager.GeneratePasswordResetTokenAsync(user);
         
-        string message = $"To reset your password <a href='{forgotPassword.RedirectTo}?resetCode={resetCode}&email={email}'>"+
-                         $"click here</a>.\n\nOr you can go to the <a href='{forgotPassword.RedirectTo}>reset page</a>"+
-                         $"and give this reset code: \n<i>{resetCode}</i>";
+        string message = $"<html><body>To reset your password <a href='{forgotPassword.RedirectTo}?resetCode={resetCode}&email={email}'>"+
+                         $"click here</a>.<br/><br/>Or you can go to the <a href='{forgotPassword.RedirectTo}'>reset page</a>"+
+                         $"and give this reset code: <br/><i>{resetCode}</i></body></html>";
 
         await emailSender.SendEmailAsync(email, "PasswordReset", message);
         return this.Ok();
