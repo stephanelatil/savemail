@@ -94,7 +94,7 @@ export const useMailboxes = () => {
     try{
       setLoading(true);
       await synchronizeMailBoxService(id);
-
+      showNotification("Mailbox queued to sync", 'success');
     }catch (error:unknown){
       if (error instanceof FetchError)
         if (error.statusCode == 400)

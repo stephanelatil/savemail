@@ -1,6 +1,6 @@
 'use client'
 
-import { Credentials, Response2FA } from '@/models/credentials'
+import { Credentials, PasswordReset, Response2FA } from '@/models/credentials'
 import {
   login as loginService,
   logout as logoutService,
@@ -12,7 +12,8 @@ import {
   enable2FA as enable2FAService,
   init2FA as init2FAService,
   reset2FARecoveryCodes as reset2FARecoveryCodesService,
-  sendPasswordReset as sendPasswordResetService
+  sendPasswordReset as sendPasswordResetService,
+  passwordReset as passwordResetService
 } from '@/services/authenticationService'
 import { useState } from 'react'
 import { useNotification } from './useNotification'
@@ -212,6 +213,21 @@ export const useAuthentication = () => {
     return false;
   }
 
+  const resetPassword = async (reset:PasswordReset) :Promise<boolean> => {
+    try{
+      setLoading(true);
+      await passwordResetService(reset);
+      return true;
+    }catch (error){
+      if (error instanceof Error) {
+        showNotification("Unable reset password:\n"+ error.message, 'warning');
+      }
+    } finally {
+      setLoading(false);
+    }
+    return false;
+  }
+
   return {
     login,
     register,
@@ -224,6 +240,7 @@ export const useAuthentication = () => {
     changeAccountEmail,
     changePassword,
     sendPasswordReset,
+    resetPassword,
     loading
   };
 }
