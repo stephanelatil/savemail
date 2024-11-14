@@ -1,6 +1,6 @@
 'use client'
 
-import { Credentials, PasswordReset, Response2FA } from '@/models/credentials'
+import { ChangePassword, Credentials, PasswordReset, Response2FA } from '@/models/credentials'
 import {
   login as loginService,
   logout as logoutService,
@@ -198,10 +198,10 @@ export const useAuthentication = () => {
     return false;
   }
 
-  const changePassword = async (oldPassword:string, newPassword:string) :Promise<boolean> => {
+  const changePassword = async (newPassword:ChangePassword) :Promise<boolean> => {
     try{
       setLoading(true);
-      await changePasswordService({oldPassword:oldPassword, newPassword:newPassword});
+      await changePasswordService(newPassword);
       return true;
     }catch (error){
       if (error instanceof Error) {
