@@ -41,7 +41,7 @@ const EditMailboxFormBase:React.FC<{defaultValues:MailBox}> = ({defaultValues}) 
             
             {
                 defaultValues.needsReauth &&
-                <Typography variant='h5' textAlign="center">
+                <Typography variant='h6' textAlign="center" color='warning'>
                     To continue syncing you need to update your credentials!
                     {provider === ImapProvider.Simple ? "\nPlease check that your Username and Password are still valid and that the Imap info is correct."
                                                       : "\nPlease Refresh your OAuth credentials with the button below."
@@ -53,7 +53,7 @@ const EditMailboxFormBase:React.FC<{defaultValues:MailBox}> = ({defaultValues}) 
                 disabled={provider !== ImapProvider.Simple}
                 name='username'
                 control={control}
-                label="Username (Email address)"
+                label="Email address (or Username))"
                 required
                 fullWidth
             />
@@ -85,7 +85,6 @@ const EditMailboxFormBase:React.FC<{defaultValues:MailBox}> = ({defaultValues}) 
                 disabled={provider !== ImapProvider.Simple}
                 label="Imap Domain"
                 name='imapDomain'
-                defaultValue={defaultValues.imapDomain}
                 control={control}
                 required
                 fullWidth
@@ -95,7 +94,6 @@ const EditMailboxFormBase:React.FC<{defaultValues:MailBox}> = ({defaultValues}) 
                 label="Imap Port"
                 type='number'
                 name='imapPort'
-                defaultValue={defaultValues.imapPort}
                 control={control}
                 rules={{
                     max:{value:65535, message:"Port must be less than 65535"},
@@ -116,7 +114,7 @@ const EditMailboxFormBase:React.FC<{defaultValues:MailBox}> = ({defaultValues}) 
                 >
                 {loading ? <CircularProgress size={24} color="inherit" /> : "Update"}
             </Button>
-            <Divider  sx={{my:'2em'}}/>
+            <Divider variant="middle" sx={{my:'2rem'}}/>
             <Button 
                 disabled={loading}
                 variant="outlined"
@@ -129,6 +127,36 @@ const EditMailboxFormBase:React.FC<{defaultValues:MailBox}> = ({defaultValues}) 
         </Box>);
 }
 
+const EditMailboxFormSkeleton: React.FC = () => (
+    <Box 
+        sx={{
+            maxWidth: '600px',
+            width:'95%',
+            margin: '0 auto',
+            padding: '2rem',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '1rem',
+        }}
+    >
+        <Typography variant="h3" textAlign="center">
+            Edit Mailbox
+        </Typography>
+
+        <Skeleton variant="text" width="80%" height={30} sx={{ margin: '1rem auto'}} />
+
+        <Skeleton variant="rectangular" height={56} />
+        <Skeleton variant="rounded" animation='wave' height={40} />
+        <Skeleton variant="rectangular" height={56} />
+        <Skeleton variant="rectangular" height={56} />
+        <Skeleton variant="rounded" animation='wave' height={40} />
+
+        <Divider variant="middle" sx={{my:'2rem'}}/>
+        <Skeleton variant="rounded" animation='wave' width="60%" height={30} sx={{ margin: '0 auto' }} />
+    </Box>
+);
+
+
 const EditMailboxForm: React.FC = () => {
     const params = useParams();
     const mailboxPageId = parseInt(params.id as string ?? '0', 10);
@@ -136,7 +164,7 @@ const EditMailboxForm: React.FC = () => {
     const {data, isLoading} = useSWR('/api/MailBox/'+mailboxPageId, () =>getMailbox(mailboxPageId));
 
     return isLoading
-                ? <Skeleton />
+                ? <EditMailboxFormSkeleton />
                 : !!data ? <EditMailboxFormBase defaultValues={data}/>
                          : <NotFound />
 }
