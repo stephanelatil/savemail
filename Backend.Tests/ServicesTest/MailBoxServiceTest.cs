@@ -23,7 +23,11 @@ public class MailBoxServiceTest
     {
         // Given
         var context = CreateMockContext();
-        MailBoxService service = new MailBoxService(context.Object);
+
+        Mock<TokenEncryptionService> tokenServiceMock = new();
+        tokenServiceMock.Setup(c => c.Encrypt(It.IsAny<String>(), It.IsAny<int>(), It.IsAny<string>())).Returns(
+            "OK");
+        MailBoxService service = new MailBoxService(context.Object, tokenServiceMock.Object);
         AppUser owner = new (){Id = Guid.Empty.ToString()};
         UpdateMailBox mb = new(){
             ImapDomain = "imap.mail.com",
@@ -59,7 +63,10 @@ public class MailBoxServiceTest
         };
         // Given
         var context = CreateMockContext(baseMb);
-        MailBoxService service = new(context.Object);
+        Mock<TokenEncryptionService> tokenServiceMock = new();
+        tokenServiceMock.Setup(c => c.Encrypt(It.IsAny<String>(), It.IsAny<int>(), It.IsAny<string>())).Returns(
+            "OK");
+        MailBoxService service = new(context.Object, tokenServiceMock.Object);
 
         UpdateMailBox mb = new(){
             Id = baseMb.Id,
@@ -97,7 +104,10 @@ public class MailBoxServiceTest
         };
         // Given
         var context = CreateMockContext(baseMb);
-        MailBoxService service = new(context.Object);
+        Mock<TokenEncryptionService> tokenServiceMock = new();
+        tokenServiceMock.Setup(c => c.Encrypt(It.IsAny<String>(), It.IsAny<int>(), It.IsAny<string>())).Returns(
+            "OK");
+        MailBoxService service = new(context.Object, tokenServiceMock.Object);
         // When
         var record = await Record.ExceptionAsync(
                                 async () => 
