@@ -72,6 +72,8 @@ export const deleteMailBox = async (id:number) : Promise<null> => {
         throw new Error("Forbidden", response.status);
     if (response.status == 404)
         throw new Error("Mailbox not found", response.status);
+    if (response.status == 400)
+        throw new Error(await response.text(), response.status);
     if (response.status >= 500)
         throw new Error("Database Error please try again later", response.status);
 
