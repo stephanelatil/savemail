@@ -12,8 +12,7 @@ import { PasswordElement, TextFieldElement } from "react-hook-form-mui";
 
 
 const EditMailboxFormBase:React.FC<{defaultValues:MailBox}> = ({defaultValues}) =>{
-    const params = useParams();
-    const mailboxPageId = parseInt(params.id as string ?? '0', 10);
+    const mailboxPageId = defaultValues.id;
 
     const { loading, editMailBox, synchronizeMailbox } = useMailboxes();
     const { control, handleSubmit } = useForm<EditMailBox>({defaultValues:defaultValues});
@@ -71,7 +70,12 @@ const EditMailboxFormBase:React.FC<{defaultValues:MailBox}> = ({defaultValues}) 
                                 fullWidth
                             />
                         case ImapProvider.Google:
-                            return <Button href={`${process.env.NEXT_PUBLIC_BACKEND_URL}/oauth/google/login/${mailboxPageId}`}
+                            const base = new URL(`${process.env.NEXT_PUBLIC_BACKEND_URL}/oauth/google/login/${mailboxPageId}`);
+                            let hostname = process.env.NEXT_PUBLIC_FRONTEND_URL;
+                            while (hostname?.charAt(hostname.length-1) == '/')
+                                hostname = hostname.substring(hostname.length-1);
+                            base.searchParams.set('next', `${hostname}/mailbox`);
+                            return <Button href={base.toString()}
                                         variant='outlined'>
                                 <Google />{' '}Re-Authenticate with Google
                             </Button>;
