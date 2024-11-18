@@ -93,9 +93,9 @@ public class OAuthGoogleController : Controller
         var refreshToken = authenticateResult.Properties.GetTokenValue("refresh_token") ?? string.Empty;
         var expiresIn = authenticateResult.Properties.GetTokenValue("expires_in");
 
-        //Mark expired 10min after expiry date to discourage use of expired token when syncing with server
-        var validUntil = int.TryParse(expiresIn, out int remainingSeconds) ? DateTime.Now.AddSeconds(remainingSeconds).AddMinutes(-10):
-                                                                             DateTime.Now.AddMinutes(40);
+        //Mark expired 10min before expiry date to discourage use of almost expired token when syncing with server
+        var validUntil = int.TryParse(expiresIn, out int remainingSeconds) ? DateTime.Now.ToUniversalTime().AddSeconds(remainingSeconds).AddMinutes(-10):
+                                                                             DateTime.Now.ToUniversalTime().AddMinutes(45);
 
         if (accessToken is null)
             return this.BadRequest("Access Token is null");
@@ -108,7 +108,7 @@ public class OAuthGoogleController : Controller
             mailbox = await this._context.MailBox.Where(mb => mb.Id == mailboxId && mb.OwnerId == user.Id)
                                                  .FirstOrDefaultAsync();
         else
-            // auth withoug givin mailbox id, ensure mailbox does not already exist with this email for this user
+            // auth without givin mailbox id, ensure mailbox does not already exist with this email for this user
             mailbox = await this._context.MailBox.Where(mb => mb.OwnerId == user.Id && mb.Username == email)
                                                  .FirstOrDefaultAsync();
         if (mailbox is null)
@@ -124,7 +124,8 @@ public class OAuthGoogleController : Controller
                             accessToken,
                             validUntil,
                             refreshToken,
-                            mailbox.Id);
+                            mailbox.Id,
+                            mailbox.Username);
         //Enqueues mailbox for sync
         this._taskManager.EnqueueTask(mailbox.Id);
         if (next is not null)

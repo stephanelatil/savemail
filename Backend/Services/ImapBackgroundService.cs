@@ -219,6 +219,8 @@ namespace Backend.Services
             MailBox? mailbox = await this._context.MailBox.Where(x=> x.Id == mailboxId)
                                                             .Include(mb =>mb.Folders)
                                                             .Include(mb =>mb.OAuthCredentials)
+                                                            .AsSplitQuery()
+                                                            .AsNoTracking()
                                                             .FirstOrDefaultAsync(cancellationToken);
             if (mailbox == null)
                 //mailbox invalid or deleted. ignore
@@ -233,17 +235,27 @@ namespace Backend.Services
 
                 //run fixup to map folders to mailbox correctly
                 this._context.ChangeTracker.DetectChanges();
+                mailbox = await this._context.MailBox.Where(x=> x.Id == mailboxId)
+                                                        .Include(mb =>mb.Folders)
+                                                        .Include(mb =>mb.OAuthCredentials)
+                                                        .AsSplitQuery()
+                                                        .AsNoTracking()
+                                                        .FirstOrDefaultAsync(cancellationToken);
+                if (mailbox is null)
+                    return new IntOrObject<IImapFetchTaskService>(this);
                 this._logger.LogDebug("Ran Fixup: got total {} folders to handle", mailbox.Folders.Count);
             }
-            //Prepare Imapclient to fetch new mails
+            //Prepare Imapclient_context to fetch new mails
             await this._imapMailFetchService.Prepare(mailbox, cancellationToken);
             if (!(this._imapMailFetchService.IsConnected && this._imapMailFetchService.IsAuthenticated))
             {
+                //unable to connect
                 this._imapMailFetchService.Disconnect();
-                this._context.MailBox.Update(mailbox);
-                if (mailbox.OAuthCredentials is not null)
-                    this._context.OAuthCredentials.Update(mailbox.OAuthCredentials);
-                await this._context.SaveChangesAsync(cancellationToken);
+                if (mailbox.NeedsReauth)
+                { // Credentials issue. Save NeedsReauth value
+                    this._context.MailBox.Update(mailbox);
+                    await this._context.SaveChangesAsync(cancellationToken);
+                }
                 return new IntOrObject<IImapFetchTaskService>(this);
             }
             

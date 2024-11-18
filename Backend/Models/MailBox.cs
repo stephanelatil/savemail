@@ -43,7 +43,7 @@ public class MailBox
                 ArgumentNullException.ThrowIfNull(this.OAuthCredentials, nameof(this.OAuthCredentials));
                 if (this.OAuthCredentials.AccessTokenExpired)
                 {
-                    if (this.OAuthCredentials.NeedReAuth)
+                    if (this.NeedsReauth)
                         throw new SecurityTokenExpiredException("OAuthCredentials expired");
                     //refresh here
                     if (tokenRefreshService is null || !await tokenRefreshService.RefreshToken(this.OAuthCredentials, this.OwnerId))
