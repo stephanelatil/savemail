@@ -63,8 +63,6 @@ namespace Backend.Services
                 this._logger.LogWarning("Unable to connect to imap server '{}' on port {}", mailbox.ImapDomain, mailbox.ImapPort);
             }
             catch(MailKit.Security.AuthenticationException e){
-                if (mailbox.OAuthCredentials is not null)
-                    await this._oAuthService.SetNeedReauth(mailbox.OAuthCredentials);
                 mailbox.NeedsReauth = true;
                 this._logger.LogWarning(e, "Unable to connect to connect and authenticate for mailbox {}", mailbox.Id);
                 return null;
@@ -181,8 +179,6 @@ namespace Backend.Services
                 this._logger.LogWarning("Unable to connect to imap server '{}' on port {}", mailbox.ImapDomain, mailbox.ImapPort);
             }
             catch(MailKit.Security.AuthenticationException e){
-                if (mailbox.OAuthCredentials is not null)
-                    await this._oAuthService.SetNeedReauth(mailbox.OAuthCredentials);
                 mailbox.NeedsReauth = true;
                 this._logger.LogWarning(e, "Unable to connect to connect and authenticate for mailbox {}", mailbox.Id);
             }

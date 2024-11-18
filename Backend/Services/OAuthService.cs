@@ -11,8 +11,7 @@ public interface IOAuthService
 {
     public Task<bool> RefreshToken(OAuthCredentials credentials, string ownerId);
     public Task<string> GetEmail(string decryptedAccessToken, string userInfoUrl);
-    public Task<string> GetEmail(OAuthCredentials credentials, string ownerId); 
-    public Task SetNeedReauth(OAuthCredentials credentials);
+    public Task<string> GetEmail(OAuthCredentials credentials, string ownerId);
 }
 
 public class OAuthService : IOAuthService
@@ -34,13 +33,6 @@ public class OAuthService : IOAuthService
         this._clientId[ImapProvider.Google] = configuration.GetValue<string>("OAuth2:GOOGLE_CLIENT_ID") ?? string.Empty;
         this._clientSecret[ImapProvider.Google] = configuration.GetValue<string>("OAuth2:GOOGLE_CLIENT_SECRET") ?? string.Empty;
         //add other client id/secrets here with other providers
-    }
-
-    public async Task SetNeedReauth(OAuthCredentials credentials)
-    {
-        var entry = this._context.OAuthCredentials.Update(credentials);
-        entry.Entity.NeedReAuth = true;
-        await this._context.SaveChangesAsync();
     }
 
     public async Task<string> GetEmail(OAuthCredentials credentials, string ownerId)
@@ -100,7 +92,8 @@ public class OAuthService : IOAuthService
             var response = await this._httpClient.SendAsync(request);
             if (!response.IsSuccessStatusCode)
             {
-                credentials.NeedReAuth = true;
+                credentials.OwnerMailbox.NeedsReauth = true;
+                this._context.MailBox.Update(credentials.OwnerMailbox);
                 await this._context.SaveChangesAsync();
                 return false;
             }
@@ -108,7 +101,8 @@ public class OAuthService : IOAuthService
             var tokenResponse = JObject.Parse(await response.Content.ReadAsStringAsync());
             if (tokenResponse is null || !tokenResponse.ContainsKey("access_token"))
             {
-                credentials.NeedReAuth = true;
+                credentials.OwnerMailbox.NeedsReauth = true;
+                this._context.MailBox.Update(credentials.OwnerMailbox);
                 await this._context.SaveChangesAsync();
                 return false;
             }
@@ -122,15 +116,18 @@ public class OAuthService : IOAuthService
                                                         tokenResponse.GetValue<int>("expires_in"));
             else
                 credentials.AccessTokenValidity = DateTime.UtcNow.AddMinutes(50);
-            credentials.NeedReAuth = false;
+            credentials.OwnerMailbox.NeedsReauth = false;
         }
         catch {
-            credentials.NeedReAuth = true;
+                credentials.OwnerMailbox.NeedsReauth = true;
+            this._context.OAuthCredentials.Update(credentials);
+            this._context.MailBox.Update(credentials.OwnerMailbox);
             await this._context.SaveChangesAsync();
             return false;
         }
 
         this._context.OAuthCredentials.Update(credentials);
+        this._context.MailBox.Update(credentials.OwnerMailbox);
         await this._context.SaveChangesAsync();
         return true;
     }

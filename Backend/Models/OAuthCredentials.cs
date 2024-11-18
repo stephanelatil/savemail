@@ -5,7 +5,6 @@ namespace Backend.Models;
 public class OAuthCredentials
 {
     public int Id { get; set; }
-    public bool NeedReAuth { get; set; } = false;
     public string AccessToken { get; set; } = string.Empty;
     public DateTime AccessTokenValidity { get; set; } = DateTime.Now;
     public string RefreshToken { get; set; } = string.Empty;
