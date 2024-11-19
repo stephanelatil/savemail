@@ -216,11 +216,11 @@ namespace Backend.Services
 
         public async Task<IntOrObject<IImapFetchTaskService>> ExecuteTask(int mailboxId, CancellationToken cancellationToken = default)
         {
+            this._context.ChangeTracker.Clear();
             MailBox? mailbox = await this._context.MailBox.Where(x=> x.Id == mailboxId)
                                                             .Include(mb =>mb.Folders)
                                                             .Include(mb =>mb.OAuthCredentials)
                                                             .AsSplitQuery()
-                                                            .AsNoTracking()
                                                             .FirstOrDefaultAsync(cancellationToken);
             if (mailbox == null)
                 //mailbox invalid or deleted. ignore
@@ -239,7 +239,6 @@ namespace Backend.Services
                                                         .Include(mb =>mb.Folders)
                                                         .Include(mb =>mb.OAuthCredentials)
                                                         .AsSplitQuery()
-                                                        .AsNoTracking()
                                                         .FirstOrDefaultAsync(cancellationToken);
                 if (mailbox is null)
                     return new IntOrObject<IImapFetchTaskService>(this);
@@ -309,13 +308,16 @@ namespace Backend.Services
             foreach (var mail in newMails)
             {
                 //ensure parents are set correctly
+                mail.OwnerMailBox = mailBox;
                 mail.OwnerMailBoxId = mailBox.Id;
                 mail.FolderId = folder.Id;
+                mail.Folder = folder;
             }
             Mail? last = this.GetLastMail(newMails);
             if (last is null)
                 return;
             this._context.TrackEntry(folder);
+            this._context.TrackEntry(mailBox);
             folder.LastPulledInternalDate = last.DateSent;
             folder.LastPulledUid = last.ImapMailUID;
             await this._mailService.SaveMail(newMails, cancellationToken);
