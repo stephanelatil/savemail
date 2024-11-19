@@ -17,12 +17,17 @@ public class OAuthCredentialsService : IOAuthCredentialsService
     private readonly IOAuthService _oAuthService;
     private readonly ApplicationDBContext _context;
     private readonly TokenEncryptionService _tokenEncryptionService;
+    private readonly ILogger _logger;
 
-    public OAuthCredentialsService(IOAuthService oAuthService, TokenEncryptionService tokenEncryptionService, ApplicationDBContext context)
+    public OAuthCredentialsService(IOAuthService oAuthService,
+                                   TokenEncryptionService tokenEncryptionService,
+                                   ApplicationDBContext context,
+                                   ILogger<OAuthCredentialsService> logger)
     {
         this._oAuthService = oAuthService;
         this._context = context;
         this._tokenEncryptionService = tokenEncryptionService;
+        this._logger = logger;
     }
 
     public async Task<MailBox> CreateNewMailboxWithCredentials(ImapProvider provider, string accessToken, DateTime validityEnd, string refreshToken, AppUser owner, string? email=null)
@@ -59,9 +64,11 @@ public class OAuthCredentialsService : IOAuthCredentialsService
     {
         MailBox mailbox = await this._context.MailBox.Where(mb => mb.Id == mailboxId)
                                                  .Include(mb=> mb.OAuthCredentials)
+                                                 .AsSplitQuery()
                                                  .FirstOrDefaultAsync() ??
                                                     throw new ArgumentException("The provided mailboxId does not exist", nameof(mailboxId));
         EntityEntry<OAuthCredentials>? entry = null;
+        mailbox.NeedsReauth = false;
         if (mailbox.OAuthCredentials is null)
         {
             entry = this._context.OAuthCredentials.Add(new(){
@@ -75,6 +82,8 @@ public class OAuthCredentialsService : IOAuthCredentialsService
             mailbox.ImapPort = MailBox.GetImapPortForProvider(provider);
             mailbox.ImapDomain = OAuthCredentials.ImapUrl(provider);
             mailbox.Username = email ?? await this._oAuthService.GetEmail(entry.Entity, mailbox.OwnerId);
+            mailbox.OAuthCredentials = entry.Entity;
+            this._context.MailBox.Update(mailbox);
         }
         else
         {
@@ -82,11 +91,18 @@ public class OAuthCredentialsService : IOAuthCredentialsService
             oauthCredentials.AccessToken = this._tokenEncryptionService.Encrypt(accessToken, mailbox.Id, mailbox.OwnerId);
             oauthCredentials.RefreshToken = refreshToken;
             oauthCredentials.AccessTokenValidity = validityEnd;
-            if ((email ??=await this._oAuthService.GetEmail(oauthCredentials, mailbox.OwnerId)) == mailbox.Username)
+            oauthCredentials.OwnerMailboxId = mailboxId;
+            oauthCredentials.OwnerMailbox = mailbox;
+            mailbox.OAuthCredentials = oauthCredentials;
+            if ((email ??=await this._oAuthService.GetEmail(oauthCredentials, mailbox.OwnerId)) == mailbox.Username){
                 entry = this._context.OAuthCredentials.Update(oauthCredentials);
-            else
+                this._context.MailBox.Update(mailbox);
+            }
+            else{
                 //attempting to set access tokens for wrong email
+                this._logger.LogWarning("Cannot set access tokens for email {} to mailbox with email {}", email, mailbox.Username);
                 throw new InvalidDataException($"Cannot set access tokens for email {email} to mailbox with email {mailbox.Username}");
+            }
         }
 
         await this._context.SaveChangesAsync();
