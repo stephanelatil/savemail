@@ -76,7 +76,10 @@ namespace Backend.Services
             if (parent.HasReply && parent.Reply is not null)
                 //keep going down the reply list (in chronological order) until the bottom
                 await this.InsertReply(reply, 
-                        await this._context.Mail.Where(m => m.Id == parent.Reply.Id).Include(m => m.Reply).SingleOrDefaultAsync());
+                        await this._context.Mail.Where(m => m.Id == parent.Reply.Id)
+                                                .Include(m => m.Reply)
+                                                .AsSplitQuery()
+                                                .SingleOrDefaultAsync());
             else
             {
                 //bottom of reply list hit :
@@ -95,7 +98,7 @@ namespace Backend.Services
                 if (mail.ImapReplyFromId is not null){
                     mail.RepliedFrom = mails.Where(m => m.OwnerMailBoxId == mail.OwnerMailBoxId)
                                                         .SingleOrDefault(x => mail.ImapReplyFromId == x.ImapMailId)
-                                     ?? await this._context.Mail.Include(m => m.Reply)
+                                     ?? await this._context.Mail.Include(m => m.Reply).AsSplitQuery()
                                                         .Where(m => m.OwnerMailBoxId == mail.OwnerMailBoxId)
                                                         .SingleOrDefaultAsync(x => mail.ImapReplyFromId == x.ImapMailId, cancellationToken);
                     if (mail.RepliedFrom is not null)

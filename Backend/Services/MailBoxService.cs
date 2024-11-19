@@ -28,7 +28,8 @@ namespace Backend.Services
         {
             var query =  this._context.MailBox.Where(x => x.Id == id);
             if (includeFolders)
-                query = query.Include(mb => mb.Folders);
+                query = query.Include(mb => mb.Folders)
+                             .AsSplitQuery();
             return await query.FirstOrDefaultAsync();
         }
 

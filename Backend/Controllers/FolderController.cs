@@ -34,6 +34,7 @@ public class FolderController : ControllerBase
                                                 .Include(f=>f.MailBox)
                                                 .Include(f => f.Parent)
                                                 .Include(f => f.Children)
+                                                .AsSplitQuery()
                                                 .FirstOrDefaultAsync();
 
         if (folder == null)
@@ -89,6 +90,7 @@ public class FolderController : ControllerBase
     {
         var folder = await this._context.Folder.Where(f => f.Id == id)
                                                 .Include(f=>f.MailBox)
+                                                .AsSplitQuery()
                                                 .SingleOrDefaultAsync();
         if (folder == null)
         {

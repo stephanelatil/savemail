@@ -92,6 +92,7 @@ namespace Backend.Services
             mailbox = await this._context.MailBox
                                                 .Where(mb =>mb.Id == mailbox.Id)
                                                 .Include(mb => mb.Folders)
+                                                .AsSplitQuery()
                                                 .SingleOrDefaultAsync(cancellationToken)
                                 ?? throw new ArgumentNullException(nameof(mailbox));
             return await this.CreateFolderAsync(folder, mailbox, true, cancellationToken);

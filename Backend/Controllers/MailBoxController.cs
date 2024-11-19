@@ -45,6 +45,7 @@ public class MailBoxController : ControllerBase
         
         return await this._context.MailBox.Where(mb => mb.OwnerId == self.Id)
                                             .Include(mb => mb.Folders)
+                                            .AsSplitQuery()
                                             .Select(mb => new MailBoxDto(mb))
                                             .ToArrayAsync();
     }
@@ -175,6 +176,7 @@ public class MailBoxController : ControllerBase
     {
         MailBox? mailbox = await this._context.MailBox.Where(mb => mb.Id == id)
                                                         .Include(mb =>mb.Folders)
+                                                        .AsSplitQuery()
                                                         .SingleOrDefaultAsync();
         if (mailbox == null)
         {

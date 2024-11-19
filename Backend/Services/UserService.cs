@@ -32,7 +32,7 @@ namespace Backend.Services
         {
             var query = this._context.Users.Where(x=> x.Id == id);
             if (includeMailboxes)
-                query.Include(u => u.MailBoxes);
+                query.Include(u => u.MailBoxes).AsSplitQuery();
             return await query.FirstOrDefaultAsync();
         }
 
@@ -42,7 +42,10 @@ namespace Backend.Services
             if (user is null)
                 return null;
             if (includeMailboxes)
-                user = await this._context.Users.Where(u => u.Id == user.Id).Include(x => x.MailBoxes).FirstOrDefaultAsync();
+                user = await this._context.Users.Where(u => u.Id == user.Id)
+                                                .Include(x => x.MailBoxes)
+                                                .AsSplitQuery()
+                                                .FirstOrDefaultAsync();
             return user;
         }
 
@@ -71,7 +74,9 @@ namespace Backend.Services
         {
             var users = this._context.Users;
             if (includeMailboxes)
-                return await users.Include(u => u.MailBoxes).FirstOrDefaultAsync(u => u.Email == email);
+                return await users.Include(u => u.MailBoxes)
+                                  .AsSplitQuery()
+                                  .FirstOrDefaultAsync(u => u.Email == email);
             return await users.FirstOrDefaultAsync(u => u.Email == email);
         }
     }

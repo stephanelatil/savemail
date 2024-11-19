@@ -46,6 +46,7 @@ public class MailController : ControllerBase
     {
         Mail? mail = await this._context.Mail.Where(m => m.Id == id)
                                             .Include(m => m.OwnerMailBox)
+                                            .AsSplitQuery()
                                             .SingleOrDefaultAsync();
         if (mail == null)
         {
