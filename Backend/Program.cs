@@ -40,7 +40,8 @@ builder.Services.AddDbContext<ApplicationDBContext>(opt =>{
     connectionString.Append($"Database={builder.Configuration.GetConnectionString("Database") ?? "savemaildb"};");
 
     opt.UseNpgsql(connectionString.ToString());
-    opt.EnableSensitiveDataLogging(false);
+    opt.EnableSensitiveDataLogging(builder.Environment.IsDevelopment());
+    opt.EnableDetailedErrors(builder.Environment.IsDevelopment());
 });
 
 
@@ -121,6 +122,7 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IFolderService, FolderService>();
 builder.Services.AddScoped<IMailBoxService, MailBoxService>();
 builder.Services.AddScoped<IMailService, MailService>();
+builder.Services.AddScoped<IAttachmentService, AttachmentService>();
 builder.Services.AddScoped<IOAuthCredentialsService, OAuthCredentialsService>();
 
 builder.Services.AddCors(opt => 
