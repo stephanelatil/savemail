@@ -195,6 +195,7 @@ namespace Backend.Services
         private readonly ApplicationDBContext _context;
         private readonly IFolderService _folderService;
         private readonly IMailService _mailService;
+        private readonly AttachmentService _attachmentService;
         private readonly IImapFolderFetchService _imapFolderFetchService;
         private readonly IImapMailFetchService _imapMailFetchService;
         private readonly ILogger<ImapFetchTaskService> _logger;
@@ -203,6 +204,7 @@ namespace Backend.Services
                                     ApplicationDBContext context,
                                     IFolderService folderService,
                                     IMailService mailService,
+                                    AttachmentService attachmentService,
                                     IImapFolderFetchService imapFolderFetchService,
                                     IImapMailFetchService imapMailFetchService)
         {
@@ -210,6 +212,7 @@ namespace Backend.Services
             this._context = context;
             this._folderService = folderService;
             this._mailService = mailService;
+            this._attachmentService = attachmentService;
             this._imapFolderFetchService = imapFolderFetchService;
             this._imapMailFetchService = imapMailFetchService;
         }
@@ -321,6 +324,7 @@ namespace Backend.Services
             folder.LastPulledInternalDate = last.DateSent;
             folder.LastPulledUid = last.ImapMailUID;
             await this._mailService.SaveMail(newMails, cancellationToken);
+            await this._attachmentService.SaveAttachments()
             newMails.Clear();
         }
 

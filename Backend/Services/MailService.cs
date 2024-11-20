@@ -1,6 +1,5 @@
 using System.Data;
 using Backend.Models;
-using Backend.Models.DTO;
 using MailKit;
 using Microsoft.EntityFrameworkCore;
 
@@ -45,13 +44,8 @@ namespace Backend.Services
         
         private async Task<EmailAddress> GetOrCreateEmailAddresses(EmailAddress address)
         {
-            //try to get address from change tracker
-            var addr = this._context.ChangeTracker.Entries<EmailAddress>()
-                                                    .Where(e => e.Entity.Address == address.Address)
-                                                    .Select(e => e.Entity)
-                                                    .SingleOrDefault();
             //not in change tracker try to find it in the database
-            addr ??= await this._context.EmailAddress.SingleOrDefaultAsync(e => e.Address == address.Address);
+            EmailAddress? addr = await this._context.EmailAddress.FirstOrDefaultAsync(e => e.Address == address.Address);
             //not in Db => track new 
             return addr ?? this._context.EmailAddress.Add(address).Entity;
         }
