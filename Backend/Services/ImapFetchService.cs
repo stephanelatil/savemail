@@ -138,7 +138,7 @@ namespace Backend.Services
         {
             ArgumentNullException.ThrowIfNull(this._imapFolder);
             MailKit.UniqueId? start = null;
-            //Gets the latest mails starting at the 
+            //Gets the latest mails starting at the last Uid+1 or starting fron the last date
             if (lastUid.HasValue && this._imapFolder.UidValidity == lastUid.Value.Validity)
                 start = lastUid.Value;
             else if (lastDate != DateTime.MinValue)
@@ -157,8 +157,10 @@ namespace Backend.Services
 
             UniqueIdRange range = new(start.Value, MailKit.UniqueId.MaxValue);
             return new Queue<MailKit.UniqueId>(
-                            await this._imapFolder.SearchAsync(
-                                    range, MailKit.Search.SearchQuery.NotDraft, cancellationToken));
+                            (await this._imapFolder.SearchAsync(
+                                    range, MailKit.Search.SearchQuery.NotDraft, cancellationToken))
+                                    .Skip(1)//Skip the first on in the list which is already downloaded!
+                                    );
         }
 
         public async Task Prepare(MailBox mailbox, CancellationToken cancellationToken = default)
@@ -204,6 +206,9 @@ namespace Backend.Services
             {
                 if (!this._uids.TryDequeue(out MailKit.UniqueId uid))
                     break; //done if end of queue reached
+                
+                if (this._folder.LastPulledUid >= uid)
+                    continue; //skip if mail is already in DB
                 
                 mails.Add(new Mail(await this._imapFolder.GetMessageAsync(uid),
                                     uid,
