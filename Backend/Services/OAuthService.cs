@@ -74,7 +74,7 @@ public class OAuthService : IOAuthService
     public async Task<bool> RefreshToken(OAuthCredentials credentials, string ownerId)
     {
         this._context.OAuthCredentials.Update(credentials);
-        string? clientId = this._clientSecret.GetValueOrDefault(credentials.Provider);
+        string? clientId = this._clientId.GetValueOrDefault(credentials.Provider);
         string? clientSecret = this._clientSecret.GetValueOrDefault(credentials.Provider);
         if (clientId is null || clientSecret is null)
             return false;
@@ -119,7 +119,7 @@ public class OAuthService : IOAuthService
             credentials.OwnerMailbox.NeedsReauth = false;
         }
         catch {
-                credentials.OwnerMailbox.NeedsReauth = true;
+            credentials.OwnerMailbox.NeedsReauth = true;
             this._context.OAuthCredentials.Update(credentials);
             this._context.MailBox.Update(credentials.OwnerMailbox);
             await this._context.SaveChangesAsync();

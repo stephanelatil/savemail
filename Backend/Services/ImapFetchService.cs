@@ -215,7 +215,7 @@ namespace Backend.Services
                                     this._folder));
             }
 
-            this._logger.LogDebug($"Fetched {mails.Count} mails from folder: {this._folder.Path}");
+            this._logger.LogDebug("Fetched {} mails from folder: {}", mails.Count, this._folder.Path);
             return mails;
         }
 
