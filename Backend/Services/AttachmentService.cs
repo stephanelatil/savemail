@@ -20,13 +20,15 @@ public class AttachmentService : IAttachmentService
         //TODO make service and add path creation
         this._context = context;
         this._logger = logger;
-        this._attachmentPath = configuration.GetValue<string>("") ?? "./Attachments";
+        this._attachmentPath = configuration.GetValue<string>("") ?? "../Attachments";
+        Directory.CreateDirectory(this._attachmentPath);
     }
 
     public async Task SaveAttachments(List<Mail> mails, string userId){
         var tasks = mails.Select(m => 
-                m.MimeMessage is not null ? this.AddAttachments(m.MimeMessage.Attachments, m.Id, userId)
-                                          : Task.CompletedTask);
+                m.MimeMessage is not null && m.MimeMessage.Attachments.Any()
+                        ? this.AddAttachments(m.MimeMessage.Attachments, m.Id, userId)
+                        : Task.CompletedTask);
         await Task.WhenAll(tasks);
         await this._context.SaveChangesAsync();
     }
