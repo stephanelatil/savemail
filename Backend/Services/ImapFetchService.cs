@@ -210,9 +210,7 @@ namespace Backend.Services
                 if (this._folder.LastPulledUid >= uid)
                     continue; //skip if mail is already in DB
                 
-                mails.Add(new Mail(await this._imapFolder.GetMessageAsync(uid),
-                                    uid,
-                                    this._folder));
+                mails.Add(new Mail(await this._imapFolder.GetMessageAsync(uid), uid));
             }
 
             this._logger.LogDebug("Fetched {} mails from folder: {}", mails.Count, this._folder.Path);

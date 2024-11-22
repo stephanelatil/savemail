@@ -7,7 +7,7 @@ namespace Backend.Services
 {
     public interface IMailService
     {
-        public Task SaveMail(List<Mail> mail, CancellationToken cancellationToken = default);
+        public Task SaveMail(List<Mail> mails, string ownerUserId, CancellationToken cancellationToken = default);
         public Task<Mail?> GetMail(long id);
         public Task<Mail?> GetMail(UniqueId id);
         public Task DeleteMailAsync(Mail mail);
@@ -16,12 +16,15 @@ namespace Backend.Services
     public class MailService : IMailService
     {
         private readonly ApplicationDBContext _context;
+        private readonly IAttachmentService _attachmentService;
         private readonly ILogger<MailService> _logger;
 
         public MailService(ApplicationDBContext context,
+                           IAttachmentService attachmentService,
                            ILogger<MailService> logger)
         {
             this._context = context;
+            this._attachmentService = attachmentService;
             this._logger = logger;
         }
 
@@ -84,7 +87,35 @@ namespace Backend.Services
             }
         }
 
-        public async Task SaveMail(List<Mail> mails, CancellationToken cancellationToken = default)
+        /// <summary>
+        /// Checks all given mails and returns the mails that aren't present in the database
+        /// Those present in the DBs have their Id field set
+        /// </summary>
+        /// <param name="mails">A list of mils you'd like to add</param>
+        /// <returns>The Mails that don't yet exist in the DB</returns>
+        private List<Mail> GetMailsToAdd(List<Mail> mails){
+            var uniqueHashes = mails.Select(m => new { m.UniqueHash, m.UniqueHash2 }).ToList();
+
+            var existingMailsDict = this._context.Mail
+                .Where(m => uniqueHashes.Any(u => u.UniqueHash == m.UniqueHash && u.UniqueHash2 == m.UniqueHash2))
+                .Select(m => new { m.Id, m.UniqueHash, m.UniqueHash2 })
+                .ToList().ToDictionary(
+                m => (m.UniqueHash, m.UniqueHash2),
+                m => m.Id);
+
+            foreach (var mail in mails)
+            {
+                if (existingMailsDict.TryGetValue((mail.UniqueHash, mail.UniqueHash2), out var id))
+                {
+                    mail.Id = id;
+                }
+            }
+
+            // Return mails that are not in the database (Id is still 0)
+            return mails.Where(m => m.Id == 0).ToList();
+        }
+
+        public async Task SaveMail(List<Mail> mails, string ownerUserId, CancellationToken cancellationToken = default)
         {
             this._logger.LogDebug("Adding {} emails", mails.Count);
             foreach(var mail in mails)
@@ -100,8 +131,12 @@ namespace Backend.Services
                 }
                 await this.HandleEmailAddresses(mail);
             }
-            await this._context.Mail.AddRangeAsync(mails, cancellationToken);
-            await this._context.SaveChangesAsync(cancellationToken);
+            var newMails = this.GetMailsToAdd(mails);
+            await this._context.Mail.AddRangeAsync(newMails, cancellationToken);
+            await this._context.SaveChangesAsync(cancellationToken); 
+            //All Ids are set and mail saved
+            //Add attachments to new emails
+            await this._attachmentService.SaveAttachments(newMails, ownerUserId);
         }
     }
 }
