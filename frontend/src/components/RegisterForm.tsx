@@ -18,9 +18,7 @@ const RegisterForm: React.FC = () => {
 
   const onSubmit: SubmitHandler<Credentials> = async (data) => {
     if (await register(data)){
-      const url = new URL('/auth/register-ok')
-      url.searchParams.set('email', data.email);
-      router.push(url.toString()); //action to run after register is successful
+      router.push('/auth/register-ok?email='+data.email); //action to run after register is successful
     }
   };
 
