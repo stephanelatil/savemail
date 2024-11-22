@@ -73,11 +73,13 @@ public class FolderController : ControllerBase
             return this.Forbid();
 
         return this.Ok(await PaginationService.GetPagedResult(
-                        this._context.Mail.Where(m => m.FolderId == folder.Id && m.HasReply == false)
-                                          .Include(m => m.Attachments)
-                                          .AsSplitQuery()
-                                          .OrderByDescending(m =>m.DateSent)
-                                          .ThenByDescending(m => m.ImapMailUID),
+                        this._context.Folder.Where(f => f.Id == id)
+                            .Include(f => f.Mails)
+                            .ThenInclude(m => m.Attachments)
+                            .SelectMany(f => f.Mails)
+                            .AsSplitQuery()
+                            .OrderByDescending(m =>m.DateSent)
+                            .ThenByDescending(m => m.ImapMailUID),
                         paginationQueryParameters,
                         (x)=>new MailDto(x, true),
                         this.Request.PathBase+this.Request.Path

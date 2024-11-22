@@ -13,17 +13,19 @@ using NpgsqlTypes;
 namespace Backend.Models
 {
     [Index(nameof(UniqueHash), IsUnique = false)]
-    [Index(nameof(FolderId), IsUnique = false)]
     public partial class Mail
     {
         [Key]
         public long Id { get; set; }
         public UniqueId ImapMailUID { get; set; }
         [JsonIgnore]
-        public string ImapMailId { get; set; }= string.Empty;
+        public string ImapMailId { get; set; } = string.Empty;
         [NotMapped]
         [JsonIgnore]
         public readonly string? ImapReplyFromId;
+        [NotMapped]
+        [JsonIgnore]
+        public MimeMessage? MimeMessage;
         [JsonIgnore]
         public long? RepliedFromId { get; set; }
         public bool IsAReply => this.RepliedFromId.HasValue && this.RepliedFromId.Value > 0;
@@ -63,33 +65,71 @@ namespace Backend.Models
         [ReadOnly(true)]
         public int? OwnerMailBoxId { get; set; } = null;
         [JsonIgnore]
-        public Folder? Folder { get; set; } = null;
-        [JsonIgnore]
-        public int FolderId { get; set; }
+        // public ICollection<Folder> Folders { get; set; } = [];
         
-        private ulong _uniqueHash = 0;
+        // TODO Change the folder FK to a collection. The same mail can have multiple labels (or can be in different folders)
+            // Make sure to do a duplicate check (UniqueId + Mailbox?) and add a ref to the folder if it exists
+            // TODO check if it really needs to be bidirectional?
+
+        // TODO All all emails from the "All Mail" folder that have a unique hash that hasn't been seen before : place it into a special "Archived" folder
+        
+        
+        //TODO split into uniqueId1 and 2 to have a 128 bit hash to minimize collisions
+        private byte[] _uniqueHash = new byte[16];
         public ulong UniqueHash
-        { get 
+        { 
+            get 
             {
-                if (this._uniqueHash == 0){
-                    XxHash3 xxHash= new();
+                //it's all zeroes: not set
+                if (this._uniqueHash.All(x=> x == 0)){
+                    XxHash128 xxHash = new();
 
                     xxHash.Append(Encoding.UTF8.GetBytes(this.Subject));
                     xxHash.Append(Encoding.UTF8.GetBytes(this.Body));
                     xxHash.Append(BitConverter.GetBytes(this.DateSent.Ticks));
                     if (this.Sender is not null)
                         xxHash.Append(Encoding.UTF8.GetBytes(this.Sender.Address));
+                    xxHash.Append(Encoding.UTF8.GetBytes(
+                            string.Join(";", this.Recipients.OrderBy(x=>x.Address).Select(x=>x.Address))));
+                    xxHash.Append(Encoding.UTF8.GetBytes(
+                            string.Join(";", this.RecipientsCc.OrderBy(x=>x.Address).Select(x=>x.Address))));
+                    xxHash.Append(BitConverter.GetBytes(this.OwnerMailBoxId??0));
 
-                    this._uniqueHash = xxHash.GetCurrentHashAsUInt64();
+                    this._uniqueHash = xxHash.GetCurrentHash();
                 }
-                return this._uniqueHash;
+                return BitConverter.ToUInt64(this._uniqueHash, 0);
+            }
+            private set { _ = value; }
+        }
+        public ulong UniqueHash2 
+        { 
+            get 
+            {
+                //it's all zeroes: not set
+                if (this._uniqueHash.All(x=> x == 0)){
+                    XxHash128 xxHash = new();
+
+                    xxHash.Append(Encoding.UTF8.GetBytes(this.Subject));
+                    xxHash.Append(Encoding.UTF8.GetBytes(this.Body));
+                    xxHash.Append(BitConverter.GetBytes(this.DateSent.Ticks));
+                    if (this.Sender is not null)
+                        xxHash.Append(Encoding.UTF8.GetBytes(this.Sender.Address));
+                    xxHash.Append(Encoding.UTF8.GetBytes(
+                            string.Join(";", this.Recipients.OrderBy(x=>x.Address).Select(x=>x.Address))));
+                    xxHash.Append(Encoding.UTF8.GetBytes(
+                            string.Join(";", this.RecipientsCc.OrderBy(x=>x.Address).Select(x=>x.Address))));
+                    xxHash.Append(BitConverter.GetBytes(this.OwnerMailBoxId??0));
+
+                    this._uniqueHash = xxHash.GetCurrentHash();
+                }
+                return BitConverter.ToUInt64(this._uniqueHash, 8);
             }
             private set { _ = value; }
         }
 
         public Mail(){}
 
-        public Mail(MimeMessage msg, UniqueId uid, Folder folder)
+        public Mail(MimeMessage msg, UniqueId uid)
         {
             this.Id = 0;
             this.ImapReplyFromId = msg.InReplyTo;
@@ -97,8 +137,7 @@ namespace Backend.Models
             this.ImapMailUID = uid;
             this.Subject = msg.Subject;
             this.Body = msg.HtmlBody;
-            this.Folder = folder;
-            this.OwnerMailBox = folder.MailBox;
+            this.MimeMessage = msg;
             this.DateSent = DateTime.SpecifyKind(msg.Date.ToUniversalTime().DateTime, DateTimeKind.Unspecified);
 
 
