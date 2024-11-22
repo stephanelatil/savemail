@@ -313,8 +313,6 @@ namespace Backend.Services
                 //ensure parents are set correctly
                 mail.OwnerMailBox = mailBox;
                 mail.OwnerMailBoxId = mailBox.Id;
-                mail.FolderId = folder.Id;
-                mail.Folder = folder;
             }
             Mail? last = this.GetLastMail(newMails);
             if (last is null)
@@ -323,7 +321,7 @@ namespace Backend.Services
             this._context.TrackEntry(mailBox);
             folder.LastPulledInternalDate = last.DateSent;
             folder.LastPulledUid = last.ImapMailUID;
-            await this._mailService.SaveMail(newMails, cancellationToken);
+            await this._mailService.SaveMail(newMails, mailBox.OwnerId, cancellationToken);
             await this._attachmentService.SaveAttachments(newMails, mailBox.OwnerId);
             newMails.Clear();
         }
