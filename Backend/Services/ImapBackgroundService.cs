@@ -5,90 +5,68 @@ using System.Collections.Concurrent;
 
 namespace Backend.Services
 {
+    /// <summary>
+    /// Represents a union type that can hold either an integer or an object value.
+    /// Used for task queue management where we need to handle both mailbox IDs and task runners.
+    /// </summary>
     public class IntOrObject<T>
     {
-        private int? _intValue;
-        private T? _objectValue;
+        private readonly int? _intValue;
+        private readonly T? _objectValue;
+        
         public bool HasInt => this._intValue.HasValue;
         public bool HasObject => this._objectValue is not null;
-        public T ObjectValue => this._objectValue ?? throw new ArgumentNullException();
-        public int IntValue => this._intValue ?? throw new ArgumentNullException();
+        public T ObjectValue => this._objectValue ?? throw new ArgumentNullException(nameof(this._objectValue));
+        public int IntValue => this._intValue ?? throw new ArgumentNullException(nameof(this._intValue));
 
-        public IntOrObject(int val)
-        {
-            this._intValue = val;
-        }
-        public IntOrObject(T val)
-        {
-            this._objectValue = val;
-        }
-
+        public IntOrObject(int val) => this._intValue = val;
+        public IntOrObject(T val) => this._objectValue = val;
     }
 
     public interface ITaskManager
     {
         void EnqueueTask(int mailboxId);
-        public Task RunTasks(AsyncQueue<IntOrObject<IImapFetchTaskService>> _taskRunners,CancellationToken cancellationToken);
+        public Task RunTasks(CancellationToken cancellationToken);
     }
 
+    /// <summary>
+    /// Manages the execution of IMAP fetch tasks, coordinating between mailboxes that need processing
+    /// and available task runners.
+    /// </summary>
     public class TaskManager : ITaskManager
     {
         private readonly ILogger<TaskManager> _logger;
-        private readonly AsyncQueue<IntOrObject<IImapFetchTaskService>> _mailboxesToFetch = new();
 
-        public TaskManager(ILogger<TaskManager> logger)
+        private readonly AsyncQueue<int> _mailboxesToFetch = new();
+        private readonly Queue<IImapFetchTaskService> _runners;
+
+        public TaskManager(ILogger<TaskManager> logger,
+                           IImapFetchTaskService runner1,
+                           IImapFetchTaskService runner2,
+                           IImapFetchTaskService runner3)
         {
             this._logger = logger;
+            this._runners = new Queue<IImapFetchTaskService>([runner1, runner2, runner3]);
         }
 
         public void EnqueueTask(int mailboxId)
         {
-            this._mailboxesToFetch.Enqueue(new IntOrObject<IImapFetchTaskService>(mailboxId));
+            this._mailboxesToFetch.Enqueue(mailboxId);
         }
-        public async Task RunTasks(AsyncQueue<IntOrObject<IImapFetchTaskService>> availableRunners,
-                                    CancellationToken cancellationToken)
-        {
-            int? nextId = null;
-            ConcurrentDictionary<Task<IntOrObject<IImapFetchTaskService>>, bool> _runningTasks = new();
-            {
-                var startupTask = this._mailboxesToFetch.DequeueAsync(cancellationToken:cancellationToken);
-                _runningTasks.TryAdd(startupTask, true);
-            }
-            try
-            {
-                //for the lifetime of the app (or until cancelled)
-                while (!cancellationToken.IsCancellationRequested){
-                    //wait to get element from queue or for a runner to finish
-                    
-                    var t = await Task.WhenAny(_runningTasks.Keys);
-                    _runningTasks.TryRemove(t,out _);
-                    IntOrObject<IImapFetchTaskService> result = await t;                
 
-                    if (result.HasInt){
-                        int id = result.IntValue;
-                        //got mailbox id so request a runner.
-                        nextId = id;
-                        _runningTasks.TryAdd(availableRunners.DequeueAsync(cancellationToken:cancellationToken), true);
-                    }
-                    // Got new runner because it has finished his task or has been gotten from a queue
-                    else if (result.HasObject)
-                    {
-                        var runner = result.ObjectValue;
-                        // nextId is null which means that a runner has finished
-                        if(!nextId.HasValue)
-                            availableRunners.Enqueue(new IntOrObject<IImapFetchTaskService>(runner));
-                        // nextId is not null which means we got runner to execute the task
-                        else
-                        {
-                            //start runner and await new mailbox id from queue
-                            _runningTasks.TryAdd(runner.ExecuteTask(nextId.Value, cancellationToken), true);
-                            nextId = null;
-                            _runningTasks.TryAdd(this._mailboxesToFetch.DequeueAsync(cancellationToken:cancellationToken), true);
-                        }
-                    }
-                }
+        public async Task RunTasks(CancellationToken cancellationToken)
+        {
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                int mailboxId = await this._mailboxesToFetch.DequeueAsync(cancellationToken:cancellationToken);
+                if (cancellationToken.IsCancellationRequested)
+                    return;
+                var runner = this._runners.Dequeue();
+                this._runners.Enqueue(runner); //pace it back at the end of the list
+                ThreadPool.QueueUserWorkItem(
+                            (mailboxId) => runner.ExecuteTask((int?)mailboxId, cancellationToken),
+                            mailboxId, false);
             }
-            catch(OperationCanceledException) {} //Ok no prob
         }
     }
 
@@ -139,13 +117,8 @@ namespace Backend.Services
         {
             using IServiceScope scope = this._serviceScopeFactory.CreateScope();
             var taskManager = scope.ServiceProvider.GetRequiredService<ITaskManager>();
-            AsyncQueue<IntOrObject<IImapFetchTaskService>> taskRunners = new();
             
-            taskRunners.Enqueue(
-                new IntOrObject<IImapFetchTaskService>(
-                    scope.ServiceProvider.GetRequiredService<IImapFetchTaskService>()));
-            
-            await taskManager.RunTasks(taskRunners,stoppingToken);
+            await taskManager.RunTasks(stoppingToken);
         }
 
         private void DoWork(object? state)
@@ -185,7 +158,7 @@ namespace Backend.Services
     public interface IImapFetchTaskService : IDisposable
     {
         public Guid TaskId { get; }
-        Task<IntOrObject<IImapFetchTaskService>> ExecuteTask(int mailboxId, CancellationToken cancellationToken = default);
+        Task ExecuteTask(int? mailboxId, CancellationToken cancellationToken = default);
     }
 
     public class ImapFetchTaskService : IImapFetchTaskService
@@ -199,6 +172,10 @@ namespace Backend.Services
         private readonly IImapFolderFetchService _imapFolderFetchService;
         private readonly IImapMailFetchService _imapMailFetchService;
         private readonly ILogger<ImapFetchTaskService> _logger;
+        /// <summary>
+        /// Use sem to make sure only one sync is running at once
+        /// </summary>
+        private readonly Semaphore _busy;
 
         public ImapFetchTaskService(ILogger<ImapFetchTaskService> logger,
                                     ApplicationDBContext context,
@@ -215,64 +192,78 @@ namespace Backend.Services
             this._attachmentService = attachmentService;
             this._imapFolderFetchService = imapFolderFetchService;
             this._imapMailFetchService = imapMailFetchService;
+            this._busy = new Semaphore(1,1);
         }
 
-        public async Task<IntOrObject<IImapFetchTaskService>> ExecuteTask(int mailboxId, CancellationToken cancellationToken = default)
+        public async Task ExecuteTask(int? mailboxId, CancellationToken cancellationToken = default)
         {
-            this._context.ChangeTracker.Clear();
-            MailBox? mailbox = await this._context.MailBox.Where(x=> x.Id == mailboxId)
+            if (mailboxId is null)
+                return;
+            do{
+                //wait for other task to finish or cancel to be requested
+                if (cancellationToken.IsCancellationRequested)
+                    return;
+            }while(!this._busy.WaitOne(500));
+
+            try
+            {
+                this._context.ChangeTracker.Clear();
+                MailBox? mailbox = await this._context.MailBox.Where(x=> x.Id == mailboxId)
+                                                                .Include(mb =>mb.Folders)
+                                                                .Include(mb =>mb.OAuthCredentials)
+                                                                .AsSplitQuery()
+                                                                .FirstOrDefaultAsync(cancellationToken);
+                if (mailbox == null)
+                    //mailbox invalid or deleted. ignore
+                    return;
+
+                //get new undiscovered folders
+                List<Folder>? folders = await this._imapFolderFetchService.GetNewFolders(mailbox, cancellationToken);
+                if (folders is not null && folders.Count > 0){
+                    this._logger.LogDebug("Folders To Add: {}", string.Join(", ", folders.Select(f => f.Name)));
+                    foreach(var folder in folders)
+                        await this._folderService.CreateFolderAsync(folder, mailbox, cancellationToken);
+
+                    //run fixup to map folders to mailbox correctly
+                    this._context.ChangeTracker.DetectChanges();
+                    mailbox = await this._context.MailBox.Where(x=> x.Id == mailboxId)
                                                             .Include(mb =>mb.Folders)
                                                             .Include(mb =>mb.OAuthCredentials)
                                                             .AsSplitQuery()
                                                             .FirstOrDefaultAsync(cancellationToken);
-            if (mailbox == null)
-                //mailbox invalid or deleted. ignore
-                return new IntOrObject<IImapFetchTaskService>(this);
-
-            //get new undiscovered folders
-            List<Folder>? folders = await this._imapFolderFetchService.GetNewFolders(mailbox, cancellationToken);
-            if (folders is not null){
-                this._logger.LogDebug("Folders To Add: {}", string.Join(", ", folders.Select(f => f.Name)));
-                foreach(var folder in folders)
-                    await this._folderService.CreateFolderAsync(folder, mailbox, cancellationToken);
-
-                //run fixup to map folders to mailbox correctly
-                this._context.ChangeTracker.DetectChanges();
-                mailbox = await this._context.MailBox.Where(x=> x.Id == mailboxId)
-                                                        .Include(mb =>mb.Folders)
-                                                        .Include(mb =>mb.OAuthCredentials)
-                                                        .AsSplitQuery()
-                                                        .FirstOrDefaultAsync(cancellationToken);
-                if (mailbox is null)
-                    return new IntOrObject<IImapFetchTaskService>(this);
-                this._logger.LogDebug("Ran Fixup: got total {} folders to handle", mailbox.Folders.Count);
-            }
-            //Prepare Imapclient_context to fetch new mails
-            await this._imapMailFetchService.Prepare(mailbox, cancellationToken);
-            if (!(this._imapMailFetchService.IsConnected && this._imapMailFetchService.IsAuthenticated))
-            {
-                //unable to connect
-                this._imapMailFetchService.Disconnect();
-                if (mailbox.NeedsReauth)
-                { // Credentials issue. Save NeedsReauth value
-                    this._context.MailBox.Update(mailbox);
-                    await this._context.SaveChangesAsync(cancellationToken);
+                    if (mailbox is null)
+                        return;
+                    this._logger.LogDebug("Ran Fixup: got total {} folders to handle", mailbox.Folders.Count);
                 }
-                return new IntOrObject<IImapFetchTaskService>(this);
-            }
-            
-            foreach(Folder folder in mailbox.Folders)//this._context.Folder.Where(f=>f.MailBoxId == mailboxId))
-            {
-                try{
-                    await this.PopulateFolder(mailbox, folder, cancellationToken);
-                }
-                catch(Exception e)
+                //Prepare Imapclient_context to fetch new mails
+                await this._imapMailFetchService.Prepare(mailbox, cancellationToken);
+                if (!(this._imapMailFetchService.IsConnected && this._imapMailFetchService.IsAuthenticated))
                 {
-                    this._logger.LogError(e, "Unable to fetch or save emails");
+                    //unable to connect
+                    this._imapMailFetchService.Disconnect();
+                    if (mailbox.NeedsReauth)
+                    { // Credentials issue. Save NeedsReauth value
+                        this._context.MailBox.Update(mailbox);
+                        await this._context.SaveChangesAsync(cancellationToken);
+                    }
+                    return;
                 }
+                
+                foreach(Folder folder in mailbox.Folders)//this._context.Folder.Where(f=>f.MailBoxId == mailboxId))
+                {
+                    try{
+                        await this.PopulateFolder(mailbox, folder, cancellationToken);
+                    }
+                    catch(Exception e)
+                    {
+                        this._logger.LogError(e, "Unable to fetch or save emails in folder: {}", folder.Path);
+                    }
+                }
+                this._imapMailFetchService.Disconnect();
             }
-            this._imapMailFetchService.Disconnect();
-            return new IntOrObject<IImapFetchTaskService>(this);
+            finally{
+                this._busy.Release();
+            }
         }
 
         private async Task PopulateFolder(MailBox mailbox, Folder folder, CancellationToken cancellationToken)
@@ -308,23 +299,25 @@ namespace Backend.Services
         private async Task SaveNewMails(List<Mail> newMails, MailBox mailBox, Folder folder, CancellationToken cancellationToken)
         {
             this._logger.LogDebug($"Saving {newMails.Count} emails");
+            Mail? last = this.GetLastMail(newMails);
+            if (last is null)
+                return;
             foreach (var mail in newMails)
             {
                 //ensure parents are set correctly
                 mail.OwnerMailBox = mailBox;
                 mail.OwnerMailBoxId = mailBox.Id;
-                mail.FolderId = folder.Id;
-                mail.Folder = folder;
             }
-            Mail? last = this.GetLastMail(newMails);
-            if (last is null)
-                return;
+            //saves new mails and existing mails get their Id field set to the correct value. All Ids are set
+            await this._mailService.SaveMail(newMails, mailBox.OwnerId, cancellationToken);
             this._context.TrackEntry(folder);
             this._context.TrackEntry(mailBox);
             folder.LastPulledInternalDate = last.DateSent;
             folder.LastPulledUid = last.ImapMailUID;
-            await this._mailService.SaveMail(newMails, cancellationToken);
-            await this._attachmentService.SaveAttachments(newMails, mailBox.OwnerId);
+
+            //Add mails to folder ref
+            newMails.ForEach(m => folder.Mails.Add(m));
+            await this._context.SaveChangesAsync(cancellationToken);
             newMails.Clear();
         }
 
