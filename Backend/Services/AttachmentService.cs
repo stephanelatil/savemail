@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using Backend.Models;
 using MimeKit;
 
@@ -24,15 +25,24 @@ public class AttachmentService : IAttachmentService
     }
 
     public async Task SaveAttachments(List<Mail> mails, string userId){
-        foreach (var m in mails)
-            if (m.MimeMessage is not null && m.MimeMessage.Attachments.Any())
-                await this.AddAttachments(m.MimeMessage.Attachments, m.Id, userId);
+        //add concurrency fo only track/save synchronously
+        ConcurrentBag<Attachment> attachments = [];
+        var tasks = mails.Select(m => m.MimeMessage is not null && m.MimeMessage.Attachments.Any()
+                                         ? this.ConcurrentDLAttachments(attachments, m.MimeMessage, m.Id, userId)
+                                         : Task.CompletedTask)
+                         .ToArray() ?? [];
+        await Task.WhenAll(tasks);
+
+        await this._context.AddRangeAsync(attachments);
         await this._context.SaveChangesAsync();
     }
 
-    public async Task AddAttachments(IEnumerable<MimeEntity> attachments, long mailId, string userId)
+    private async Task ConcurrentDLAttachments(ConcurrentBag<Attachment> newAttachments,
+                                                MimeMessage message,
+                                                long mailId,
+                                                string userId)
     {
-        foreach (var attachment in attachments)
+        foreach (var attachment in message.Attachments)
         {
             try{
                 string? filepath = null;
@@ -47,14 +57,13 @@ public class AttachmentService : IAttachmentService
                     await ((MimePart)attachment).Content.DecodeToAsync(stream);
                 await stream.FlushAsync();
 
-                var attachmentObj = new Attachment(){
-                    FileName = fileName,
-                    FilePath = filepath,
-                    FileSize = stream.Length,
-                    MailId = mailId,
-                    OwnerId = userId
-                };
-                this._context.Attachment.Add(attachmentObj);
+                newAttachments.Add(new Attachment(){
+                                        FileName = fileName,
+                                        FilePath = filepath,
+                                        FileSize = stream.Length,
+                                        MailId = mailId,
+                                        OwnerId = userId
+                                    });
             }
             catch (Exception e)
             {
