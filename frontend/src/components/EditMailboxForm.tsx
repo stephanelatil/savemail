@@ -3,20 +3,26 @@
 import { useMailboxes } from "@/hooks/useMailboxes";
 import { EditMailBox, ImapProvider, MailBox } from "@/models/mailBox";
 import { Google } from "@mui/icons-material";
-import { Box, Button, CircularProgress, Divider, Skeleton, TextField, Typography } from "@mui/material";
+import { Box, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Divider, Skeleton, TextField, Typography } from "@mui/material";
 import { useParams, useRouter } from "next/navigation";
 import { SubmitHandler, useForm } from "react-hook-form";
 import useSWR from "swr";
 import NotFound from "./NotFound";
 import { PasswordElement, TextFieldElement } from "react-hook-form-mui";
+import { useState } from "react";
+import { useNotification } from "@/hooks/useNotification";
 
 
 const EditMailboxFormBase:React.FC<{defaultValues:MailBox}> = ({defaultValues}) =>{
     const mailboxPageId = defaultValues.id;
 
-    const { loading, editMailBox, synchronizeMailbox } = useMailboxes();
+    const { loading, editMailBox, synchronizeMailbox, deleteMailBox } = useMailboxes();
     const { control, handleSubmit } = useForm<EditMailBox>({defaultValues:defaultValues});
+    const { control:controlDelete, handleSubmit:handleSubmitDelete } = useForm<{delete:string}>();
     const provider = defaultValues?.provider;
+    const router = useRouter();
+    const [deleteOpen, setDeleteOpen] = useState(false);
+    const showNotif = useNotification();
 
     const onSubmit: SubmitHandler<EditMailBox> = async (mb) => {
         await editMailBox(mb);
@@ -128,6 +134,66 @@ const EditMailboxFormBase:React.FC<{defaultValues:MailBox}> = ({defaultValues}) 
             >
                 Synchronize mailbox now
             </Button>
+
+            <Divider variant="middle" sx={{my:'3rem'}}/>
+            <Button
+                disabled={loading}
+                variant='contained'
+                size='small'
+                sx={{py:'0.5rem'}}
+                color='error'
+                onClick={() => {setDeleteOpen(true);}}
+            >
+                Delete MailBox
+            </Button>
+            <Dialog
+                open={deleteOpen}
+                onClose={() => {setDeleteOpen(false);}}
+                PaperProps={{
+                    component: 'form'
+                }}
+                >
+                <DialogTitle>Subscribe</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        <Typography>
+                            Are you sure you want to delete this mailbox? <br/>
+                        </Typography>
+                        <Typography color='error'>
+                            This action is permanent and you will have to re-add and re-download all emails.
+                        </Typography>
+                        <Typography>
+                            Write "delete" below then click the button
+                        </Typography>
+                    </DialogContentText>
+                    <TextFieldElement
+                        autoFocus
+                        required
+                        margin="dense"
+                        control={controlDelete}
+                        name="delete"
+                        label='Write "delete" to confirm   '
+                        fullWidth
+                        variant="standard"
+                    />
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => {setDeleteOpen(false);}}>Cancel</Button>
+                    <Button onClick={handleSubmitDelete(async (data) => {
+                        if (data.delete.trim() != 'delete')
+                        {
+                            showNotif('Write "delete" to confirm deleting', 'error');
+                            return;
+                        }
+                        await deleteMailBox(mailboxPageId);
+                        setDeleteOpen(false);
+                        router.push('/mailbox/new');
+                    })}>
+                        Delete Mailbox
+                        </Button>
+                </DialogActions>
+
+            </Dialog>
         </Box>);
 }
 
