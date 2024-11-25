@@ -17,7 +17,6 @@ public class AttachmentService : IAttachmentService
                              IConfiguration configuration,
                              ILogger<AttachmentService> logger)
     {
-        //TODO make service and add path creation
         this._context = context;
         this._logger = logger;
         this._attachmentPath = configuration.GetValue<string>("") ?? "../Attachments";
@@ -25,11 +24,9 @@ public class AttachmentService : IAttachmentService
     }
 
     public async Task SaveAttachments(List<Mail> mails, string userId){
-        var tasks = mails.Select(m => 
-                m.MimeMessage is not null && m.MimeMessage.Attachments.Any()
-                        ? this.AddAttachments(m.MimeMessage.Attachments, m.Id, userId)
-                        : Task.CompletedTask);
-        await Task.WhenAll(tasks);
+        foreach (var m in mails)
+            if (m.MimeMessage is not null && m.MimeMessage.Attachments.Any())
+                await this.AddAttachments(m.MimeMessage.Attachments, m.Id, userId);
         await this._context.SaveChangesAsync();
     }
 
