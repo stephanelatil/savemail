@@ -47,9 +47,12 @@ namespace Backend.Services
         
         private async Task<EmailAddress> GetOrCreateEmailAddresses(EmailAddress address)
         {
-            //not in change tracker try to find it in the database
-            EmailAddress? addr = await this._context.EmailAddress.FirstOrDefaultAsync(e => e.Address == address.Address);
-            //not in Db => track new 
+            //Check in change tracker or in the database
+            EmailAddress? addr = this._context.ChangeTracker.Entries<EmailAddress>()
+                                                        .FirstOrDefault(e => e.Entity.Address == address.Address)?.Entity
+                                ?? await this._context.EmailAddress.Where(e => e.Address == address.Address)
+                                                        .SingleOrDefaultAsync();
+            //not in Db or change-tracker => track new 
             return addr ?? this._context.EmailAddress.Add(address).Entity;
         }
 
@@ -82,7 +85,7 @@ namespace Backend.Services
                 //bottom of reply list hit :
                 parent.HasReply = true;
                 parent.Reply = reply;
-                this._context.Mail.Update(parent);
+                this._context.TrackEntry(parent);
                 reply.RepliedFrom = parent;
             }
         }
@@ -91,23 +94,30 @@ namespace Backend.Services
         /// Checks all given mails and returns the mails that aren't present in the database
         /// Those present in the DBs have their Id field set
         /// </summary>
-        /// <param name="mails">A list of mils you'd like to add</param>
+        /// <param name="mails">A list of mails you'd like to add</param>
         /// <returns>The Mails that don't yet exist in the DB</returns>
-        private List<Mail> GetMailsToAdd(List<Mail> mails){
-            var uniqueHashes = mails.Select(m => new { m.UniqueHash, m.UniqueHash2 }).ToList();
+        private async Task<List<Mail>> GetMailsToAdd(List<Mail> mails){
+            var uniqueHashes1 = mails.Select(m => m.UniqueHash);
 
-            var existingMailsDict = this._context.Mail
-                .Where(m => uniqueHashes.Any(u => u.UniqueHash == m.UniqueHash && u.UniqueHash2 == m.UniqueHash2))
-                .Select(m => new { m.Id, m.UniqueHash, m.UniqueHash2 })
-                .ToList().ToDictionary(
-                m => (m.UniqueHash, m.UniqueHash2),
-                m => m.Id);
+            var existingMailsDict = await this._context.Mail
+                .Where(m => uniqueHashes1.Any(u => u == m.UniqueHash))
+                .Select(m => new { m.Id, m.UniqueHash, m.UniqueHash2})
+                .ToListAsync();
 
             foreach (var mail in mails)
             {
-                if (existingMailsDict.TryGetValue((mail.UniqueHash, mail.UniqueHash2), out var id))
+                foreach (var existingMail in existingMailsDict
+                                .Where(m => mail.UniqueHash == m.UniqueHash && m.UniqueHash2 == mail.UniqueHash2))
                 {
-                    mail.Id = id;
+                    var collisionCheck = await this._context.Mail.Where(m => m.Id == existingMail.Id)
+                                                .Select(m => new {m.DateSent, m.Subject, m.Body})
+                                                .FirstOrDefaultAsync();
+                    //better duplicate detection in case of collision (very unlikely)
+                    if (collisionCheck is not null
+                            && mail.DateSent == collisionCheck.DateSent
+                            && mail.Subject == collisionCheck.Subject
+                            && mail.Body == collisionCheck.Body)
+                        mail.Id = existingMail.Id;
                 }
             }
 
@@ -123,6 +133,10 @@ namespace Backend.Services
                 if (mail.ImapReplyFromId is not null){
                     mail.RepliedFrom = mails.Where(m => m.OwnerMailBoxId == mail.OwnerMailBoxId)
                                                         .SingleOrDefault(x => mail.ImapReplyFromId == x.ImapMailId)
+                                     ?? this._context.ChangeTracker.Entries<Mail>()
+                                                        .Where(m => m.Entity.OwnerMailBoxId == mail.OwnerMailBoxId &&
+                                                                mail.ImapReplyFromId == m.Entity.ImapMailId)
+                                                        .SingleOrDefault()?.Entity
                                      ?? await this._context.Mail.Include(m => m.Reply).AsSplitQuery()
                                                         .Where(m => m.OwnerMailBoxId == mail.OwnerMailBoxId)
                                                         .SingleOrDefaultAsync(x => mail.ImapReplyFromId == x.ImapMailId, cancellationToken);
@@ -131,7 +145,7 @@ namespace Backend.Services
                 }
                 await this.HandleEmailAddresses(mail);
             }
-            var newMails = this.GetMailsToAdd(mails);
+            var newMails = await this.GetMailsToAdd(mails);
             await this._context.Mail.AddRangeAsync(newMails, cancellationToken);
             await this._context.SaveChangesAsync(cancellationToken); 
             //All Ids are set and mail saved
