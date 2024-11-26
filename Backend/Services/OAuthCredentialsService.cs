@@ -55,12 +55,17 @@ public class OAuthCredentialsService : IOAuthCredentialsService
                                                         credentials.Entity.AccessToken,
                                                         mailbox.Entity.Id,
                                                         owner.Id);
+        credentials.Entity.RefreshToken = this._tokenEncryptionService.Encrypt(
+                                                        credentials.Entity.RefreshToken,
+                                                        mailbox.Entity.Id,
+                                                        owner.Id);
         this._context.OAuthCredentials.Update(credentials.Entity);
         await this._context.SaveChangesAsync();
         return mailbox.Entity;
     }
 
-    public async Task<OAuthCredentials> CreateNewCredentials(ImapProvider provider, string accessToken, DateTime validityEnd, string refreshToken, int mailboxId, string? email=null)
+    public async Task<OAuthCredentials> CreateNewCredentials(ImapProvider provider, string accessToken, DateTime validityEnd,
+                                                             string refreshToken, int mailboxId, string? email=null)
     {
         MailBox mailbox = await this._context.MailBox.Where(mb => mb.Id == mailboxId)
                                                  .Include(mb=> mb.OAuthCredentials)
@@ -74,7 +79,7 @@ public class OAuthCredentialsService : IOAuthCredentialsService
             entry = this._context.OAuthCredentials.Add(new(){
                 AccessToken = this._tokenEncryptionService.Encrypt(accessToken, mailbox.Id, mailbox.OwnerId),
                 AccessTokenValidity = validityEnd.ToUniversalTime(),
-                RefreshToken = refreshToken,
+                RefreshToken = this._tokenEncryptionService.Encrypt(refreshToken, mailbox.Id, mailbox.OwnerId),
                 Provider = provider,
                 OwnerMailboxId = mailboxId,
                 OwnerMailbox = mailbox
@@ -89,7 +94,7 @@ public class OAuthCredentialsService : IOAuthCredentialsService
         {
             var oauthCredentials = mailbox.OAuthCredentials;
             oauthCredentials.AccessToken = this._tokenEncryptionService.Encrypt(accessToken, mailbox.Id, mailbox.OwnerId);
-            oauthCredentials.RefreshToken = refreshToken;
+            oauthCredentials.RefreshToken = this._tokenEncryptionService.Encrypt(refreshToken, mailbox.Id, mailbox.OwnerId);
             oauthCredentials.AccessTokenValidity = validityEnd;
             oauthCredentials.OwnerMailboxId = mailboxId;
             oauthCredentials.OwnerMailbox = mailbox;

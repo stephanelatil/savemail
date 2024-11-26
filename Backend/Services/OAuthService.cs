@@ -79,10 +79,14 @@ public class OAuthService : IOAuthService
         if (clientId is null || clientSecret is null)
             return false;
 
+        var refreshToken = this._tokenEncryptionService.Decrypt(credentials.RefreshToken,
+                                                                credentials.Id,
+                                                                ownerId);
+
         HttpRequestMessage request = new(HttpMethod.Post, OAuthCredentials.RefreshUrl(credentials.Provider))
         {
             Content = new StringContent(
-                $"client_id={clientId}&client_secret={clientSecret}&refresh_token={credentials.RefreshToken}&grant_type=refresh_token",
+                $"client_id={clientId}&client_secret={clientSecret}&refresh_token={refreshToken}&grant_type=refresh_token",
                 Encoding.UTF8,
                 "application/x-www-form-urlencoded")
         };
