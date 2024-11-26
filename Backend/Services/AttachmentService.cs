@@ -42,6 +42,9 @@ public class AttachmentService : IAttachmentService
                                                 long mailId,
                                                 string userId)
     {
+        //ensures dir exists (will not do anything if it does)
+        Directory.CreateDirectory(this._attachmentPath);
+
         foreach (var attachment in message.Attachments)
         {
             try{
