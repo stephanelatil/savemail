@@ -176,7 +176,7 @@ const DrawerContentSkeleton:React.FC<{isDesktop?:boolean, open:boolean, setOpen:
 	  flexDirection: 'column', 
 	  height: '100%', 
 	  p: 2,
-	  gap: 2 
+	  gap: 2
 	}}>
 		{!isDesktop && (
 			<><IconButton
@@ -193,24 +193,28 @@ const DrawerContentSkeleton:React.FC<{isDesktop?:boolean, open:boolean, setOpen:
 		)}
 	  
 	  {/* Mailbox list skeletons */}
-	  <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>
+	  <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
 		{[...Array(5)].map((_, i) => (
 		  <Skeleton key={i} variant="rectangular" height={48} sx={{ borderRadius: 1 }} />
 		))}
 	  </Box>
 	  
+	  <Divider variant='middle' />
 	  {/* Refresh button skeleton */}
-	  <Skeleton variant="circular" width={40} height={40} sx={{ alignSelf: 'center' }} />
+	  <Skeleton variant="circular" width='90%' height={40} sx={{ alignSelf: 'center' }} />
 	  
 	  {/* User card skeleton */}
 	  <Skeleton 
 		variant="rounded" 
-		height={60}
+		height={45}
 	  />
-	  {/* TODO add logout (skeleton) and theme change button */}
 	  <Skeleton 
 		variant="rounded" 
-		height={60}
+		height={45}
+	  />
+	  <Skeleton 
+		variant="rounded" 
+		height={45}
 	  />
 	</Box>
   );
