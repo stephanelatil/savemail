@@ -135,6 +135,9 @@ namespace Backend.Services
             catch(OperationCanceledException){} //no problem :)
         }
 
+        //TODO find way to avoid multiple runners updating the same mailbox at the same time (or stop if mailbox deleted)
+        // TODO find a way to refresh a token if it expires while syncing (can happen on first sync of lots to download)
+            // This should never happen except if the token expires after starting to get the folders and before fetching the mails
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             using IServiceScope scope = this._serviceScopeFactory.CreateScope();
@@ -317,12 +320,13 @@ namespace Backend.Services
             Mail? last = this.GetLastMail(newMails);
             if (last is null)
                 return;
-            this._context.TrackEntry(folder);
-            this._context.TrackEntry(mailBox);
+            this._context.Folder.Update(folder);
             folder.LastPulledInternalDate = last.DateSent;
             folder.LastPulledUid = last.ImapMailUID;
             await this._mailService.SaveMail(newMails, mailBox.OwnerId, cancellationToken);
             await this._attachmentService.SaveAttachments(newMails, mailBox.OwnerId);
+            newMails.ForEach(m => folder.Mails.Add(m));
+            await this._context.SaveChangesAsync();
             newMails.Clear();
         }
 
