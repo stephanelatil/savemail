@@ -1,14 +1,36 @@
 'use client'
 
 import { useMails } from "@/hooks/useMails";
-import { Mail } from "@/models/mail";
-import { ArrowDropDown, ChevronRight, Close } from "@mui/icons-material";
+import { ArrowDropDown, ChevronRight, Close, Download } from "@mui/icons-material";
 import React from 'react';
 import purify from 'dompurify';
-import { Box, Button,  Collapse, Divider, IconButton, List, ListItem, ListItemText, Modal, Paper, Skeleton, Stack, Typography, useTheme } from "@mui/material";
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { Box, Button, Container, Collapse, Divider, IconButton, Link, List, ListItem, ListItemText, Modal, Paper, Skeleton, Stack, Typography, useTheme } from "@mui/material";
+import { Dispatch, SetStateAction, useState } from "react";
 import useSWR from "swr";
+import { Attachment } from "@/models/attachment";
+import Grid2 from "@mui/material/Unstable_Grid2";
 
+const AttachmentDownload:React.FC<{attachment:Attachment}> = ({attachment}) =>{
+    function formatBytes(bytes:number, decimals = 2) {
+        if (!+bytes) return '0B'
+    
+        const k = 1024
+        const dm = decimals < 0 ? 0 : decimals
+        const sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
+    
+        const i = Math.floor(Math.log(bytes) / Math.log(k))
+    
+        return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`
+    }
+
+    return <Button startIcon={<Download />}
+                   component={Link}
+                   download={attachment.fileName}
+                   href={`${process.env.NEXT_PUBLIC_BACKEND_URL}${attachment.downloadUrl}`}
+                   variant='contained'>
+                {`${attachment.fileName} (${formatBytes(attachment.fileSize)})`}
+           </Button>;
+};
 
 const LoadingMailElement: React.FC = () => {
     const theme = useTheme();
@@ -38,10 +60,20 @@ const LoadingMailElement: React.FC = () => {
           <Skeleton variant="text" width="95%" height={20} />
           <Skeleton variant="text" width="98%" height={20} />
           <Skeleton variant="text" width="90%" height={20} />
+
+          {/* Attachments */}
+          <Divider sx={{ my: 2 }} />
+          <Grid2 wrap="wrap" spacing={1}>
+            {Array(3).fill(null).map((_, index) => (
+              <Container key={index} component="div">
+                <Skeleton variant="rectangular" width={200} height={36} />
+              </Container>
+            ))}
+          </Grid2>
         </Stack>
       </Paper>
     );
-  };
+};
 
 const MailElement:React.FC<{id?:number|null,
                             loadedMails:number[],
@@ -144,9 +176,17 @@ const MailElement:React.FC<{id?:number|null,
             }}
             />
             
-            {/* TODO: Add attachments here */}
-            
             <Divider sx={{ my: 2 }} />
+            <Grid2 wrap='wrap'
+                   spacing={1}>
+                {
+                    mail.attachments.map((attachment) => {
+                        return (<Container component='div' >
+                                    <AttachmentDownload attachment={attachment}/>
+                                </Container>); }
+                    )
+                }
+            </Grid2>
         </Box>
         </Paper>
     );
