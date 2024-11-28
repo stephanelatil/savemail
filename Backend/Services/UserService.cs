@@ -20,12 +20,15 @@ namespace Backend.Services
     {
         private readonly ApplicationDBContext _context;
         private readonly UserManager<AppUser> _userManager;
+        private readonly string _attachmentPath;
 
         public UserService(ApplicationDBContext context,
-                            UserManager<AppUser> userManager)
+                            UserManager<AppUser> userManager,
+                            IConfiguration configuration)
         {
             this._context = context;
             this._userManager = userManager;
+            this._attachmentPath = configuration.GetValue<string>("AttachmentsPath") ?? "../Attachments";
         }
 
         public async Task<AppUser?> GetUserByIdAsync(string id, bool includeMailboxes=false)
@@ -65,6 +68,7 @@ namespace Backend.Services
 
         public async Task DeleteUserAsync(AppUser user)
         {
+            Directory.Delete(Path.Join(this._attachmentPath, user.Id));
             this._context.Users.Remove(user);
             if (await this._context.SaveChangesAsync() == 0)
                 throw new DbUpdateException();

@@ -17,11 +17,15 @@ namespace Backend.Services
     {
         private readonly ApplicationDBContext _context;
         private readonly TokenEncryptionService _tokenEncryptionService;
+        private readonly string _attachmentPath;
 
-        public MailBoxService(ApplicationDBContext context, TokenEncryptionService tokenEncryptionService)
+        public MailBoxService(ApplicationDBContext context,
+                                TokenEncryptionService tokenEncryptionService,
+                                IConfiguration configuration)
         {
             this._tokenEncryptionService = tokenEncryptionService;
             this._context = context;
+            this._attachmentPath = configuration.GetValue<string>("AttachmentsPath") ?? "./Attachments";
         }
 
         public async Task<MailBox?> GetMailboxByIdAsync(int id, bool includeFolders=false)
@@ -78,6 +82,9 @@ namespace Backend.Services
         public async Task DeleteMailBoxAsync(MailBox mailbox)
         {
             ArgumentNullException.ThrowIfNull(mailbox);
+
+            //Also delete all attachments
+            Directory.Delete(Path.Join(this._attachmentPath, mailbox.OwnerId, mailbox.Id.ToString()), true);
 
             this._context.MailBox.Remove(mailbox);
             if (await this._context.SaveChangesAsync() == 0)

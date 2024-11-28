@@ -20,7 +20,7 @@ public class AttachmentService : IAttachmentService
     {
         this._context = context;
         this._logger = logger;
-        this._attachmentPath = configuration.GetValue<string>("") ?? "../Attachments";
+        this._attachmentPath = configuration.GetValue<string>("AttachmentsPath") ?? "../Attachments";
         Directory.CreateDirectory(this._attachmentPath);
     }
 
@@ -28,29 +28,35 @@ public class AttachmentService : IAttachmentService
         //add concurrency fo only track/save synchronously
         ConcurrentBag<Attachment> attachments = [];
         var tasks = mails.Select(m => m.MimeMessage is not null && m.MimeMessage.Attachments.Any()
-                                         ? this.ConcurrentDLAttachments(attachments, m.MimeMessage, m.Id, userId)
+                                         ? this.ConcurrentDLAttachments(attachments, m, userId)
                                          : Task.CompletedTask)
                          .ToArray() ?? [];
         await Task.WhenAll(tasks);
 
-        await this._context.AddRangeAsync(attachments);
+        mails.ForEach(m => this._context.TrackEntry(m));
+        foreach (var att in attachments)
+            this._context.Add(att);
         await this._context.SaveChangesAsync();
+        
     }
 
     private async Task ConcurrentDLAttachments(ConcurrentBag<Attachment> newAttachments,
-                                                MimeMessage message,
-                                                long mailId,
+                                                Mail mail,
                                                 string userId)
     {
         //ensures dir exists (will not do anything if it does)
-        Directory.CreateDirectory(this._attachmentPath);
+        if (mail is null || mail.MimeMessage is null || mail.Id == 0)
+            return;
+        if (mail.Attachments.Count == 0)
+            return;
+        Directory.CreateDirectory(Path.Join(this._attachmentPath, userId, mail.OwnerMailBoxId.ToString()));
 
-        foreach (var attachment in message.Attachments)
+        foreach (var attachment in mail.MimeMessage.Attachments)
         {
             try{
                 string? filepath = null;
                 while (filepath is null || Path.Exists(filepath))
-                    filepath = Path.Join(this._attachmentPath,Path.GetRandomFileName());
+                    filepath = Path.Join(this._attachmentPath, userId, mail.OwnerMailBoxId.ToString(), Path.GetRandomFileName());
                 var fileName = attachment.ContentDisposition?.FileName ?? attachment.ContentType.Name;
 
                 using var stream = File.Create(filepath);
@@ -64,7 +70,7 @@ public class AttachmentService : IAttachmentService
                                         FileName = fileName,
                                         FilePath = filepath,
                                         FileSize = stream.Length,
-                                        MailId = mailId,
+                                        Mail = mail,
                                         OwnerId = userId
                                     });
             }
@@ -76,4 +82,7 @@ public class AttachmentService : IAttachmentService
             }
         }
     }
+    // TODO Handle duplicates here:
+        //Can be at the model level (single attachment linked to multiple mails)
+        //Or at the file level (multiple attachment Models pointing to the same file with path property)
 }
