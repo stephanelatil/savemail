@@ -9,8 +9,6 @@ public partial class MailDto
     public long Id { get; set; }
     public long? RepliedFromId { get; set; } = null;
     public MailDto? RepliedFrom { get; set; } = null;
-    public MailDto? Reply { get; set; } = null;
-    public long? ReplyId { get; set; } = null;
     public EmailAddressDto Sender { get; set; } = new EmailAddressDto();
     public ICollection<EmailAddressDto> Recipients { get; set; } = [];
     public ICollection<EmailAddressDto> RecipientsCc { get; set; } = [];
@@ -31,8 +29,6 @@ public partial class MailDto
         this.Id = mail.Id;
         this.RepliedFromId = mail.RepliedFromId;
         this.RepliedFrom = mail.RepliedFrom is null ? null : new MailDto(mail.RepliedFrom, fetch_partial);
-        this.ReplyId = mail.ReplyId;
-        this.Reply = mail.Reply is null ? null : new MailDto(mail.Reply, fetch_partial);
         this.Sender = mail.Sender is null ? new EmailAddressDto() : new EmailAddressDto(mail.Sender);
         this.Recipients = mail.Recipients.Select(x => new EmailAddressDto(x)).ToList();
         this.RecipientsCc = mail.RecipientsCc.Select(x => new EmailAddressDto(x)).ToList();
