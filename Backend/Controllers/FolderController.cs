@@ -76,8 +76,9 @@ public class FolderController : ControllerBase
                         this._context.Folder.Where(f => f.Id == id)
                             .Include(f => f.Mails)
                             .ThenInclude(m => m.Attachments)
-                            .SelectMany(f => f.Mails)
                             .AsSplitQuery()
+                            .SelectMany(f => f.Mails)
+                            .Where(m => !m.HasReply)
                             .OrderByDescending(m =>m.DateSent)
                             .ThenByDescending(m => m.ImapMailUID),
                         paginationQueryParameters,
