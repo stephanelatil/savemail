@@ -39,6 +39,8 @@ namespace Backend.Models
                                         .HasForeignKey(a => a.MailId).OnDelete(DeleteBehavior.Cascade);
             modelBuilder.Entity<MailBox>().HasMany(mb => mb.Folders).WithOne(f => f.MailBox)
                                         .HasForeignKey(f =>f.MailBoxId).OnDelete(DeleteBehavior.Cascade);
+            modelBuilder.Entity<MailBox>().HasMany(mb => mb.Mails).WithOne(m => m.OwnerMailBox)
+                                        .HasForeignKey(m => m.OwnerMailBoxId).OnDelete(DeleteBehavior.Cascade);
             modelBuilder.Entity<Attachment>().HasOne(a => a.Owner).WithMany() //there is no navigation property in AppUser
                                         .HasForeignKey(a => a.OwnerId).OnDelete(DeleteBehavior.Restrict); // Prevent deletion of User
             modelBuilder.Entity<Folder>().HasMany(f => f.Mails).WithMany();
