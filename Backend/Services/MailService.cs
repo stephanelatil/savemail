@@ -149,7 +149,7 @@ namespace Backend.Services
             await this._context.Mail.AddRangeAsync(newMails, cancellationToken);
             await this._context.SaveChangesAsync(cancellationToken); 
             //All Ids are set and mail saved
-            //Add attachments to new emails
+            //Add attachments to *new* emails only
             await this._attachmentService.SaveAttachments(newMails, ownerUserId);
         }
     }

@@ -324,7 +324,6 @@ namespace Backend.Services
             folder.LastPulledInternalDate = last.DateSent;
             folder.LastPulledUid = last.ImapMailUID;
             await this._mailService.SaveMail(newMails, mailBox.OwnerId, cancellationToken);
-            await this._attachmentService.SaveAttachments(newMails, mailBox.OwnerId);
             newMails.ForEach(m => folder.Mails.Add(m));
             await this._context.SaveChangesAsync();
             newMails.Clear();
