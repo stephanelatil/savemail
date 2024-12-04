@@ -101,12 +101,14 @@ export const useMailboxes = () => {
           showNotification(error.message, 'warning');
         else if (error.statusCode == 404)
           showNotification("Mailbox does not exist", 'error');
+        else if (error.statusCode >= 500)
+          showNotification("Backend error", 'error');
         else
           showNotification('This mailbox does not belong to you!', 'warning');
       else{
         showNotification("Backend error", 'error');
-        console.error(error);
       }
+      console.error(error);
     }finally{
       setLoading(false);
     }
