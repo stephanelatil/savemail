@@ -84,7 +84,9 @@ namespace Backend.Services
             ArgumentNullException.ThrowIfNull(mailbox);
 
             //Also delete all attachments
-            Directory.Delete(Path.Join(this._attachmentPath, mailbox.OwnerId, mailbox.Id.ToString()), true);
+            string attachmentsPath = Path.Join(this._attachmentPath, mailbox.OwnerId, mailbox.Id.ToString());
+            if (Directory.Exists(attachmentsPath))
+                Directory.Delete(attachmentsPath, true);
 
             this._context.MailBox.Remove(mailbox);
             if (await this._context.SaveChangesAsync() == 0)
