@@ -28,7 +28,10 @@ const AttachmentDownload:React.FC<{attachment:Attachment}> = ({attachment}) =>{
                    download={attachment.fileName}
                    href={`${process.env.NEXT_PUBLIC_BACKEND_URL}${attachment.downloadUrl}`}
                    variant='contained'>
-                {`${attachment.fileName} (${formatBytes(attachment.fileSize)})`}
+            <Typography variant='body1' noWrap textOverflow='ellipsis' maxWidth='20rem'>
+                {attachment.fileName}
+            </Typography>
+            <Typography variant='body1'>{formatBytes(attachment.fileSize)}</Typography>
            </Button>;
 };
 
@@ -63,7 +66,7 @@ const LoadingMailElement: React.FC = () => {
 
           {/* Attachments */}
           <Divider sx={{ my: 2 }} />
-          <Grid2 wrap="wrap" spacing={1}>
+          <Grid2 flexWrap='wrap' spacing={1} container>
             {Array(3).fill(null).map((_, index) => (
               <Container key={index} component="div">
                 <Skeleton variant="rectangular" width={200} height={36} />
@@ -177,14 +180,9 @@ const MailElement:React.FC<{id?:number|null,
             />
             
             <Divider sx={{ my: 2 }} />
-            <Grid2 wrap='wrap'
-                   spacing={1}>
+            <Grid2 flexWrap='wrap' spacing={1} container>
                 {
-                    mail.attachments.map((attachment) => {
-                        return (<Container component='div' >
-                                    <AttachmentDownload attachment={attachment}/>
-                                </Container>); }
-                    )
+                    mail.attachments.map((attachment) => <AttachmentDownload attachment={attachment}/>)
                 }
             </Grid2>
         </Box>
