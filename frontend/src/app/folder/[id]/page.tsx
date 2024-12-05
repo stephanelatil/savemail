@@ -1,4 +1,4 @@
-import MailListPage from '@/components/MailList';
+import MailListPage, { MailListPage2 } from '@/components/MailList';
 import Sidebar from '@/components/SideBar';
 import { Stack } from '@mui/material';
 import { Metadata } from 'next';
@@ -12,7 +12,7 @@ const MailsInFolder:React.FC = () =>{
         return (
           <Stack flexDirection='row'>
             <Sidebar />
-            <MailListPage />
+            <MailListPage2 />
           </Stack>);
 }
 
