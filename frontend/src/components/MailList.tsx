@@ -3,13 +3,14 @@
 import { useFolder } from "@/hooks/useFolder";
 import { EmailAddress } from "@/models/emailAddress";
 import { Mail } from "@/models/mail";
-import React from 'react';
+import React, { Suspense } from 'react';
 import { AttachFile, SkipNext, SkipPrevious } from "@mui/icons-material";
-import { Stack, Typography, Box, ListItem, CircularProgress, Button, List, ListItemButton, Paper, BottomNavigation, BottomNavigationAction, PaginationItem, TablePagination, Pagination } from "@mui/material";
+import { Stack, Typography, Box, ListItem, Button, List, ListItemButton, Paper, BottomNavigation, BottomNavigationAction, PaginationItem, TablePagination, Pagination, Skeleton } from "@mui/material";
 import { useEffect, useState } from "react";
-import { useParams } from 'next/navigation';
+import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation';
 import NotFound from "./NotFound";
 import MailOverlay from "./MailOverlay";
+import { PaginatedRequest } from "@/models/paginatedRequest";
 
 interface MailParts{
     id:number,
@@ -50,13 +51,14 @@ interface MailListPageInfo {
     hasNext?:boolean,
     hasPrev?:boolean
     pageNum:number,
-    setPageNum:(pageNum:number)=>void,
     mails:Mail[]
 }
 
-const MailListBox : React.FC<MailListPageInfo> = ({hasNext, hasPrev, pageNum, setPageNum, mails}) => {
+const MailListBox : React.FC<MailListPageInfo> = ({hasNext, hasPrev, pageNum, mails}) => {
     const [open, setOpen] = useState(false);
     const [mailId, setMailId] = useState(0);
+    const router = useRouter();
+    const basePathname = usePathname();
 
     return (
         <>
@@ -70,17 +72,17 @@ const MailListBox : React.FC<MailListPageInfo> = ({hasNext, hasPrev, pageNum, se
                                             sender={m.sender}
                                             hasAttachments={m.attachments.length > 0}
                                             dateSent={m.dateSent}
-                                            onClick={() => {setMailId(m.id); setOpen(true); console.log("clicked on "+m.id);}}
+                                            onClick={() => {setMailId(m.id); setOpen(true);}}
                                                 />)}
                     </List>
                     <Stack direction='row' justifyContent='center' position='sticky'>
-                        <Button onClick={() => setPageNum(pageNum-1)} disabled={!hasPrev}>
+                        <Button onClick={() => router.push(`${basePathname}?page=${pageNum-1}`)} disabled={!hasPrev}>
                             <SkipPrevious />
                         </Button>
                         <Typography variant='h6'>
                             {pageNum}
                         </Typography>
-                        <Button onClick={() => setPageNum(pageNum+1)} disabled={!hasNext}>
+                        <Button onClick={() => router.push(`${basePathname}?page=${pageNum+1}`)} disabled={!hasNext}>
                             <SkipNext />
                         </Button>
                     </Stack>
@@ -89,28 +91,74 @@ const MailListBox : React.FC<MailListPageInfo> = ({hasNext, hasPrev, pageNum, se
         </>);
 }
 
-const MailListPage : React.FC = () => {
-    const {id:folderId}:{id:string} = useParams();
-    const {loading, getMails} = useFolder();
-    const [mailList, setMailList] = useState(<CircularProgress />);
-    const [pageNum, setPageNum] = useState(1);
-    folderId
-    useEffect(() => {
-        async function fetchEmails(){
-            const paginatedMail = await getMails(parseInt(folderId), pageNum);
-            if (!paginatedMail)
-            {
-                setMailList(<NotFound/>);
-                return;
-            }
-            const hasPrev = !!paginatedMail?.prev;
-            const hasNext = !!paginatedMail?.next;
-            setMailList(<MailListBox mails={paginatedMail.items} hasNext={hasNext} hasPrev={hasPrev} pageNum={pageNum} setPageNum={setPageNum}/>);
-        }
-        fetchEmails();
-    },[pageNum]);
+const LoadingMailListBox: React.FC = () => {
+    return (
+        <Stack overflow="hidden" sx={{width:'100%'}}>
+            <List sx={{width:'100%'}}>
+                {Array.from({ length: 5 }).map((_, index) => (
+                    <ListItem key={`loading-mail-${index}`} sx={{width:'100%'}}>
+                        <Stack flexDirection="column" spacing={1} justifyContent="space-between" width='100%'>
+                            <Stack flexDirection="row" spacing={2} justifyContent={"space-between"} width='100%'>
+                                <Skeleton variant='text' width='25%'/>
+                                <Skeleton variant="text" width='50%'/>
+                                <Skeleton variant='rounded' width='20%' sx={{maxWidth:'10rem'}} animation='pulse'/>
+                            </Stack>
+                            <Stack flexDirection='row' justifyContent="space-between" gap={1} width='100%'>
+                                <Skeleton variant='text' width="95%"/>
+                                <Skeleton variant='rounded' animation='pulse' width='5%'/>
+                            </Stack>
+                        </Stack>
+                    </ListItem>
+                ))}
+            </List>
+        </Stack>
+    );
+};
 
-    return <>{loading ? <CircularProgress /> : mailList}</>;
+const MailListPage : React.FC<{folderId:number, pageNum:number}> = ({folderId, pageNum}) => {
+    const { getMails } = useFolder();
+    const [mailList, setMailList] = useState<PaginatedRequest<Mail>|null>(null);
+    const [loading, setLoading] = useState(true);
+
+    // TODO Replace dynamic loading with new page with search params
+    // TODO Add search bar up top & search page
+
+    useEffect(() => {
+        async function fetchMail(page:number){
+            try{
+                setLoading(true);
+                setMailList(
+                    await getMails(folderId, page)
+                );
+            } finally{
+                setLoading(false);
+            }
+        }
+        fetchMail(pageNum);
+    },[]);
+
+    return loading ? <LoadingMailListBox />
+                    : (!!mailList ? <MailListBox mails={mailList.items}
+                                                hasNext={!!mailList.next}
+                                                hasPrev={!!mailList.prev}
+                                                pageNum={pageNum}/>
+                                  : <NotFound objectName={`Page ${pageNum}`}/>);
 }
 
-export default MailListPage
+export const MailListPage2: React.FC = () => {
+    const {id:folder}:{id:string} = useParams();
+    const searchParams = useSearchParams();
+    const folderId:number = parseInt(folder);
+
+    if (isNaN(folderId) || !isFinite(folderId))
+        return <NotFound objectName={`Folder with ID ${folder}`}/>
+
+    let mailPage = searchParams.has('page') ? parseInt(searchParams.get('page') ?? '1') : 1;
+    mailPage = isNaN(mailPage) ? 1 : mailPage;
+
+    return <Suspense fallback={<LoadingMailListBox />}>
+                <MailListPage folderId={folderId} pageNum={mailPage}/>
+            </Suspense>;
+}
+
+export default MailListPage;
