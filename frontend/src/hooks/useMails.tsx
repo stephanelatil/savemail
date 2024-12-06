@@ -7,7 +7,7 @@ import { FetchError } from '@/services/fetchService'
 import { Mail } from '@/models/mail'
 
 export const useMails = () => {
-  const showNotification = useNotification();
+  const {showNotification} = useNotification();
   const [loading, setLoading] = useState(false);
 
   const getMail = async (id:number): Promise<Mail|null> => {

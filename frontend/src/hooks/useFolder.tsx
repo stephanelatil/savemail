@@ -8,7 +8,7 @@ import { getFolderMails } from '@/services/folderService'
 import { PaginatedRequest } from '@/models/paginatedRequest'
 
 export const useFolder = () => {
-  const showNotification = useNotification();
+  const {showNotification} = useNotification();
   const [loading, setLoading] = useState(false);
 
   const getMails = async (folderId:number, pageNumber:number=1): Promise<PaginatedRequest<Mail>|null> => {

@@ -22,7 +22,7 @@ const EditMailboxFormBase:React.FC<{defaultValues:MailBox}> = ({defaultValues}) 
     const provider = defaultValues?.provider;
     const router = useRouter();
     const [deleteOpen, setDeleteOpen] = useState(false);
-    const showNotif = useNotification();
+    const {showNotification} = useNotification();
 
     const onSubmit: SubmitHandler<EditMailBox> = async (mb) => {
         await editMailBox(mb);
@@ -163,7 +163,7 @@ const EditMailboxFormBase:React.FC<{defaultValues:MailBox}> = ({defaultValues}) 
                             This action is permanent and you will have to re-add and re-download all emails.
                         </Typography>
                         <Typography>
-                            Write "delete" below then click the button
+                            {'Write "delete" below then click the button'}
                         </Typography>
                     </DialogContentText>
                     <TextFieldElement
@@ -182,7 +182,7 @@ const EditMailboxFormBase:React.FC<{defaultValues:MailBox}> = ({defaultValues}) 
                     <Button onClick={handleSubmitDelete(async (data) => {
                         if (data.delete.trim() != 'delete')
                         {
-                            showNotif('Write "delete" to confirm deleting', 'error');
+                            showNotification('Write "delete" to confirm deleting', 'error');
                             return;
                         }
                         await deleteMailBox(mailboxPageId);

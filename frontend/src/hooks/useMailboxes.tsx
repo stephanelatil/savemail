@@ -8,7 +8,7 @@ import { EditMailBox, MailBox } from '@/models/mailBox'
 import { FetchError } from '@/services/fetchService'
 
 export const useMailboxes = () => {
-  const showNotification = useNotification();
+  const {showNotification} = useNotification();
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 

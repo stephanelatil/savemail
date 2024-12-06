@@ -182,7 +182,7 @@ const MailElement:React.FC<{id?:number|null,
             <Divider sx={{ my: 2 }} />
             <Grid2 flexWrap='wrap' spacing={1} container>
                 {
-                    mail.attachments.map((attachment) => <AttachmentDownload attachment={attachment}/>)
+                    mail.attachments.map((attachment) => <AttachmentDownload key={`Attachment_${attachment.id}`} attachment={attachment}/>)
                 }
             </Grid2>
         </Box>

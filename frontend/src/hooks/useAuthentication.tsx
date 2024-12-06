@@ -19,7 +19,7 @@ import { useState } from 'react'
 import { useNotification } from './useNotification'
 
 export const useAuthentication = () => {
-  const showNotification = useNotification();
+  const {showNotification} = useNotification();
   const [loading, setLoading] = useState(false);
 
   const login = async (credentials:Credentials, rememberMe:boolean=false): Promise<boolean> => {

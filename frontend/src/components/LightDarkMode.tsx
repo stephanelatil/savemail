@@ -13,7 +13,7 @@ declare module '@mui/material/styles' {
       success: string,
       warning: string,
       error: string
-  };
+  }
 } 
 
 const lightTheme = createTheme({

@@ -120,7 +120,6 @@ const MailListPage : React.FC<{folderId:number, pageNum:number}> = ({folderId, p
     const [mailList, setMailList] = useState<PaginatedRequest<Mail>|null>(null);
     const [loading, setLoading] = useState(true);
 
-    // TODO Replace dynamic loading with new page with search params
     // TODO Add search bar up top & search page
 
     useEffect(() => {
@@ -135,7 +134,7 @@ const MailListPage : React.FC<{folderId:number, pageNum:number}> = ({folderId, p
             }
         }
         fetchMail(pageNum);
-    },[]);
+    });
 
     return loading ? <LoadingMailListBox />
                     : (!!mailList ? <MailListBox mails={mailList.items}

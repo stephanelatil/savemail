@@ -3,5 +3,5 @@ import { useContext } from 'react';
 
 
 export const useNotification = () => {
-  return useContext(NotificationContext);
+  return {showNotification:useContext(NotificationContext)};
 };

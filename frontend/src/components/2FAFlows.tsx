@@ -8,6 +8,15 @@ import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 
 const DisableReset2FA: React.FC<{isLoading?:boolean, onDisable:()=>void}> = ({isLoading, onDisable}) => {
+    const { disable2FA, reset2FARecoveryCodes, loading } = useAuthentication();
+    const disable = useCallback(()=>{
+        async function disableAsync(){
+            if (await disable2FA())
+                onDisable();
+        }
+        disableAsync();
+    }, [disable2FA, onDisable]);
+
     if (isLoading)
         return <Box flexDirection='column'
                     alignItems='center'
@@ -28,16 +37,6 @@ const DisableReset2FA: React.FC<{isLoading?:boolean, onDisable:()=>void}> = ({is
                         <Skeleton variant='rounded' animation='wave' sx={{mx:2}} width={'6rem'}/>
                     </Stack>
                 </Box>;
-
-    const { disable2FA, reset2FARecoveryCodes, loading } = useAuthentication();
-
-    const disable = useCallback(()=>{
-        async function disableAsync(){
-            if (await disable2FA())
-                onDisable();
-        }
-        disableAsync();
-    }, []);
     
     return <Box flexDirection='column'
                 alignItems='center'

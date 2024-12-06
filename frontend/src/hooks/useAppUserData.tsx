@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation'
 import { FetchError } from '@/services/fetchService'
 
 export const useAppUserData = () => {
-  const showNotification = useNotification();
+  const {showNotification} = useNotification();
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 

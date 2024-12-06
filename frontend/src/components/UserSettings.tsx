@@ -73,7 +73,7 @@ const EditNames: React.FC<UserEdit & UserLoadingData> = ({user, isLoading, inval
             defaultValues: {id:user?.id, firstName:user?.firstName, lastName:user?.lastName}
         }
     );
-    const showNotification = useNotification();
+    const {showNotification} = useNotification();
     
     const onSubmit: SubmitHandler<EditAppUser> = async (u) => {
         if (await editUser(u))
@@ -133,6 +133,9 @@ const EditNames: React.FC<UserEdit & UserLoadingData> = ({user, isLoading, inval
 
 //Add 2FA, password reset and email change/confirm
 const ConfirmEmail: React.FC<UserLoadingData> = ({user, isLoading}) => {
+    const {showNotification} = useNotification();
+    const { resendConfirmationEmail, loading } = useAuthentication();
+    
     if (isLoading)
         return <Box flexDirection='row'
                     sx={{
@@ -148,8 +151,6 @@ const ConfirmEmail: React.FC<UserLoadingData> = ({user, isLoading}) => {
                     <Skeleton variant="text" width="30%" />
                 </Box>;
 
-    const showNotification = useNotification();
-    const { resendConfirmationEmail, loading } = useAuthentication();
     const resendEmailConfirmation = () => {
         async function resend(){
             await resendConfirmationEmail(user?.email??'');
