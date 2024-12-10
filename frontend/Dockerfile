@@ -19,7 +19,7 @@ WORKDIR /app
 
 # Copy built assets from build stage to minimize the size of the container
 COPY --from=build /app/package*.json ./
-COPY --from=build /app/next.config.js ./
+COPY --from=build /app/next.config.mjs ./
 COPY --from=build /app/public ./public
 COPY --from=build /app/.next ./.next
 
