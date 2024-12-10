@@ -28,6 +28,8 @@ RUN npm install next
 
 # Expose the port the app runs on
 EXPOSE 3000
+ENV NEXT_PUBLIC_FRONTEND_URL="https://localhost:3000"
+ENV NEXT_PUBLIC_BACKEND_URL="https://localhost:5000"
 
 # Start the application
 CMD ["npx", "next", "start"]
