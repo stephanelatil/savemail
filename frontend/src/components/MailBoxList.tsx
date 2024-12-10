@@ -1,12 +1,11 @@
 'use client'
 
-import { useMailboxes } from "@/hooks/useMailboxes";
 import { Folder } from "@/models/folder";
 import { MailBox } from "@/models/mailBox";
 import { Archive as ArchiveIcon, CreateNewFolder, Delete as DeleteIcon, Email as EmailIcon, ExpandLess, ExpandMore, Folder as FolderIcon, Refresh, Send as SendIcon } from "@mui/icons-material";
-import { CircularProgress, Collapse, Divider, IconButton, List, ListItem, ListItemButton, ListItemIcon, ListItemText } from "@mui/material";
+import { Collapse, IconButton, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Skeleton, Stack } from "@mui/material";
 import { useParams, usePathname, useRouter } from "next/navigation";
-import useSWR, {} from 'swr';
+import { useLayoutEffect, useMemo, useState } from "react";
 
 const mapFolderIcon = (name:string) =>{
     switch (name.toLowerCase()) {
@@ -21,156 +20,229 @@ const mapFolderIcon = (name:string) =>{
     }
 }
 
-interface PartialFolderInfo{
-    id:number,
-    name:string,
-    folderPathId?:string,
-    child_folders:Folder[],
-    indent?:number
+const LoadingMailListBox: React.FC = () => {
+    return  (<>{Array(3).map((i) => 
+                <ListItem key={`Skeleton_MB_${i}`}>
+                    <Stack flexDirection='row' gap={1} justifyContent='space-evenly'>
+                        <Skeleton width={30} variant='circular' />
+                        <Skeleton width='calc(40 - 100%)' variant='rounded' />
+                    </Stack>
+                </ListItem>
+            )}</>);
 }
 
-const FolderListItem: React.FC<PartialFolderInfo> = ({id, name, child_folders, folderPathId, indent}) => {
-    const pathname = usePathname();
+interface TreeNode {
+    id: number;
+    type: 'mailbox' | 'folder';
+    name: string;
+    children?: TreeNode[];
+    parent?: TreeNode | null;
+}
+
+interface TreeItemProps {
+    node: TreeNode;
+    depth?: number;
+    selectedNodeId?: number | null;
+    expandedNodes: Set<number>;
+    onToggleExpand: (nodeId: number) => void;
+}
+
+const TreeItem: React.FC<TreeItemProps> = ({ 
+    node, 
+    depth = 0,
+    selectedNodeId, 
+    expandedNodes, 
+    onToggleExpand 
+}) => {
     const router = useRouter();
-    const {id:pageId}:{id:string} = useParams();
-    let folderSelected:boolean = RegExp("/folder/([0-9]+)").test(pathname) && (pageId == id+'');
 
-    const hasChildren:boolean = child_folders.length > 0;
-    function idInSubfolders(folder:Folder, id:string): boolean {
-        if (!folder || !folderPathId)
-            return false;
-        return folder.id+"" == folderPathId || folder.children?.some(f => idInSubfolders(f, folderPathId));
+    const [isSelected, setIsSelected] = useState(selectedNodeId === node.id);
+    const isExpanded = expandedNodes.has(node.id);
+    const hasChildren = node.children && node.children.length > 0;
+    const handleSelect = (node: TreeNode) => {
+        if (isSelected)
+            return;
+        setIsSelected(true);
+        // Default navigation behavior
+        if (node.type === 'mailbox') {
+            router.push(`/mailbox/${node.id}`);
+        } else {
+            router.push(`/folder/${node.id}`);
+        }
     };
-
-    const open = !!folderPathId && (id+"" == folderPathId || !!child_folders?.some(f => idInSubfolders(f, folderPathId)));
-    
-    return (
-    <>
-    <ListItem sx={{alignSelf:'center', px:0.5, paddingLeft: (indent || 0)}}>
-        <ListItemButton key={'FOLDER_'+id} 
-                onClick={() => router.push(`/folder/${id}`)}
-                selected={folderSelected}>
-            <ListItemIcon>
-                {mapFolderIcon(name)}
-            </ListItemIcon>
-            <ListItemText primary={name} />
-            {/* Here we only enable the expand button if there are children present */}
-            {hasChildren && (open ? <ExpandLess/> : <ExpandMore/>) }
-        </ListItemButton>
-    </ListItem>
-    {/* Only add sub-element (collapse) if the folder has children. Otherwise no need! */}
-    {hasChildren ? 
-        <Collapse in={open} timeout='auto' unmountOnExit>
-            <List>
-                {child_folders.map(f => 
-                    <FolderListItem key={'FOLDER_LI_'+f.id} id={f.id} name={f.name} child_folders={f.children} indent={(indent|| 0) +1}></FolderListItem>
-                )}
-            </List>
-        </Collapse>
-        : <></>}
-    </>);
-}
-
-interface PartialMailbox{
-    id:number,
-    username:string,
-    folders?:Folder[]|null,
-    indent?:number
-}
-
-const MailBoxListItem : React.FC<PartialMailbox> = ({id, username, folders, indent}) =>{
-    const pathname = usePathname();
-    const router = useRouter();
-    const {id:pageId}:{id:string} = useParams();
-    let mbSelected:boolean = false;
-    
-    function idInSubfolders(folder:Folder, id:string): boolean {
-        if (!folder)
-            return false;
-        return folder.id+"" == id || folder.children?.some(f => idInSubfolders(f, id));
-    };
-
-    let open = (RegExp("/mailbox/([0-9]+)").test(pathname)
-                    && pageId == (id+''));
-    if (open)
-        mbSelected = true;
-    let folderId:string = "";
-    if (RegExp("/folder/([0-9]+)").test(pathname))
-    {
-        folderId = pageId;
-        if (folderId)
-            open = !!folders?.some(f => idInSubfolders(f, folderId));
-    }
 
     return (
         <>
-        <ListItem key={'MAILBOX_'+id} sx={{alignSelf:'center', py:0, px:0.5, paddingLeft:indent|| 0}}>
-            <ListItemButton 
-                onClick={() => router.push(`/mailbox/${id}`)}
-                selected={mbSelected}
-                sx={{
-                    justifyContent:'space-between',
-                    paddingLeft:0
-                }}>
-                <ListItemIcon sx={{justifyContent:'center'}}>
-                    <EmailIcon/>
-                </ListItemIcon>
-                <ListItemText primary={username}/>
-            </ListItemButton>
-        </ListItem>
-        {
-            open ? 
-                <List>
-                    { !!folders && folders.length > 0 ? folders?.map(f => <FolderListItem key={'FOLDER_LI_'+f.id} id={f.id} name={f.name} child_folders={f.children} folderPathId={folderId} indent={(indent||0)+1}/>) : <></>}
-                </List> 
-                : <></>
-        }
-        <Divider/>
+            <ListItem sx={{ 
+                paddingLeft: `${depth * 16}px`, 
+                display: 'flex', 
+                alignItems: 'center' 
+            }}>
+                <ListItemButton
+                    selected={isSelected}
+                    onClick={() => handleSelect(node)}
+                    sx={{ display: 'flex', justifyContent: 'space-between' }}
+                >
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <ListItemIcon>
+                            {node.type === 'mailbox' ? <EmailIcon /> : mapFolderIcon(node.name)}
+                        </ListItemIcon>
+                        <ListItemText primary={node.name} />
+                    </div>
+                    {hasChildren && (
+                        <IconButton 
+                            size="small" 
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onToggleExpand(node.id);
+                            }}
+                        >
+                            {isExpanded ? <ExpandLess /> : <ExpandMore />}
+                        </IconButton>
+                    )}
+                </ListItemButton>
+            </ListItem>
+            
+            {hasChildren && (
+                <Collapse in={isExpanded} timeout="auto" unmountOnExit>
+                    <List disablePadding>
+                        {node.children?.map(childNode => (
+                            <TreeItem
+                                key={`${node.type}-${childNode.id}`}
+                                node={childNode}
+                                depth={depth + 1}
+                                selectedNodeId={selectedNodeId}
+                                expandedNodes={expandedNodes}
+                                onToggleExpand={onToggleExpand}
+                            />
+                        ))}
+                    </List>
+                </Collapse>
+            )}
         </>
     );
 }
 
-const NewMailboxListItem:React.FC = () => {
+export const MailBoxList: React.FC<{loading?: boolean, mailboxes?: MailBox[]}> = ({ loading, mailboxes }) => {
     const router = useRouter();
     const pathname = usePathname();
+    const params = useParams();
 
-    return (
-        <ListItem sx={{alignSelf:'center', px:0.5}}>
-            <ListItemButton key={'NEW'} 
-                selected={pathname == '/mailbox/new'}
-                onClick={() => {pathname != '/mailbox/new' && router.push('/mailbox/new');}}
-                sx={{
-                    minHeight:'3em',
-                    justifyContent:'space-between',
-                    px:2
-            }}>
-                <ListItemIcon>
-                    <CreateNewFolder />
-                </ListItemIcon>
-                <ListItemText primary={'Add new Mailbox'} />
-            </ListItemButton>
-        </ListItem>);
-}
+    const isFolderRoute = pathname.startsWith('/folder/');
+    const currentId = parseInt(params.id as string);
 
-// TODO convert to a dynamic tree
-const MailBoxList: React.FC<{loading?:boolean, mailboxes?:MailBox[]}> = ({loading, mailboxes}) => {
-    return (
-        <>
-            <List sx={{ height:'100%',
-                        display:'flex',
-                        flexDirection:'column',
-                        flex:'1 1 auto',
-                        overflowY:'auto',
-                        overflowX:'hidden'}}>
-                <NewMailboxListItem key={'NEW_LI'}/>
-                {!loading ? mailboxes?.map(mb => <MailBoxListItem key={'MAILBOX_LI_'+mb.id} id={mb.id} folders={mb.folders} username={mb.username}/>)
-                          : <CircularProgress size={20} sx={{  alignContent:'center' ,
-                                    mb: 2, 
-                                    p: 2, 
-                                    borderRadius: 2, }}/>
+    const [expandedNodes, setExpandedNodes] = useState<Set<number>>(new Set());
+
+    // Transform mailbox data into a tree structure with parent references
+    const treeData = useMemo(() => {
+        const createTreeWithParents = (
+            items: Folder[], 
+            parent?: TreeNode | null
+        ): TreeNode[] => 
+            items.map(folder => {
+                let f:TreeNode = {
+                id: folder.id,
+                type: 'folder',
+                name: folder.name,
+                parent: parent
+            };
+            if (!!folder.children)
+                f.children = createTreeWithParents(folder.children, f);
+            return f;
+
+        });
+
+        return mailboxes?.map(mb => {
+            let mbNode:TreeNode = {
+                id: mb.id,
+                type: 'mailbox',
+                name: mb.username
+            }
+            if (!!mb.folders?.length)
+                mbNode.children = createTreeWithParents(mb.folders, mbNode);
+            return mbNode;
+        }) || [];
+    }, [mailboxes]);
+
+    // Auto-expand and select based on current route
+    useLayoutEffect(() => {
+        if (!treeData.length) return;
+        if (isNaN(currentId)) return;
+
+        // Determine current route type and ID
+        const nodesToExpand:Set<number> = new Set<number>([currentId]);
+
+        if (isFolderRoute) {
+            // Set to expand: all
+            const fillExpandSet = (nodes: TreeNode[])  => {
+                for (const node of nodes) {
+                    if (node.id === currentId) {
+                        let parent = node.parent;
+                        //set all parent path to be expanded
+                        while (!!parent)
+                        {
+                            nodesToExpand.add(parent.id);
+                            parent = parent.parent
+                        }
+                        return;
+                    }
+                    // look for current id node in children
+                    if (!!node.children)
+                        fillExpandSet(node.children);
                 }
-            </List>
-        </>
+            };
+
+            fillExpandSet(treeData);
+            setExpandedNodes(nodesToExpand);
+        }
+    }, [currentId, isFolderRoute, treeData]);
+
+    const handleToggleExpand = (nodeId: number) => {
+        setExpandedNodes(prev => {
+            const updated = new Set(prev);
+            if (updated.has(nodeId)) {
+                updated.delete(nodeId);
+            } else {
+                updated.add(nodeId);
+            }
+            return updated;
+        });
+    };
+
+    const handleNewMailbox = () => {
+        router.push('/mailbox/new');
+    };
+
+    return (
+        <List sx={{ 
+            height: '100%', 
+            display: 'flex', 
+            flexDirection: 'column', 
+            flex: '1 1 auto', 
+            overflowY: 'auto', 
+            overflowX: 'hidden' 
+        }}>
+            <ListItem>
+                <ListItemButton selected={pathname == '/mailbox/new'}
+                                onClick={() => {pathname != '/mailbox/new' && router.push('/mailbox/new');}}>
+                    <ListItemIcon>
+                        <CreateNewFolder />
+                    </ListItemIcon>
+                    <ListItemText primary="Add New Mailbox" />
+                </ListItemButton>
+            </ListItem>
+
+            {loading ? <LoadingMailListBox/>
+                    : (treeData.map(mailbox => (
+                            <TreeItem
+                                key={`mailbox-${mailbox.id}`}
+                                node={mailbox}
+                                selectedNodeId={currentId}
+                                expandedNodes={expandedNodes}
+                                onToggleExpand={handleToggleExpand}
+                            />)))
+            }
+        </List>
     );
 }
 

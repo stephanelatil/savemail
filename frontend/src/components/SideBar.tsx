@@ -131,7 +131,6 @@ const SidebarBase: React.FC<{isDesktop?:boolean}> = ({isDesktop}) => {
 	const theme:Theme = useTheme();
 	const [open, setOpen] = useState(false);
 
-	//TODO study why sidebar color is different for desktop & mobile
 	return !!isDesktop ? // Permanent drawer for desktop (md+ AND landscape)
 					<StyledDrawer variant="permanent" open={true}>
 						<DrawerContent theme={theme} open={open} setOpen={setOpen} isDesktop={isDesktop}/>
