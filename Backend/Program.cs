@@ -12,6 +12,16 @@ builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddAuthorization();
 builder.Configuration.AddEnvironmentVariables("SAVEMAIL_");
 
+//Check mandatory vars:
+foreach (var envVar in new []{"ConnectionStrings_Password"})
+    if (string.IsNullOrWhiteSpace(builder.Configuration.GetValue<string>(envVar)))
+    {
+        throw new ArgumentException(
+            $"SAVEMAIL_{envVar} variable is not set! "
+            +"Set the environment variable or set it in the appsettings.json file:"
+            +string.Join("->", envVar.Split('_',StringSplitOptions.RemoveEmptyEntries)));
+    }
+
 // Add services to the container.
 
 builder.Services.AddControllers().AddJsonOptions(opt => {
