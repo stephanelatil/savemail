@@ -164,6 +164,9 @@ app.MapPost("/api/auth/Logout", async (SignInManager<AppUser> _signInManager) =>
     return Results.Ok();
 }).RequireAuthorization();
 
+//HealthCheck endpoint
+app.MapGet("/status", () => Results.Ok());
+
 //In case of 4xx error so it doesn't leak info
 app.UseStatusCodePages(async context =>
 {
