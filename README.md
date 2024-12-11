@@ -1,6 +1,6 @@
 # SaveMail
 
-![SaveMail Icon](https://raw.githubusercontent.com/stephanelatil/savemail/main/img/Logo.png?raw=true "Savemail")
+<img src="https://raw.githubusercontent.com/stephanelatil/savemail/main/img/Logo.png?raw=true" width="200">
 
 SaveMail is a self-hosted web application for storing and archiving emails locally. Designed for convenience and security, it supports multi-user access and comes with a responsive web interface. Built on a modern tech stack, it leverages **ASP.NET Core** for the backend REST API and **Next.js** for the WebUI.
 
