@@ -16,11 +16,11 @@ namespace Backend.Services
     public class MailBoxService : IMailBoxService
     {
         private readonly ApplicationDBContext _context;
-        private readonly TokenEncryptionService _tokenEncryptionService;
+        private readonly ITokenEncryptionService _tokenEncryptionService;
         private readonly string _attachmentPath;
 
         public MailBoxService(ApplicationDBContext context,
-                                TokenEncryptionService tokenEncryptionService,
+                                ITokenEncryptionService tokenEncryptionService,
                                 IConfiguration configuration)
         {
             this._tokenEncryptionService = tokenEncryptionService;

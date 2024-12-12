@@ -30,7 +30,7 @@ public class MailBox
     public ICollection<Folder> Folders { get; set; } = [];
 
     public async Task ImapAuthenticateAsync(ImapClient client,
-                                            TokenEncryptionService tokenEncryptionService,
+                                            ITokenEncryptionService tokenEncryptionService,
                                             IOAuthService? tokenRefreshService=null,
                                             CancellationToken cancellationToken = default)
     {

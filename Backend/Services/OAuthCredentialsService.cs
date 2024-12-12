@@ -16,11 +16,11 @@ public class OAuthCredentialsService : IOAuthCredentialsService
 {
     private readonly IOAuthService _oAuthService;
     private readonly ApplicationDBContext _context;
-    private readonly TokenEncryptionService _tokenEncryptionService;
+    private readonly ITokenEncryptionService _tokenEncryptionService;
     private readonly ILogger _logger;
 
     public OAuthCredentialsService(IOAuthService oAuthService,
-                                   TokenEncryptionService tokenEncryptionService,
+                                   ITokenEncryptionService tokenEncryptionService,
                                    ApplicationDBContext context,
                                    ILogger<OAuthCredentialsService> logger)
     {

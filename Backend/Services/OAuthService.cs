@@ -18,11 +18,11 @@ public class OAuthService : IOAuthService
 {
     private readonly HttpClient _httpClient;
     private readonly ApplicationDBContext _context;
-    private readonly TokenEncryptionService _tokenEncryptionService;
+    private readonly ITokenEncryptionService _tokenEncryptionService;
     private readonly Dictionary<ImapProvider, string> _clientId;
     private readonly Dictionary<ImapProvider, string> _clientSecret;
 
-    public OAuthService(HttpClient httpClient, IConfiguration configuration, TokenEncryptionService tokenEncryptionService, ApplicationDBContext context)
+    public OAuthService(HttpClient httpClient, IConfiguration configuration, ITokenEncryptionService tokenEncryptionService, ApplicationDBContext context)
     {
         this._context = context;
         this._httpClient = httpClient;

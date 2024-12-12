@@ -6,7 +6,12 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Extensions.Configuration;
 
-public class TokenEncryptionService
+public interface ITokenEncryptionService{
+    public string Encrypt(string encryptedToken, int id, string ownerId);
+    public string Decrypt(string encryptedToken, int id, string ownerId);
+}
+
+public class TokenEncryptionService : ITokenEncryptionService
 {
     private readonly ILogger _logger;
     private readonly string _baseKey;

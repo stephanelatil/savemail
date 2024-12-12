@@ -15,14 +15,14 @@ namespace Backend.Services
     {
         private ImapClient imapClient;
         private readonly ILogger<ImapFolderFetchService> _logger;
-        private readonly TokenEncryptionService _tokenEncryptionService;
+        private readonly ITokenEncryptionService _tokenEncryptionService;
         private readonly IOAuthService _oAuthService;
         private bool _disposed = false;
 
 
         public ImapFolderFetchService(ILogger<ImapFolderFetchService> logger,
                                       IOAuthService oAuthService,
-                                      TokenEncryptionService tokenEncryptionService)
+                                      ITokenEncryptionService tokenEncryptionService)
         {
             this.imapClient = new();
             this._logger = logger;
@@ -113,7 +113,7 @@ namespace Backend.Services
     {
         private ImapClient imapClient = new();
         private readonly IOAuthService _oAuthService;
-        private readonly TokenEncryptionService _tokenEncryptionService;
+        private readonly ITokenEncryptionService _tokenEncryptionService;
         private Folder? _folder;
         private IMailFolder? _imapFolder;
         private Queue<MailKit.UniqueId>? _uids = null;        
@@ -126,7 +126,7 @@ namespace Backend.Services
 
         public ImapMailFetchService(ILogger<ImapMailFetchService> logger,
                                     IOAuthService oAuthService,
-                                    TokenEncryptionService tokenEncryptionService) 
+                                    ITokenEncryptionService tokenEncryptionService) 
         {
             this._logger = logger;
             this._oAuthService = oAuthService;
