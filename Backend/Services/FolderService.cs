@@ -61,9 +61,8 @@ namespace Backend.Services
             }
 
             folder.MailBoxId = mailbox.Id; //ensure mailbox parent is set
-            var newFolder = this._context.Folder.Add(folder);
-            newFolder.State = EntityState.Added;
-            this._logger.LogDebug($"Created new folder {newFolder.Entity.Path}");
+            this._context.Folder.Add(folder);
+            this._logger.LogDebug($"Created new folder {folder.Path}");
 
             if (cancellationToken.IsCancellationRequested)
                 return folder;
@@ -73,7 +72,7 @@ namespace Backend.Services
                     throw new DbUpdateException();
                 this._logger.LogDebug("Folders saved");
             }
-            return newFolder.Entity;
+            return folder;
         }
 
         /// <summary>
