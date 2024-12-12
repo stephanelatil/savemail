@@ -68,7 +68,8 @@ namespace Backend.Services
 
         public async Task DeleteUserAsync(AppUser user)
         {
-            Directory.Delete(Path.Join(this._attachmentPath, user.Id));
+            if (Directory.Exists(Path.Join(this._attachmentPath, user.Id)))
+                Directory.Delete(Path.Join(this._attachmentPath, user.Id), true);
             this._context.Users.Remove(user);
             if (await this._context.SaveChangesAsync() == 0)
                 throw new DbUpdateException();

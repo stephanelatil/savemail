@@ -61,6 +61,11 @@ namespace Backend.Services
             }
             catch (SocketException){
                 this._logger.LogWarning("Unable to connect to imap server '{}' on port {}", mailbox.ImapDomain, mailbox.ImapPort);
+                return null;
+            }
+            catch (IOException){
+                this._logger.LogWarning("Unable to connect to imap server '{}' on port {}", mailbox.ImapDomain, mailbox.ImapPort);
+                return null;
             }
             catch(MailKit.Security.AuthenticationException e){
                 mailbox.NeedsReauth = true;
