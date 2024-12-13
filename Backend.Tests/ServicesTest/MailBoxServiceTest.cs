@@ -1,7 +1,7 @@
 using Backend.Models;
 using Backend.Models.DTO;
 using Backend.Services;
-using MailKit.Security;
+using Microsoft.Extensions.Configuration;
 using Moq;
 using Moq.EntityFrameworkCore;
 
@@ -24,10 +24,19 @@ public class MailBoxServiceTest
         // Given
         var context = CreateMockContext();
 
-        Mock<TokenEncryptionService> tokenServiceMock = new();
-        tokenServiceMock.Setup(c => c.Encrypt(It.IsAny<String>(), It.IsAny<int>(), It.IsAny<string>())).Returns(
+
+        Mock<ITokenEncryptionService> tokenServiceMock = new();
+        tokenServiceMock.Setup(c => c.Encrypt(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>())).Returns(
             "OK");
-        MailBoxService service = new MailBoxService(context.Object, tokenServiceMock.Object);
+        var inMemorySettings = new Dictionary<string, string?> {
+            {"AppSecret", "Value"},
+            {"AttachmentsPath", "/tmp"}
+        };
+
+        IConfiguration configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(inMemorySettings)
+            .Build();
+        MailBoxService service = new MailBoxService(context.Object, tokenServiceMock.Object, configuration);
         AppUser owner = new (){Id = Guid.Empty.ToString()};
         UpdateMailBox mb = new(){
             ImapDomain = "imap.mail.com",
@@ -46,7 +55,11 @@ public class MailBoxServiceTest
         Assert.Null(record);
         //Assert saved to Db
         context.Verify(c=> c.MailBox.AddAsync(It.IsAny<MailBox>(), It.IsAny<CancellationToken>()));
-        context.Verify(c => c.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once());
+        //twice because ID is needed to encrypt password
+        context.Verify(c => c.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Exactly(2));
+        tokenServiceMock.Verify(t => t.Encrypt(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>()), Times.Once());
+        //ensure password is encrypted
+        tokenServiceMock.Verify(t => t.Decrypt(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>()), Times.Never());
     }
 
     [Fact]
@@ -63,10 +76,18 @@ public class MailBoxServiceTest
         };
         // Given
         var context = CreateMockContext(baseMb);
-        Mock<TokenEncryptionService> tokenServiceMock = new();
-        tokenServiceMock.Setup(c => c.Encrypt(It.IsAny<String>(), It.IsAny<int>(), It.IsAny<string>())).Returns(
+        Mock<ITokenEncryptionService> tokenServiceMock = new();
+        tokenServiceMock.Setup(c => c.Encrypt(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>())).Returns(
             "OK");
-        MailBoxService service = new(context.Object, tokenServiceMock.Object);
+        var inMemorySettings = new Dictionary<string, string?> {
+            {"AppSecret", "Value"},
+            {"AttachmentsPath", "/tmp"}
+        };
+
+        IConfiguration configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(inMemorySettings)
+            .Build();
+        MailBoxService service = new(context.Object, tokenServiceMock.Object, configuration);
 
         UpdateMailBox mb = new(){
             Id = baseMb.Id,
@@ -104,10 +125,18 @@ public class MailBoxServiceTest
         };
         // Given
         var context = CreateMockContext(baseMb);
-        Mock<TokenEncryptionService> tokenServiceMock = new();
-        tokenServiceMock.Setup(c => c.Encrypt(It.IsAny<String>(), It.IsAny<int>(), It.IsAny<string>())).Returns(
+        Mock<ITokenEncryptionService> tokenServiceMock = new();
+        tokenServiceMock.Setup(c => c.Encrypt(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>())).Returns(
             "OK");
-        MailBoxService service = new(context.Object, tokenServiceMock.Object);
+        var inMemorySettings = new Dictionary<string, string?> {
+            {"AppSecret", "Value"},
+            {"AttachmentsPath", "/tmp"}
+        };
+
+        IConfiguration configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(inMemorySettings)
+            .Build();
+        MailBoxService service = new(context.Object, tokenServiceMock.Object, configuration);
         // When
         var record = await Record.ExceptionAsync(
                                 async () => 
