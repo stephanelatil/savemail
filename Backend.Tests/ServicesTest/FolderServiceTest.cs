@@ -1,6 +1,3 @@
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using Backend.Models;
 using Backend.Services;
 using FluentAssertions;
@@ -8,12 +5,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
 using MailKit;
-using Xunit;
-using System.Linq;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Moq.EntityFrameworkCore;
 
-namespace Backend.Tests.Services;
+namespace Backend.Tests.ServicesTest;
 /// <summary>
 /// Unit tests for the FolderService class.
 /// </summary>
@@ -46,22 +40,19 @@ public class FolderServiceTests
     public async Task CreateFolderAsync_NewFolder_CreatesSuccessfully()
     {
         // Arrange
-        var mailbox = new MailBox 
-        { 
-            Id = 1, 
-            Folders = new List<Folder>() 
+        var mailbox = new MailBox
+        {
+            Id = 1,
+            Folders = []
         };
-        var newFolder = new Folder 
-        { 
-            Path = "Test/NewFolder", 
-            MailBoxId = mailbox.Id 
+        var newFolder = new Folder
+        {
+            Path = "Test",
+            MailBoxId = mailbox.Id
         };
 
         // Mock MailBox DbSet with Include simulation
         var mailboxList = new List<MailBox> { mailbox }.AsQueryable();
-
-        // Simulate Include behavior
-        var mockIncludableQueryable = new Mock<IQueryable<MailBox>>();
 
         var mockFolderSet = new Mock<DbSet<Folder>>();
         mockFolderSet.Setup(m => m.Add(It.IsAny<Folder>()));
@@ -76,7 +67,50 @@ public class FolderServiceTests
 
         // Assert
         result.Should().NotBeNull();
-        result.Path.Should().Be("Test/NewFolder");
+        result.Path.Should().Be("Test");
+        result.MailBoxId.Should().Be(mailbox.Id);
+    }
+
+    /// <summary>
+    /// Tests creating a folder tree from a sub-folder.
+    /// </summary>
+    [Fact]
+    public async Task CreateFolderAsync_NewFolderTreeFromSingle_CreatesSuccessfully()
+    {
+        // Arrange
+        var mailbox = new MailBox
+        {
+            Id = 1,
+            Folders = []
+        };
+        var newFolder = new Folder
+        {
+            Path = "Test/NewFolder/SubFolder",
+            MailBoxId = mailbox.Id
+        };
+
+        // Mock MailBox DbSet with Include simulation
+        var mailboxList = new List<MailBox> { mailbox }.AsQueryable();
+
+        var mockFolderSet = new Mock<DbSet<Folder>>();
+        mockFolderSet.Setup(m => m.Add(It.IsAny<Folder>()));
+
+        this._mockContext.SetupGet(c => c.MailBox).ReturnsDbSet(mailboxList);
+        this._mockContext.SetupGet(c => c.Folder).ReturnsDbSet([], mockFolderSet);
+        this._mockContext.Setup(c => c.SaveChangesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(1);
+
+        // Act
+        var result = await this._folderService.CreateFolderAsync(newFolder, mailbox);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Path.Should().Be("Test/NewFolder/SubFolder");
+        mockFolderSet.Verify(f => f.Add(It.IsAny<Folder>()), Times.Exactly(3));
+        result.Parent.Should().NotBeNull();
+        result.Parent.Path.Should().Be("Test/NewFolder");
+        result?.Parent?.Parent.Should().NotBeNull();
+        result.Parent.Parent.Name.Should().Be("Test");
         result.MailBoxId.Should().Be(mailbox.Id);
     }
 
