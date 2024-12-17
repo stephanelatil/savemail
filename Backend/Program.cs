@@ -10,16 +10,20 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddAuthorization();
-builder.Configuration.AddEnvironmentVariables("SAVEMAIL_");
+builder.Configuration.AddEnvironmentVariables("SAVEMAIL__");
+if (builder.Environment.IsDevelopment())
+    builder.Configuration.AddJsonFile("appsettings.Development.json", optional:false);
+else
+    builder.Configuration.AddJsonFile("appsettings.json", optional:true);
 
 //Check mandatory vars:
-foreach (var envVar in new []{"ConnectionStrings_Password"})
+foreach (var envVar in new []{"ConnectionStrings:Password"})
     if (string.IsNullOrWhiteSpace(builder.Configuration.GetValue<string>(envVar)))
     {
         throw new ArgumentException(
-            $"SAVEMAIL_{envVar} variable is not set! "
+            $"SAVEMAIL__{envVar.Replace(":","__")} variable is not set! "
             +"Set the environment variable or set it in the appsettings.json file:"
-            +string.Join("->", envVar.Split('_',StringSplitOptions.RemoveEmptyEntries)));
+            +string.Join("->", envVar.Split(":",StringSplitOptions.RemoveEmptyEntries)));
     }
 
 // Add services to the container.
@@ -141,12 +145,13 @@ builder.Services.AddCors(opt =>
             b.WithOrigins("https://localhost:3000")
              .AllowAnyHeader()
              .AllowAnyMethod();
-            b.WithOrigins("https://localhost:7014")
+            b.WithOrigins("https://localhost:5000")
              .AllowAnyHeader()
              .AllowAnyMethod();
             b.WithOrigins("https://accounts.google.com")
              .AllowAnyHeader()
              .AllowAnyMethod();
+            //todo Add cors also for hostname & port of the frond/backend given in env vars
         })
 );
 
