@@ -26,8 +26,10 @@ public class MailBoxServiceTest
 
 
         Mock<ITokenEncryptionService> tokenServiceMock = new();
-        tokenServiceMock.Setup(c => c.Encrypt(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>())).Returns(
-            "OK");
+        tokenServiceMock.Setup(c => c.Encrypt(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>()))
+                        .Returns((string pass, int id, string owner) => pass);
+        tokenServiceMock.Setup(c => c.Decrypt(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>()))
+                        .Returns((string pass, int id, string owner) => pass);
         var inMemorySettings = new Dictionary<string, string?> {
             {"AppSecret", "Value"},
             {"AttachmentsPath", "/tmp"}
@@ -68,17 +70,19 @@ public class MailBoxServiceTest
         AppUser owner = new (){Id = Guid.Empty.ToString()};
         var baseMb = new MailBox(){
             Id = 123,
-            ImapDomain = "imap.mail.com",
-            ImapPort = 993,
-            Username = "example@mail.com",
-            Password = "password1234",
+            ImapDomain = "localhost",
+            ImapPort = 3143,
+            Username = "test2@localhost",
+            Password = "password2",
             Provider = ImapProvider.Simple
         };
         // Given
         var context = CreateMockContext(baseMb);
         Mock<ITokenEncryptionService> tokenServiceMock = new();
-        tokenServiceMock.Setup(c => c.Encrypt(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>())).Returns(
-            "OK");
+        tokenServiceMock.Setup(c => c.Encrypt(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>()))
+                        .Returns((string pass, int id, string owner) => pass);
+        tokenServiceMock.Setup(c => c.Decrypt(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>()))
+                        .Returns((string pass, int id, string owner) => pass);
         var inMemorySettings = new Dictionary<string, string?> {
             {"AppSecret", "Value"},
             {"AttachmentsPath", "/tmp"}
@@ -117,17 +121,19 @@ public class MailBoxServiceTest
         AppUser owner = new (){Id = Guid.Empty.ToString()};
         var baseMb = new MailBox(){
             Id = 123,
-            ImapDomain = "imap.mail.com",
-            ImapPort = 993,
-            Username = "example@mail.com",
-            Password = "password1234",
+            ImapDomain = "localhost",
+            ImapPort = 3143,
+            Username = "test2@localhost",
+            Password = "password2",
             Provider = ImapProvider.Simple
         };
         // Given
         var context = CreateMockContext(baseMb);
         Mock<ITokenEncryptionService> tokenServiceMock = new();
-        tokenServiceMock.Setup(c => c.Encrypt(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>())).Returns(
-            "OK");
+        tokenServiceMock.Setup(c => c.Encrypt(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>()))
+                        .Returns((string pass, int id, string owner) => pass);
+        tokenServiceMock.Setup(c => c.Decrypt(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>()))
+                        .Returns((string pass, int id, string owner) => pass);
         var inMemorySettings = new Dictionary<string, string?> {
             {"AppSecret", "Value"},
             {"AttachmentsPath", "/tmp"}
