@@ -163,9 +163,7 @@ namespace Backend.Services
             UniqueIdRange range = new(start.Value, MailKit.UniqueId.MaxValue);
             return new Queue<MailKit.UniqueId>(
                             (await this._imapFolder.SearchAsync(
-                                    range, MailKit.Search.SearchQuery.NotDraft, cancellationToken))
-                                    .Skip(1)//Skip the first on in the list which is already downloaded!
-                                    );
+                                    range, MailKit.Search.SearchQuery.NotDraft, cancellationToken)));
         }
 
         public async Task Prepare(MailBox mailbox, CancellationToken cancellationToken = default)
@@ -180,19 +178,22 @@ namespace Backend.Services
                                     cancellationToken);
                 await mailbox.ImapAuthenticateAsync(this.imapClient, this._tokenEncryptionService,
                                                     this._oAuthService, cancellationToken);
+                this.Prepared = true;
             }
             catch(SecurityTokenExpiredException){}
-            catch (SocketException){
-                this._logger.LogWarning("Unable to connect to imap server '{}' on port {}", mailbox.ImapDomain, mailbox.ImapPort);
+            catch (SocketException e){
+                this._logger.LogWarning(e, "Unable to connect to imap server '{}' on port {}", mailbox.ImapDomain, mailbox.ImapPort);
             }
             catch(MailKit.Security.AuthenticationException e){
                 mailbox.NeedsReauth = true;
                 this._logger.LogWarning(e, "Unable to connect to connect and authenticate for mailbox {}", mailbox.Id);
             }
+            catch (ImapProtocolException e){
+                this._logger.LogWarning(e, "Unable to connect to imap server '{}' on port {}", mailbox.ImapDomain, mailbox.ImapPort);
+            }
             catch (Exception e){
                 this._logger.LogWarning(e, "Unable to connect to connect and authenticate for mailbox {}", mailbox.Id);
             }
-            this.Prepared = true;
         }
 
         public async Task<List<Mail>> GetNextMails(int maxFetchPerLoop=20, CancellationToken cancellationToken = default)
@@ -212,7 +213,7 @@ namespace Backend.Services
                 if (!this._uids.TryDequeue(out MailKit.UniqueId uid))
                     break; //done if end of queue reached
                 
-                if (this._folder.LastPulledUid >= uid)
+                if (this._folder.LastPulledUid >= uid && uid != MailKit.UniqueId.MinValue)
                     continue; //skip if mail is already in DB
                 
                 mails.Add(new Mail(await this._imapFolder.GetMessageAsync(uid), uid));
@@ -259,7 +260,10 @@ namespace Backend.Services
             this._uids = await this.GetUidsToFetchAsync(folder.LastPulledUid,
                                                         folder.LastPulledInternalDate,
                                                         cancellationToken);
-            this._logger.LogDebug($"Got {this._uids.Count} mail uids to fetch");
+            // Ensure emails are not downloaded twice (check duplicates)
+            if (this._uids.TryPeek(out var firstUid) && firstUid > MailKit.UniqueId.MinValue)
+                this._uids.Dequeue();
+            this._logger.LogDebug("Got {} mail uids to fetch", this._uids.Count);
         }
     }
 }
