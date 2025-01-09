@@ -83,7 +83,7 @@ public class ImapMailFetchServiceTests
     private readonly Mock<ILogger<ImapMailFetchService>> _loggerMock;
     private readonly Mock<IOAuthService> _oAuthServiceMock;
     private readonly Mock<ITokenEncryptionService> _tokenEncryptionServiceMock;
-    private readonly ImapMailFetchService _service;
+    private readonly IImapMailFetchService _service;
 
     public ImapMailFetchServiceTests()
     {
@@ -150,11 +150,12 @@ public class ImapMailFetchServiceTests
         // Assert: Verify the result contains the expected emails
         mails.Should().NotBeNull();
         mails.Should().BeOfType<List<Mail>>();
+        mails.Should().HaveCount(2);
         foreach (var mail in mails)
         {
             //this mailbox should be a recipient of the email
-            mail.Should().Be(mail.RecipientsCc.Select(e => e.Address).Contains(mb.Username)
-                            || mail.Recipients.Select(e => e.Address).Contains(mb.Username));
+            (mail.RecipientsCc.Select(e => e.Address).Contains(mb.Username)
+            || mail.Recipients.Select(e => e.Address).Contains(mb.Username)).Should().Be(true);
         }
     }
 
