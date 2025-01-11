@@ -11,13 +11,13 @@ namespace Backend.Tests.ServicesTest;
 /// <summary>
 /// Unit tests for the FolderService class.
 /// </summary>
-public class FolderServiceTests
+public class FolderServiceTests : PostgresTestcontainerBase
 {
     private readonly Mock<ApplicationDBContext> _mockContext;
     private readonly Mock<ILogger<FolderService>> _mockLogger;
     private readonly FolderService _folderService;
 
-    public FolderServiceTests()
+    public FolderServiceTests() : base()
     {
         this._mockContext = CreateMockContext();
         this._mockLogger = new Mock<ILogger<FolderService>>();
@@ -25,7 +25,10 @@ public class FolderServiceTests
     }
 
     private static Mock<ApplicationDBContext> CreateMockContext(params Folder[] folders){
-        Mock<ApplicationDBContext> context = new();
+        DbContextOptions<ApplicationDBContext> opt = new DbContextOptionsBuilder<ApplicationDBContext>()
+                                                            .UseInMemoryDatabase("TestDb").Options;
+
+        Mock<ApplicationDBContext> context = new(opt);
         context.Setup(c => c.SaveChangesAsync(It.IsAny<CancellationToken>()).Result)
                     .Returns(1);
 
@@ -175,5 +178,139 @@ public class FolderServiceTests
         // Assert
         folder.LastPulledUid.Should().Be(newLastUid);
         this._mockContext.Verify(c => c.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task CreateFolderAsync_Internal_WithExistingFolder_ReturnsExistingFolder()
+    {
+        // Arrange
+        var mailbox = new MailBox
+        {
+            Id = 1,
+            Folders = [new() { Id = 1, Path = "ExistingFolder", MailBoxId = 1 }]
+        };
+
+        var folderToCreate = new Folder { Path = "ExistingFolder", MailBoxId = 1 };
+
+        // Act
+        var result = await this._folderService.CreateFolderAsync(folderToCreate, mailbox, true);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Path.Should().Be("ExistingFolder");
+        result.Id.Should().Be(1);
+        this._mockContext.Verify(c => c.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task CreateFolderAsync_Internal_WithCancellation_ReturnsFolderWithoutSaving()
+    {
+        // Arrange
+        var mailbox = new MailBox { Id = 1, Folders = [] };
+        var folderToCreate = new Folder { Path = "NewFolder", MailBoxId = 1 };
+        var cancellationToken = new CancellationToken(true);
+
+        // Act
+        var result = await this._folderService.CreateFolderAsync(folderToCreate, mailbox, true, cancellationToken);
+
+        // Assert
+        result.Should().BeNull();
+        mailbox.Folders.Should().BeEmpty();
+        this._mockContext.Verify(c => c.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task CreateFolderAsync_Internal_WithNestedPath_CreatesParentFolders()
+    {
+        // Arrange
+        var mailbox = new MailBox { Id = 1, Folders = [] };
+        var folderToCreate = new Folder { Path = "Parent/Child/SubChild", MailBoxId = 1 };
+
+        // Act
+        var result = await this._folderService.CreateFolderAsync(folderToCreate, mailbox, true);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Path.Should().Be("Parent/Child/SubChild");
+        result.Parent.Should().NotBeNull();
+        result.Parent.Path.Should().Be("Parent/Child");
+        result.Parent.Parent.Should().NotBeNull();
+        result.Parent.Parent.Path.Should().Be("Parent");
+        mailbox.Folders.Should().HaveCount(3);
+        this._mockContext.Verify(c => c.Folder.Add(It.IsAny<Folder>()), Times.Exactly(3));
+    }
+
+    [Fact]
+    public async Task CreateFolderAsync_Internal_WithInvalidPath_ThrowsArgumentException()
+    {
+        // Arrange
+        var mailbox = new MailBox { Id = 1, Folders = [] };
+        var folderToCreateNullPath = new Folder { Path = null, MailBoxId = 1 };
+        var folderToCreateEmptyPath = new Folder { Path = " ", MailBoxId = 1 };
+        var folderToCreate = new Folder { Path = "ABC", MailBoxId = 1 };
+
+        // Act & Assert
+        await Assert.ThrowsAsync<ArgumentException>(() =>
+            this._folderService.CreateFolderAsync(folderToCreateEmptyPath, mailbox, true));
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
+            this._folderService.CreateFolderAsync(folderToCreateNullPath, mailbox, true));
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
+            this._folderService.CreateFolderAsync(folderToCreate, null, true));
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
+            this._folderService.CreateFolderAsync(null, mailbox, true));
+    }
+
+    [Fact]
+    public async Task CreateFolderAsync_Integration_CreatesCompleteHierarchy()
+    {
+        // Arrange
+        await using var context = await this.CreateContextAsync();
+        var folderService = new FolderService(context, this._mockLogger.Object);
+        
+        var user = new AppUser() { };
+        var mailbox = new MailBox() { Owner = user };
+        context.Users.Add(user);
+        context.MailBox.Add(mailbox);
+        await context.SaveChangesAsync();
+
+        var folderToCreate = new Folder { Path = "A/B/C", MailBoxId = mailbox.Id };
+
+        // Act
+        var result = await folderService.CreateFolderAsync(folderToCreate, mailbox, true);
+
+        // Assert
+        result.Should().NotBeNull();
+        var folders = await context.Folder.ToListAsync();
+        folders.Should().HaveCount(3);
+        folders.Select(f => f.Path).Should().Contain(new[] { "A", "A/B", "A/B/C" });
+    }
+
+    [Fact]
+    public async Task CreateFolderAsync_Integration_HandlesExistingFolders()
+    {
+        // Arrange
+        await using var context = await this.CreateContextAsync();
+        var folderService = new FolderService(context, this._mockLogger.Object);
+        
+        var user = new AppUser() { };
+        var mailbox = new MailBox() { Owner = user };
+        context.Users.Add(user);
+        context.MailBox.Add(mailbox);
+        await context.SaveChangesAsync();
+        
+        var existingFolder = new Folder { Path = "A", MailBoxId = mailbox.Id };
+        context.Folder.Add(existingFolder);
+        await context.SaveChangesAsync();
+
+        var folderToCreate = new Folder { Path = "A/B", MailBoxId = mailbox.Id };
+
+        // Act
+        var result = await folderService.CreateFolderAsync(folderToCreate, mailbox, true);
+
+        // Assert
+        result.Should().NotBeNull();
+        var folders = await context.Folder.ToListAsync();
+        folders.Should().HaveCount(2);
+        folders.Select(f => f.Path).Should().Contain(new[] { "A", "A/B" });
     }
 }
