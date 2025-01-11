@@ -93,7 +93,7 @@ namespace Backend.Models
                             string.Join(";", this.Recipients.OrderBy(x=>x.Address).Select(x=>x.Address))));
                     xxHash.Append(Encoding.UTF8.GetBytes(
                             string.Join(";", this.RecipientsCc.OrderBy(x=>x.Address).Select(x=>x.Address))));
-                    xxHash.Append(BitConverter.GetBytes(this.OwnerMailBoxId??0));
+                    xxHash.Append(BitConverter.GetBytes(this.OwnerMailBoxId??this.OwnerMailBox?.Id??0));
 
                     this._uniqueHash = xxHash.GetCurrentHash();
                 }
