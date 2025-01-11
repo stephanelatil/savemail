@@ -1,9 +1,12 @@
-namespace Backend.Services;
-
 using System.Text;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using SendGrid;
 using SendGrid.Helpers.Mail;
+using System.Runtime.CompilerServices;
+
+[assembly: InternalsVisibleTo("Backend.Tests")]
+
+namespace Backend.Services;
 
 public class SendGridEmailSender : IEmailSender
 {
@@ -31,7 +34,7 @@ public class SendGridEmailSender : IEmailSender
         await this.Execute(subject, message, toEmail);
     }
 
-    private async Task Execute(string subject, string message, string toEmail)
+    internal async Task Execute(string subject, string message, string toEmail)
     {
         if (this.fromEmail is null)
             throw new MissingFieldException("SendGrid FromEmail should be set in the config");
@@ -89,7 +92,7 @@ public class BrevoEmailSender : IEmailSender
         await this.Execute(subject, htmlMessage, email);
     }
 
-    private async Task Execute(string subject, string message, string toEmail)
+    internal async Task Execute(string subject, string message, string toEmail)
     {
         string data = $"{{\"sender\":{{\"id\":{this.senderId} }},\"to\":[{{\"email\":\"{toEmail}\"}}],"+
                       $"\"subject\":\"{subject}\", \"htmlContent\":\"{message}\"}}";
