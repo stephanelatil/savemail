@@ -16,7 +16,7 @@ public class MailBoxController : ControllerBase
     private readonly UserManager<AppUser> _userManager;
     private readonly IMailBoxService _mailBoxService;
     private readonly ITaskManager _taskManager;
-    private IMailBoxImapCheck _mailBoxImapCheckService;
+    private readonly IMailBoxImapCheck _mailBoxImapCheckService;
     private readonly ILogger<MailBoxController> _logger;
 
     public MailBoxController(ApplicationDBContext context,
