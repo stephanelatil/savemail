@@ -1,6 +1,7 @@
 using Backend.Models;
 using Backend.Models.DTO;
 using Backend.Services;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Moq;
 using Moq.EntityFrameworkCore;
@@ -10,7 +11,10 @@ namespace Backend.Tests.ServicesTest;
 public class MailBoxServiceTest
 {
     private static Mock<ApplicationDBContext> CreateMockContext(params MailBox[] mailboxes){
-        Mock<ApplicationDBContext> context = new();
+        DbContextOptions<ApplicationDBContext> opt = new DbContextOptionsBuilder<ApplicationDBContext>()
+                                                            .UseInMemoryDatabase("TestDb").Options;
+
+        Mock<ApplicationDBContext> context = new(opt);
         context.Setup(c => c.SaveChangesAsync(It.IsAny<CancellationToken>()).Result)
                     .Returns(1);
 
@@ -23,7 +27,6 @@ public class MailBoxServiceTest
     {
         // Given
         var context = CreateMockContext();
-
 
         Mock<ITokenEncryptionService> tokenServiceMock = new();
         tokenServiceMock.Setup(c => c.Encrypt(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>()))
