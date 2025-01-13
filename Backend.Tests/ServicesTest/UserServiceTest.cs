@@ -7,6 +7,7 @@ using Moq;
 using Moq.EntityFrameworkCore;
 using FluentAssertions;
 using System.Security.Claims;
+using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Tests.ServicesTest;
 public class UserServiceTests
@@ -36,7 +37,10 @@ public class UserServiceTests
     }
 
     private static Mock<ApplicationDBContext> CreateMockContext(params AppUser[] users){
-        Mock<ApplicationDBContext> context = new();
+        DbContextOptions<ApplicationDBContext> opt = new DbContextOptionsBuilder<ApplicationDBContext>()
+                                                            .UseInMemoryDatabase("TestDb").Options;
+
+        Mock<ApplicationDBContext> context = new(opt);
         context.Setup(c => c.SaveChangesAsync(It.IsAny<CancellationToken>()).Result)
                     .Returns(1);
 

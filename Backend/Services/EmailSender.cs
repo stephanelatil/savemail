@@ -61,6 +61,31 @@ public class SendGridEmailSender : IEmailSender
 }
 
 //TODO add MailGun
+// public class MailGunEmailSender : IEmailSender
+// {
+//     private readonly string? sendGridKey = null;
+//     private readonly string? fromEmail = null;
+//     private readonly string? fromName = null;
+//     private readonly ILogger _logger;
+//     private readonly HttpClient _httpClient;
+
+//     public MailGunEmailSender(IConfiguration configuration,
+//                        ILogger<SendGridEmailSender> logger,
+//                        HttpClient httpClient)
+//     {
+//         this._logger = logger;
+//         this.sendGridKey = configuration.GetValue<string>("SendGrid:Key");
+//         this.fromEmail = configuration.GetValue<string>("SendGrid:FromEmail");
+//         this.fromName = configuration.GetValue<string>("SendGrid:FromName");
+//         this._httpClient = httpClient;
+//     }
+
+//     public Task SendEmailAsync(string email, string subject, string htmlMessage)
+//     {
+//         throw new NotImplementedException();
+//     }
+// }
+
 
 public class BrevoEmailSender : IEmailSender
 {
