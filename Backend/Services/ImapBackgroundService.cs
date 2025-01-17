@@ -136,8 +136,6 @@ public class DailyScheduleService : BackgroundService
     }
 
     //TODO find way to avoid multiple runners updating the same mailbox at the same time (or stop if mailbox deleted)
-    // TODO find a way to refresh a token if it expires while syncing (can happen on first sync of lots to download)
-        // This should never happen except if the token expires after starting to get the folders and before fetching the mails
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         using IServiceScope scope = this._serviceScopeFactory.CreateScope();

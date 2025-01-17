@@ -64,17 +64,8 @@ namespace Backend.Models
         [JsonIgnore]
         [ReadOnly(true)]
         public int? OwnerMailBoxId { get; set; } = null;
-        [JsonIgnore]
-        // public ICollection<Folder> Folders { get; set; } = [];
-        
-        // TODO Change the folder FK to a collection. The same mail can have multiple labels (or can be in different folders)
-            // Make sure to do a duplicate check (UniqueId + Mailbox?) and add a ref to the folder if it exists
-            // TODO check if it really needs to be bidirectional?
 
-        // TODO All all emails from the "All Mail" folder that have a unique hash that hasn't been seen before : place it into a special "Archived" folder
-        
-        
-        //TODO split into uniqueId1 and 2 to have a 128 bit hash to minimize collisions
+        //split into uniqueId1 and 2 to have a 128 bit hash to minimize collisions
         private byte[] _uniqueHash = new byte[16];
         public ulong UniqueHash
         { 
