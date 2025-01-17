@@ -1,4 +1,4 @@
-import MailListPage, { MailListPage2 } from '@/components/MailList';
+import MailListPage2 from '@/components/MailList';
 import Sidebar from '@/components/SideBar';
 import { Stack } from '@mui/material';
 import { Metadata } from 'next';

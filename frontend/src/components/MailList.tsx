@@ -75,7 +75,7 @@ const MailListBox : React.FC<MailListPageInfo> = ({hasNext, hasPrev, pageNum, ma
                                             onClick={() => {setMailId(m.id); setOpen(true);}}
                                                 />)}
                     </List>
-                    <Stack direction='row' justifyContent='center' position='sticky'>
+                    <Stack direction='row' justifyContent='center' position='fixed'>
                         <Button onClick={() => router.push(`${basePathname}?page=${pageNum-1}`)} disabled={!hasPrev}>
                             <SkipPrevious />
                         </Button>
@@ -160,4 +160,4 @@ export const MailListPage2: React.FC = () => {
             </Suspense>;
 }
 
-export default MailListPage;
+export default MailListPage2;
