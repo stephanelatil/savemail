@@ -229,4 +229,113 @@ public class MailBoxController : ControllerBase
 
         return this.NoContent();
     }
+
+    //Post: api/MailBox/{id}/search
+    [HttpPost("{id}/search")]
+    [Authorize]
+    public async Task<ActionResult<PaginatedList<MailDto>>> SearchMails(int id,
+                                                                [FromQuery] SearchRequestDto filters,
+                                                                [FromQuery] PaginationQueryParameters pageQuery)
+    {
+        MailBox? userMailBoxId = await this._context.MailBox.SingleOrDefaultAsync(mb => mb.Id == id);
+        if (userMailBoxId == null)
+        {
+            return this.NotFound();
+        }
+
+        AppUser? self = await this._userManager.GetUserAsync(this.User);
+        if (self is null || userMailBoxId.OwnerId != self.Id)
+            return this.Forbid();
+
+        if (userMailBoxId == null)
+            return Unauthorized("User doesn't have a mailbox");
+
+        var query = _context.Mail
+            .Where(m => m.OwnerMailBoxId == userMailBoxId.Id);
+        
+        var queryStrings = new QueryString();
+
+        // Apply filters
+        if (!string.IsNullOrWhiteSpace(filters.SearchTerm))
+        {
+            queryStrings.Add("search", filters.SearchTerm);
+            query = query.Where(m => m.SearchVector.Matches(filters.SearchTerm));
+        }
+
+        if (filters.FromDate.HasValue)
+        {
+            queryStrings.Add("after", filters.FromDate.Value.ToUniversalTime().ToString("u").Replace(" ", "T"));
+            query = query.Where(m => m.DateSent >= filters.FromDate.Value);
+        }
+
+        if (filters.ToDate.HasValue)
+        {
+            queryStrings.Add("before", filters.ToDate.Value.ToUniversalTime().ToString("u").Replace(" ", "T"));
+            query = query.Where(m => m.DateSent <= filters.ToDate.Value);
+        }
+
+        if (filters.HasAttachments.HasValue)
+        {
+            queryStrings.Add("hasAttachments", filters.HasAttachments.Value.ToString());
+            query = filters.HasAttachments.Value 
+                ? query.Where(m => m.Attachments.Any()) 
+                : query.Where(m => !m.Attachments.Any());
+        }
+
+        if (filters.IsReply.HasValue)
+        {
+            queryStrings.Add("isReply", filters.IsReply.Value.ToString());
+            query = query.Where(m => filters.IsReply.Value 
+                ? m.RepliedFromId.HasValue 
+                : !m.RepliedFromId.HasValue);
+        }
+
+        if (filters.HasReply.HasValue)
+        {
+            queryStrings.Add("hasReply", filters.HasReply.Value.ToString());
+            query = query.Where(m => filters.HasReply.Value 
+                ? m.ReplyId.HasValue 
+                : !m.ReplyId.HasValue);
+        }
+
+        if (!string.IsNullOrWhiteSpace(filters.FromAddress))
+        {
+            queryStrings.Add("from", filters.FromAddress.ToString());
+            query = query.Where(m => m.Sender != null && 
+                m.Sender.Address.Contains(filters.FromAddress));
+        }
+
+        if (!string.IsNullOrWhiteSpace(filters.ToAddress))
+        {
+            queryStrings.Add("to", filters.ToAddress.ToString());
+            query = query.Where(m => 
+                m.Recipients.Any(r => r.Address.Contains(filters.ToAddress)) ||
+                m.RecipientsCc.Any(r => r.Address.Contains(filters.ToAddress)));
+        }
+
+        queryStrings.Add("desc", filters.SortDescending.ToString());
+        // Sorting
+        query = filters.SortBy switch
+        {
+            SortByEnum.Date => filters.SortDescending 
+                ? query.OrderByDescending(m => m.Subject) 
+                : query.OrderBy(m => m.Subject),
+            _ => filters.SortDescending 
+                ? query.OrderByDescending(m => m.DateSent) 
+                : query.OrderBy(m => m.DateSent)
+        };
+
+        // Pagination
+        var totalCount = await query.CountAsync();
+        var results = await query
+            .Skip((pageQuery.PageSize - 1) * pageQuery.PageSize)
+            .Take(pageQuery.PageSize)
+            .Select(m => new MailDto(m, true))
+            .ToListAsync();
+        
+        bool hasNext = totalCount > pageQuery.PageSize;
+        string route = $"/api/MailBox/{id}/search";
+
+        return Ok(new PaginatedList<MailDto>(results, pageQuery.PageNumber, route, hasNext));
+    }
 }

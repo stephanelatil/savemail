@@ -51,7 +51,7 @@ namespace Backend.Models
             return RmRedundantSpacesRegex().Replace(text, " ");
         } 
         private set {} }
-        public NpgsqlTsVector? SearchVector { get; set; }
+        public NpgsqlTsVector SearchVector { get; set; }
         [ReadOnly(true)]
         public ICollection<Attachment> Attachments { get; set; } = [];
         [ReadOnly(true)]

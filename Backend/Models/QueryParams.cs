@@ -45,8 +45,11 @@ public class SearchRequestDto
     [FromQuery(Name = "hasReply")]
     public bool? HasReply { get; set; }
     
-    [FromQuery(Name = "address")]
-    public string? EmailAddress { get; set; }
+    [FromQuery(Name = "from")]
+    public string? FromAddress { get; set; }
+    
+    [FromQuery(Name = "to")]
+    public string? ToAddress { get; set; }
     
     [FromQuery(Name = "sortBy")]
     public SortByEnum SortBy { get; set; } = SortByEnum.Date;
