@@ -47,9 +47,15 @@ namespace Backend.Models
 
             // Create composite GIN index on Mails
             modelBuilder.Entity<Mail>()
-                .Property(m => m.SearchVector)
-                .HasColumnType("tsvector")
-                .HasComputedColumnSql("to_tsvector('english', coalesce(\"Subject\", '') || ' ' || coalesce(\"BodyText\", ''))", stored: true);
+                .HasGeneratedTsVectorColumn(
+                    m => m.SearchVector,
+                    "english",
+                    m => new {m.Subject, m.BodyText}
+                ).HasIndex(m => m.SearchVector)
+                .HasMethod('GIN');
+                // .Property(m => m.SearchVector)
+                // .HasColumnType("tsvector")
+                // .HasComputedColumnSql("to_tsvector('english', coalesce(\"Subject\", '') || ' ' || coalesce(\"BodyText\", ''))", stored: true);
 
             // Create GIN index on the computed tsvector column
             modelBuilder.Entity<Mail>()
