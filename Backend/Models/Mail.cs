@@ -5,7 +5,6 @@ using System.IO.Hashing;
 using System.Text;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
-using MailKit;
 using Microsoft.EntityFrameworkCore;
 using MimeKit;
 using NpgsqlTypes;
@@ -17,7 +16,7 @@ namespace Backend.Models
     {
         [Key]
         public long Id { get; set; }
-        public UniqueId ImapMailUID { get; set; }
+        public MailKit.UniqueId ImapMailUID { get; set; }
         [JsonIgnore]
         public string ImapMailId { get; set; } = string.Empty;
         [NotMapped]
@@ -118,9 +117,11 @@ namespace Backend.Models
             private set { _ = value; }
         }
 
+//ignore warning here because SearchVector will be will be defined by the DB itself
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
         public Mail(){}
 
-        public Mail(MimeMessage msg, UniqueId uid)
+        public Mail(MimeMessage msg, MailKit.UniqueId uid)
         {
             this.Id = 0;
             this.ImapReplyFromId = msg.InReplyTo;
@@ -141,6 +142,7 @@ namespace Backend.Models
             foreach (MailboxAddress recipient in msg.Cc.Cast<MailboxAddress>())
                 this.RecipientsCc.Add(new EmailAddress(){Address = recipient.Address, FullName = recipient.Name});
         }
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
 
         [GeneratedRegex(@"\s+\n")]
         private static partial Regex RmRedundantNewLinesRegex();

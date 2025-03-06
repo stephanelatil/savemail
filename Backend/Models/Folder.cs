@@ -1,7 +1,6 @@
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
-using MailKit;
 using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Models
@@ -24,11 +23,11 @@ namespace Backend.Models
         public MailBox? MailBox { get; set; } = null;
         [JsonIgnore]
         public ICollection<Mail> Mails { get; set; } = [];
-        public UniqueId LastPulledUid { get; set; } = UniqueId.MinValue;
+        public MailKit.UniqueId LastPulledUid { get; set; } = MailKit.UniqueId.MinValue;
         public DateTime LastPulledInternalDate { get; set; } = DateTime.MinValue;
 
         public Folder(){}
-        public Folder(IMailFolder folder){
+        public Folder(MailKit.IMailFolder folder){
             this.Path = folder.FullName;
         }
     }
