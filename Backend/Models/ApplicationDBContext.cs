@@ -52,7 +52,7 @@ namespace Backend.Models
                     "english",
                     m => new {m.Subject, m.BodyText}
                 ).HasIndex(m => m.SearchVector)
-                .HasMethod('GIN');
+                .HasMethod("GIN");
                 // .Property(m => m.SearchVector)
                 // .HasColumnType("tsvector")
                 // .HasComputedColumnSql("to_tsvector('english', coalesce(\"Subject\", '') || ' ' || coalesce(\"BodyText\", ''))", stored: true);
