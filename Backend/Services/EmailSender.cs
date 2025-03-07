@@ -21,7 +21,7 @@ public class SendGridEmailSender : IEmailSender
         this._logger = logger;
         this.sendGridKey = configuration.GetValue<string>("SendGrid:Key");
         this.fromEmail = configuration.GetValue<string>("SendGrid:FromEmail");
-        this.fromName = configuration.GetValue<string>("SendGrid:FromName");
+        this.fromName = configuration.GetValue<string>("SendGrid:FromName", "SaveMail");
     }
 
     public async Task SendEmailAsync(string toEmail, string subject, string message)

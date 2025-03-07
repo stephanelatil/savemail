@@ -129,11 +129,16 @@ These can be set in the `appsettings.json` file or passed directly when running 
 
 | Variable                         | Description                              | Default   |
 |----------------------------------|------------------------------------------|-----------|
-| `SAVEMAIL_ConnectionStrings_Host` | Database host (IP or domain) | `localhost` |
-| `SAVEMAIL_ConnectionStrings_Username` | Database username | `postgres` |
-| `SAVEMAIL_ConnectionStrings_Password` | Database password | **Required** |
-| `SAVEMAIL_AttachmentsPath` | The path where the attachments will be stored | `./Attachments` |
-| `SAVEMAIL_AppSecret` | A random string of characters used to generate an encryption key for OAuth tokens. Do not modify this once is is set or all access and refresh tokens will become invalid. | `ANY_RANDOM_ASSORTMENT_OF_CHARACTERS (Used to encrypt OAuth tokens in DB)` |
+| `SAVEMAIL__ConnectionStrings__Host` | Database host (IP or domain) | `localhost` |
+| `SAVEMAIL__ConnectionStrings__Username` | Database username | `postgres` |
+| `SAVEMAIL__ConnectionStrings__Password` | Database password | **Required** |
+| `SAVEMAIL__AttachmentsPath` | The path where the attachments will be stored | `./Attachments` |
+| `SAVEMAIL__AppSecret` | A random string of characters used to generate an encryption key for OAuth tokens. Do not modify this once is is set or all access and refresh tokens will become invalid. | `ANY_RANDOM_ASSORTMENT_OF_CHARACTERS (Used to encrypt OAuth tokens in DB)` |
+| `SAVEMAIL__Logging__LogLevel__Default` | The default logging level for all namespaces, except if specifically stated with another level in another environment variable | `Information` |
+| `SAVEMAIL__Logging__LogLevel__Backend` | The logging level for all services of the Backend. It  |  |
+| `SAVEMAIL__Logging__LogLevel__Microsoft.AspNetCore` | The default logging level for the host application and endpoints. Uses the "Default" namespace value if not set. | `Information` |
+| `SAVEMAIL__Logging__LogLevel__Microsoft.EntityFrameworkCore.Database.Command` | The default logging level for EF core database queries. Uses the "Default" namespace value if not set. Anything below `Warning` will make the logs VERY verbose. | `Warning` |
+| `SAVEMAIL__Logging__LogLevel__{Some namespace here}` | The default logging level for the namespace. Uses the "Default" namespace value if not set |  |
 
 **Added Features**
 
@@ -143,6 +148,11 @@ Other variables can be set for added features:
 |----------------------------------|------------------------------------------|-----------|
 | `SAVEMAIL_OAuth2_GOOGLE_CLIENT_ID` | Google Client Id to enable Oauth linking. Otherwise Gmail addresses will not work! |  |
 | `SAVEMAIL_OAuth2_GOOGLE_CLIENT_SECRET` | Google Client Secret to enable Oauth linking. Otherwise Gmail addresses will not work! |  |
+| `SAVEMAIL__SendGrid__Key` | The Sendgrid Key used to send email verification, password reset emails etc. If no email sending service is present, this feature will be disabled | |
+| `SAVEMAIL__SendGrid__FromEmail` | The email from which the email will be sent (use the same email as the one used with the sendgrid Key) | |
+| `SAVEMAIL__SendGrid__FromName` | The name of the sender present at the top of sent emails | `SaveMail` |
+| `SAVEMAIL__Brevo__Key` | The Brevo Key used to send email verification, password reset emails etc. If no email sending service is present, this feature will be disabled | |
+| `SAVEMAIL__Brevo__SenderId` | The Brevo Sender Id used to send email verification, password reset emails etc. | |
 
 #### Frontend
 
@@ -168,36 +178,47 @@ services:
     image: postgres:15
     container_name: postgres_db
     environment:
-      POSTGRES_USER: <DB_USER>
-      POSTGRES_PASSWORD: <DB_PASSWORD>
+      POSTGRES_USER: <DB_USERNAME_HERE>
+      POSTGRES_PASSWORD: <DB_PASSWORD_HERE>
       POSTGRES_DB: savemaildb
     volumes:
       - psql_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_PASSWORD}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    
 
   backend:
     image: stephanelatil/savemail-backend
     container_name: backend
     environment:
-      SAVEMAIL_ConnectionStrings_Host: postgres_db
-      SAVEMAIL_ConnectionStrings_Username: <DB_USER>
-      SAVEMAIL_ConnectionStrings_Password: <DB_PASSWORD>
+      SAVEMAIL__ConnectionStrings__Host: postgres_db # The name of the DB container or the Hostname of the psql DB
+      SAVEMAIL__ConnectionStrings__Username: <DB_USERNAME_HERE>
+      SAVEMAIL__ConnectionStrings__Password: <DB_PASSWORD_HERE>
+      # SAVEMAIL__OAuth2__GOOGLE_CLIENT_ID: #Google Client Id to enable Oauth linking. Otherwise Gmail addresses will not work!
+      # SAVEMAIL__OAuth2__GOOGLE_CLIENT_SECRET: #Google Client Secret to enable Oauth linking. Otherwise Gmail addresses will not work!
+      # SAVEMAIL__AttachmentsPath: #The directory path where the attachments will be stored. by default ./Attachments is used. The path is relative to the program.cs location
+      # SAVEMAIL__AppSecret: # A random string of characters used to generate an encryption key for OAuth tokens. Do not modify this once is is set or all access and refresh tokens will become invalid. They can be regenerated by re-authenticating all users (There will be a notification in the frontend or a flag in the "needsReauth" json field, when querying a MailBox though the API
     volumes:
         - attachments_vol:/app/Attachments
     depends_on:
-      postgres:
+      postgres_db:
          condition: service_healthy
 
   frontend:
-      image: stephanelatil/savemail-frontend
+    image: stephanelatil/savemail-frontend
     container_name: frontend
-      environment:
-        - PORT=3000
-        - NEXT_PUBLIC_FRONTEND_URL="http://<YOUR_IP_HOSTNAME_HERE>:3000"
-        - NEXT_PUBLIC_BACKEND_URL="http://<YOUR_IP_HOSTNAME_HERE>:5000"
-      depends_on:
-         - backend
-      ports:
-         - "3000:3000"
+    environment:
+      - PORT=3001
+      - HOSTNAME=localhost
+      - NEXT_PUBLIC_FRONTEND_URL="http://<YOUR_IP_HERE>:3000"
+      - NEXT_PUBLIC_BACKEND_URL="http://<YOUR_IP_HERE>:5000"
+    depends_on:
+        - backend
+    ports:
+        - "3000:3000"
 
 volumes:
     attachments_vol:
