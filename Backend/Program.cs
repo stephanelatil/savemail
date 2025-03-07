@@ -45,8 +45,11 @@ builder.Services.AddSwaggerGen();
 //insert DBContext
 builder.Services.AddDbContext<ApplicationDBContext>(opt =>{
     var connectionString = new StringBuilder();
-    if (builder.Environment.IsDevelopment())
+    if (builder.Environment.IsDevelopment()){
         opt.ConfigureWarnings(w => w.Throw(RelationalEventId.MultipleCollectionIncludeWarning));
+        opt.EnableSensitiveDataLogging();
+        opt.EnableDetailedErrors();
+    }
     
     connectionString.Append($"Host={builder.Configuration.GetConnectionString("Host")};");
     connectionString.Append($"Username={builder.Configuration.GetConnectionString("Username")};");
@@ -54,8 +57,6 @@ builder.Services.AddDbContext<ApplicationDBContext>(opt =>{
     connectionString.Append($"Database={builder.Configuration.GetConnectionString("Database") ?? "savemaildb"};");
 
     opt.UseNpgsql(connectionString.ToString());
-    opt.EnableSensitiveDataLogging(builder.Environment.IsDevelopment());
-    opt.EnableDetailedErrors(builder.Environment.IsDevelopment());
 });
 
 
@@ -211,5 +212,8 @@ else
 }
 
 app.MapControllers();
-
+{
+    using var context = app.Services.GetRequiredService<ApplicationDBContext>();
+    context.Database.Migrate();
+}
 app.Run();
