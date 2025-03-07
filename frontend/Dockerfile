@@ -1,3 +1,5 @@
+# syntax=docker/dockerfile:1.7-labs 
+
 # Frontend Dockerfile using Next.js
 
 FROM node:23-alpine AS build
@@ -8,7 +10,7 @@ COPY package*.json ./
 RUN npm install
 
 # Copy the rest of the frontend code
-COPY . .
+COPY --exclude=**/.env* . .
 
 # Build the application
 RUN npm run build
