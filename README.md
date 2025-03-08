@@ -184,7 +184,7 @@ services:
     volumes:
       - psql_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_PASSWORD}"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -p $${POSTGRES_PASSWORD} -d $${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -197,6 +197,7 @@ services:
       SAVEMAIL__ConnectionStrings__Host: postgres_db # The name of the DB container or the Hostname of the psql DB
       SAVEMAIL__ConnectionStrings__Username: <DB_USERNAME_HERE>
       SAVEMAIL__ConnectionStrings__Password: <DB_PASSWORD_HERE>
+      SAVEMAIL__ConnectionStrings__Database: savemaildb #name of the postgres database (Should be the same as POSTGRES_DB)
       # SAVEMAIL__OAuth2__GOOGLE_CLIENT_ID: #Google Client Id to enable Oauth linking. Otherwise Gmail addresses will not work!
       # SAVEMAIL__OAuth2__GOOGLE_CLIENT_SECRET: #Google Client Secret to enable Oauth linking. Otherwise Gmail addresses will not work!
       # SAVEMAIL__AttachmentsPath: #The directory path where the attachments will be stored. by default ./Attachments is used. The path is relative to the program.cs location
@@ -211,8 +212,8 @@ services:
     image: stephanelatil/savemail-frontend
     container_name: frontend
     environment:
-      - PORT=3001
-      - HOSTNAME=localhost
+      - PORT=3000
+      - HOSTNAME=<YOUR_IP_HERE>
       - NEXT_PUBLIC_FRONTEND_URL="http://<YOUR_IP_HERE>:3000"
       - NEXT_PUBLIC_BACKEND_URL="http://<YOUR_IP_HERE>:5000"
     depends_on:
