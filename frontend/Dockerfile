@@ -47,10 +47,5 @@ ENV BACKEND_PORT=5000
 # Expose the port the app runs on
 EXPOSE ${PORT}
 
-# ENV NEXT_PUBLIC_FRONTEND_URL="https://${HOST}:${PORT}"
-# ENV NEXT_PUBLIC_BACKEND_URL="https://${HOST}:${BACKEND_PORT}"
-
 # Start the application
-# CMD ["npx", "next", "start"]
-ENTRYPOINT ["sh"]
-CMD ["start.sh"]
+ENTRYPOINT ["./start.sh"]

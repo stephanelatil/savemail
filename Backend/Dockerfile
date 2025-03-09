@@ -33,18 +33,18 @@ RUN apt-get update \
 ENV PORT=5000
 ENV HOST=localhost
 
+EXPOSE $PORT
+
 # Set the environment
 ENV ASPNETCORE_ENVIRONMENT=Production
 ENV ASPNETCORE_URLS=http://${HOST}:${PORT}
-ENV Logging__LogLevel__Microsoft.EntityFrameworkCore.Database.Command=Warning
-ENV Logging__LogLevel__Microsoft.AspNetCore=Warning
-ENV Logging__LogLevel__Default=Information
-ENV AppSecret=123456789
-ENV AttachmentsPath="./Attachments"
+ENV SAVEMAIL__Logging__LogLevel__Microsoft.EntityFrameworkCore.Database.Command=Warning
+ENV SAVEMAIL__Logging__LogLevel__Microsoft.AspNetCore=Warning
+ENV SAVEMAIL__Logging__LogLevel__Default=Information
+ENV SAVEMAIL__AppSecret=123456789
+ENV SAVEMAIL__AttachmentsPath="./Attachments"
 
-HEALTHCHECK --start-period=15s --start-interval=3s --interval=60s CMD health.sh
+HEALTHCHECK --start-period=15s --start-interval=3s --interval=60s CMD /app/health.sh
 
 # Start the application
-ENTRYPOINT ["sh"]
-CMD ["start.sh"]
-# ENTRYPOINT ["dotnet", "Backend.dll"]
+ENTRYPOINT ["./start.sh"]
