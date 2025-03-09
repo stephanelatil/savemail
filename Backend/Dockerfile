@@ -18,6 +18,8 @@ WORKDIR /app
 
 # Copy built artifacts from build stage
 COPY --from=build --exclude=**/appsettings*.json /app/out .
+COPY start.sh .
+COPY health.sh .
 
 RUN apt-get update \
     && apt-get install -y curl
@@ -34,10 +36,9 @@ ENV Logging__LogLevel__Default=Information
 ENV AppSecret=123456789
 ENV AttachmentsPath="./Attachments"
 
-HEALTHCHECK --start-period=15s --start-interval=3s --interval=60s CMD /usr/bin/curl http://localhost:5000/status || exit 1
-
-# Expose the port the app runs on
-EXPOSE ${PORT}
+HEALTHCHECK --start-period=15s --start-interval=3s --interval=60s CMD health.sh
 
 # Start the application
-ENTRYPOINT ["dotnet", "Backend.dll"]
+ENTRYPOINT ["sh"]
+CMD ["start.sh"]
+# ENTRYPOINT ["dotnet", "Backend.dll"]
