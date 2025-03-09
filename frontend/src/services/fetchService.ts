@@ -1,3 +1,4 @@
+import { get_backend_url } from '@/constants/Envs'
 import {HttpMethod} from '@/models/helpers'
 
 /**
@@ -13,8 +14,8 @@ import {HttpMethod} from '@/models/helpers'
  */
 export const apiFetch = async (endpoint: string): Promise<Response> => {
   let url = ''
-  if (!endpoint.includes(process.env.NEXT_PUBLIC_BACKEND_URL!)) {
-    url = `${process.env.NEXT_PUBLIC_BACKEND_URL}`
+  if (!endpoint.includes(get_backend_url())) {
+    url = `${get_backend_url()}`
   }
   url = url.concat(endpoint)
   const options: RequestInit = {
@@ -44,7 +45,7 @@ export const apiFetchWithBody = async (
   method: HttpMethod,
   body?: any,
 ): Promise<Response> => {
-  const url = `${process.env.NEXT_PUBLIC_BACKEND_URL}${endpoint}`
+  const url = `${get_backend_url()}${endpoint}`
   const options: RequestInit = {
     method,
     headers: {
@@ -70,7 +71,7 @@ export const apiFetchWithBody = async (
  * @returns A promise that resolves to the `Response` object from the fetch operation.
  */
 export const apiFetchWithFormData = async (endpoint: string, body: FormData) => {
-  const url = `${process.env.NEXT_PUBLIC_BACKEND_URL}${endpoint}`
+  const url = `${get_backend_url()}${endpoint}`
   const options: RequestInit = {
     method: 'POST',
     body,

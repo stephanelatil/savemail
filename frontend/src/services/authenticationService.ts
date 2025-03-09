@@ -1,5 +1,6 @@
 import { ChangePassword, Credentials, Init2FA, Enable2FA, PasswordReset, Response2FA, EmailConfirmed } from '@/models/credentials';
 import { FetchError as Error, apiFetchWithBody } from './fetchService';
+import { get_frontend_url } from '@/constants/Envs';
 
 const AUTH_ENDPOINT = '/api/auth/';
 
@@ -78,7 +79,7 @@ export const sendPasswordReset = async (email:string) : Promise<boolean> => {
     const response = await apiFetchWithBody(`/api/AppUser/ForgotPassword`, 'POST',
                                             {
                                                 "email":email,
-                                                "redirectTo":`${process.env.NEXT_PUBLIC_FRONTEND_URL}/auth/reset`
+                                                "redirectTo":`${get_frontend_url()}/auth/reset`
                                             });
 
     return true;

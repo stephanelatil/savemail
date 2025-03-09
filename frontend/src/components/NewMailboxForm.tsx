@@ -1,5 +1,6 @@
 'use client'
 
+import { get_backend_url, get_frontend_url } from "@/constants/Envs";
 import { useMailboxes } from "@/hooks/useMailboxes";
 import { EditMailBox } from "@/models/mailBox";
 import { Google } from "@mui/icons-material";
@@ -24,9 +25,9 @@ const NewMailboxForm:React.FC = () =>{
     };
 
     const oauthUrl = (oauthProvider:string):string  =>{
-        const base = new URL(`${process.env.NEXT_PUBLIC_BACKEND_URL}/oauth/${oauthProvider}/login`);
+        const base = new URL(`${get_backend_url()}/oauth/${oauthProvider}/login`);
         
-        let hostname = process.env.NEXT_PUBLIC_FRONTEND_URL;
+        let hostname = get_frontend_url();
         while (hostname?.charAt(hostname.length-1) == '/')
             hostname = hostname.substring(hostname.length-1);
 

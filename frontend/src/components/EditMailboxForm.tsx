@@ -11,6 +11,7 @@ import NotFound from "./NotFound";
 import { PasswordElement, TextFieldElement } from "react-hook-form-mui";
 import { useState } from "react";
 import { useNotification } from "@/hooks/useNotification";
+import { get_backend_url, get_frontend_url } from "@/constants/Envs";
 
 
 const EditMailboxFormBase:React.FC<{defaultValues:MailBox}> = ({defaultValues}) =>{
@@ -76,8 +77,8 @@ const EditMailboxFormBase:React.FC<{defaultValues:MailBox}> = ({defaultValues}) 
                                 fullWidth
                             />
                         case ImapProvider.Google:
-                            const base = new URL(`${process.env.NEXT_PUBLIC_BACKEND_URL}/oauth/google/login/${mailboxPageId}`);
-                            let hostname = process.env.NEXT_PUBLIC_FRONTEND_URL;
+                            const base = new URL(`${get_backend_url()}/oauth/google/login/${mailboxPageId}`);
+                            let hostname = get_frontend_url();
                             while (hostname?.charAt(hostname.length-1) == '/')
                                 hostname = hostname.substring(hostname.length-1);
                             base.searchParams.set('next', `${hostname}/mailbox`);

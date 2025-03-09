@@ -9,6 +9,7 @@ import { Dispatch, SetStateAction, useState } from "react";
 import useSWR from "swr";
 import { Attachment } from "@/models/attachment";
 import Grid2 from "@mui/material/Unstable_Grid2";
+import { get_backend_url } from "@/constants/Envs";
 
 const AttachmentDownload:React.FC<{attachment:Attachment}> = ({attachment}) =>{
     function formatBytes(bytes:number, decimals = 2) {
@@ -26,7 +27,7 @@ const AttachmentDownload:React.FC<{attachment:Attachment}> = ({attachment}) =>{
     return <Button startIcon={<Download />}
                    component={Link}
                    download={attachment.fileName}
-                   href={`${process.env.NEXT_PUBLIC_BACKEND_URL}${attachment.downloadUrl}`}
+                   href={`${get_backend_url()}${attachment.downloadUrl}`}
                    variant='contained'>
             <Typography variant='body1' noWrap textOverflow='ellipsis' maxWidth='20rem'>
                 {attachment.fileName}
