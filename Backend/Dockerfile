@@ -9,7 +9,13 @@ COPY *.csproj ./
 RUN dotnet restore
 
 # Copy the rest of the backend code and build
-COPY . ./
+COPY Controllers .
+COPY Migrations .
+COPY Models .
+COPY Properties .
+COPY Services .
+COPY Utils .
+COPY Program.cs .
 RUN dotnet publish -c Release -o out
 
 # Production stage
@@ -25,11 +31,11 @@ RUN apt-get update \
     && apt-get install -y curl
 
 ENV PORT=5000
-ENV HOSTNAME=localhost
+ENV HOST=localhost
 
 # Set the environment
 ENV ASPNETCORE_ENVIRONMENT=Production
-ENV ASPNETCORE_URLS=http://${HOSTNAME}:${PORT}
+ENV ASPNETCORE_URLS=http://${HOST}:${PORT}
 ENV Logging__LogLevel__Microsoft.EntityFrameworkCore.Database.Command=Warning
 ENV Logging__LogLevel__Microsoft.AspNetCore=Warning
 ENV Logging__LogLevel__Default=Information

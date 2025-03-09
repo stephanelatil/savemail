@@ -1,3 +1,3 @@
 #!/bin/bash
 
-/usr/bin/curl http://${HOSTNAME}:${PORT}/healthz || exit 1
+/usr/bin/curl http://${HOST}:${PORT}/healthz || exit 1
