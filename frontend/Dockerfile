@@ -10,7 +10,7 @@ COPY package*.json ./
 RUN npm install
 
 # Copy the rest of the frontend code
-COPY --exclude=**/.env* . .
+COPY --exclude=**/.env* --exclude=.next --exclude=node_modules . .
 
 # Build the application
 RUN npm run build
@@ -30,22 +30,27 @@ COPY --from=build /app/package*.json ./
 COPY --from=build /app/next.config.mjs ./
 COPY --from=build /app/public ./public
 COPY --from=build --chown=nextjs:nodejs /app/.next ./.next
+
 RUN rm -fr /app/.next/cache || true
 
 # Install production dependencies
 RUN npm install next
 
 USER nextjs
+COPY --from=build /app/start.sh .
 
-ENV HOSTNAME=localhost
+ENV LISTEN=0.0.0.0
+ENV HOST=localhost
 ENV PORT=3000
 ENV BACKEND_PORT=5000
 
 # Expose the port the app runs on
 EXPOSE ${PORT}
 
-ENV NEXT_PUBLIC_FRONTEND_URL="https://${HOSTNAME}:${PORT}"
-ENV NEXT_PUBLIC_BACKEND_URL="https://${HOSTNAME}:${BACKEND_PORT}"
+# ENV NEXT_PUBLIC_FRONTEND_URL="https://${HOST}:${PORT}"
+# ENV NEXT_PUBLIC_BACKEND_URL="https://${HOST}:${BACKEND_PORT}"
 
 # Start the application
-CMD ["npx", "next", "start"]
+# CMD ["npx", "next", "start"]
+ENTRYPOINT ["sh"]
+CMD ["start.sh"]
