@@ -9,6 +9,12 @@ export const getMail = async (id:number):Promise<Mail> =>{
         throw new Error("Forbidden", response.status);
     if (response.status == 404)
         throw new Error("Mail not found", response.status);
+    if (response.status == 500)
+    {
+        const err = await response.json();
+        console.error(err.message);
+        throw new Error(err.message, 500)
+    }
 
     return response.json();
 }

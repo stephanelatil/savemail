@@ -17,11 +17,18 @@ export const register = async (credentials: Credentials) : Promise<boolean> => {
         delete credentials.twoFactorRecoveryCode;
     const response = await apiFetchWithBody(`${AUTH_ENDPOINT}register`, 'POST', credentials);
 
-    if (!response.ok) {
+    if (response.status == 500)
+    {
+        const err = await response.json();
+        console.error(err.message);
+        throw new Error(err.message, 500)
+    }
+    else if (!response.ok) {
         const err = (await response.json()).errors;
         var errString = '';
-        Object.values(err).forEach((val,index, arr)=>errString=errString.concat(val+'\n'));
+        Object.values(err).forEach((val, index, arr)=>errString=errString.concat(val+'\n'));
         errString.trim()
+        console.error(err);
         throw new Error(errString, response.status);
     }
 
@@ -39,7 +46,13 @@ export const login = async (credentials: Credentials, rememberMe:boolean=false):
     const remember:string = rememberMe ? "useCookies=true" : "useSessionCookies=true";
     const response = await apiFetchWithBody(`${AUTH_ENDPOINT}login?${remember}`, 'POST', credentials);
 
-    if (!response.ok) {
+    if (response.status == 500)
+    {
+        const err = await response.json();
+        console.error(err.message);
+        throw new Error(err.message, 500)
+    }
+    else if (!response.ok) {
         if (credentials.twoFactorCode || credentials.twoFactorRecoveryCode)
             throw new Error("Incorrect username, password or 2FA", response.status);
         throw new Error("Incorrect username or password", response.status);
@@ -94,7 +107,13 @@ export const sendPasswordReset = async (email:string) : Promise<boolean> => {
 export const passwordReset = async (reset:PasswordReset) : Promise<boolean> => {
     const response = await apiFetchWithBody(`${AUTH_ENDPOINT}resetPassword`, 'POST', reset);
 
-    if (!response.ok){
+    if (response.status == 500)
+    {
+        const err = await response.json();
+        console.error(err.message);
+        throw new Error(err.message, 500)
+    }
+    else if (!response.ok){
         const err = (await response.json()).errors;
         var errString = '';
         Object.values(err).forEach((val,index, arr)=>errString=errString.concat(val+'\n'));
@@ -114,7 +133,13 @@ export const passwordReset = async (reset:PasswordReset) : Promise<boolean> => {
 export const changePassword = async (newPassword:ChangePassword) : Promise<boolean> => {
     const response = await apiFetchWithBody(`${AUTH_ENDPOINT}manage/info`, 'POST', newPassword);
 
-    if (!response.ok){
+    if (response.status == 500)
+    {
+        const err = await response.json();
+        console.error(err.message);
+        throw new Error(err.message, 500)
+    }
+    else if (!response.ok){
         const err = (await response.json()).errors;
         var errString = '';
         Object.values(err).forEach((val,index, arr)=>errString=errString.concat(val+'\n'));
@@ -134,7 +159,13 @@ export const changePassword = async (newPassword:ChangePassword) : Promise<boole
 export const changeAccountEmail = async (email:string) : Promise<boolean> => {
     const response = await apiFetchWithBody(`${AUTH_ENDPOINT}manage/info`, 'POST', {email:email});
 
-    if (!response.ok){
+    if (response.status == 500)
+    {
+        const err = await response.json();
+        console.error(err.message);
+        throw new Error(err.message, 500)
+    }
+    else if (!response.ok){
         const err = (await response.json()).errors;
         var errString = '';
         Object.values(err).forEach((val,index, arr)=>errString=errString.concat(val+'\n'));
@@ -152,7 +183,13 @@ export const changeAccountEmail = async (email:string) : Promise<boolean> => {
 export const emailIsConfirmed = async () : Promise<EmailConfirmed> => {
     const response = await apiFetchWithBody(`${AUTH_ENDPOINT}manage/info`, 'GET');
 
-    if (!response.ok){
+    if (response.status == 500)
+    {
+        const err = await response.json();
+        console.error(err.message);
+        throw new Error(err.message, 500)
+    }
+    else if (!response.ok){
         const err = (await response.json()).errors;
         var errString = '';
         Object.values(err).forEach((val,index, arr)=>errString=errString.concat(val+'\n'));
@@ -171,7 +208,13 @@ export const emailIsConfirmed = async () : Promise<EmailConfirmed> => {
 export const init2FA = async (initial:Init2FA) : Promise<Response2FA> => {
     const response = await apiFetchWithBody(`${AUTH_ENDPOINT}manage/2fa`, 'POST', initial);
 
-    if (!response.ok){
+    if (response.status == 500)
+    {
+        const err = await response.json();
+        console.error(err.message);
+        throw new Error(err.message, 500)
+    }
+    else if (!response.ok){
         const err = (await response.json()).errors;
         var errString = '';
         Object.values(err).forEach((val,index, arr)=>errString=errString.concat(val+'\n'));
@@ -190,7 +233,13 @@ export const init2FA = async (initial:Init2FA) : Promise<Response2FA> => {
 export const enable2FA = async (edit2FA:Enable2FA) : Promise<Response2FA> => {
     const response = await apiFetchWithBody(`${AUTH_ENDPOINT}manage/2fa`, 'POST', edit2FA);
 
-    if (!response.ok){
+    if (response.status == 500)
+    {
+        const err = await response.json();
+        console.error(err.message);
+        throw new Error(err.message, 500)
+    }
+    else if (!response.ok){
         const err = (await response.json()).errors;
         var errString = '';
         Object.values(err).forEach((val,index, arr)=>errString=errString.concat(val+'\n'));
@@ -208,7 +257,13 @@ export const enable2FA = async (edit2FA:Enable2FA) : Promise<Response2FA> => {
 export const reset2FARecoveryCodes = async () : Promise<Response2FA> => {
     const response = await apiFetchWithBody(`${AUTH_ENDPOINT}manage/2fa`, 'POST', {resetRecoveryCodes:true});
 
-    if (!response.ok){
+    if (response.status == 500)
+    {
+        const err = await response.json();
+        console.error(err.message);
+        throw new Error(err.message, 500)
+    }
+    else if (!response.ok){
         const err = (await response.json()).errors;
         var errString = '';
         Object.values(err).forEach((val,index, arr)=>errString=errString.concat(val+'\n'));
@@ -226,7 +281,13 @@ export const reset2FARecoveryCodes = async () : Promise<Response2FA> => {
 export const disable2FA = async () : Promise<Response2FA> => {
     const response = await apiFetchWithBody(`${AUTH_ENDPOINT}manage/2fa`, 'POST', {resetSharedKey:true});
 
-    if (!response.ok){
+    if (response.status == 500)
+    {
+        const err = await response.json();
+        console.error(err.message);
+        throw new Error(err.message, 500)
+    }
+    else if (!response.ok){
         const err = (await response.json()).errors;
         var errString = '';
         Object.values(err).forEach((val,index, arr)=>errString=errString.concat(val+'\n'));

@@ -10,6 +10,12 @@ export const getAllMailboxes = async () : Promise<MailBox[]> =>{
         return response.json();
     if (response.status == 401 || response.status == 403)
         throw new Error("User is not logged in", response.status);
+    if (response.status == 500)
+    {
+        const err = await response.json();
+        console.error(err.message);
+        throw new Error(err.message, 500)
+    }
     throw new Error("Fetch Error", response.status)
 }
 
@@ -19,6 +25,12 @@ export const getMailbox = async (id:number):Promise<MailBox> =>{
         throw new Error("Forbidden", response.status);
     if (response.status == 404)
         throw new Error("Mailbox not found", response.status);
+    if (response.status == 500)
+    {
+        const err = await response.json();
+        console.error(err.message);
+        throw new Error(err.message, 500)
+    }
 
     return response.json();
 }
@@ -33,6 +45,12 @@ export const editMailBox = async (editMailBox:EditMailBox) : Promise<null> => {
         throw new Error("Forbidden", response.status);
     if (response.status == 404)
         throw new Error("Mailbox not found", response.status);
+    if (response.status == 500)
+    {
+        const err = await response.json();
+        console.error(err.message);
+        throw new Error(err.message, 500)
+    }
     
     return null;
 }
