@@ -24,11 +24,12 @@ WORKDIR /app
 
 # Copy built artifacts from build stage
 COPY --from=build --exclude=**/appsettings*.json /app/out .
-COPY start.sh .
-COPY health.sh .
 
 RUN apt-get update \
     && apt-get install -y curl
+
+COPY start.sh .
+COPY health.sh .
 
 ENV PORT=5000
 ENV HOST=localhost
@@ -37,7 +38,8 @@ EXPOSE $PORT
 
 # Set the environment
 ENV ASPNETCORE_ENVIRONMENT=Production
-ENV ASPNETCORE_URLS=http://${HOST}:${PORT}
+ENV ASPNETCORE_URLS=http://+:${PORT}
+ENV ASPNETCORE_HTTP_PORTS=${PORT}
 ENV SAVEMAIL__Logging__LogLevel__Microsoft.EntityFrameworkCore.Database.Command=Warning
 ENV SAVEMAIL__Logging__LogLevel__Microsoft.AspNetCore=Warning
 ENV SAVEMAIL__Logging__LogLevel__Default=Information
