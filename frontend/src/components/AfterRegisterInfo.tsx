@@ -1,10 +1,11 @@
 'use client'
 
-import { useSearchParams } from 'next/navigation'
-import { Box, Link, Typography } from "@mui/material";
+import { useRouter, useSearchParams } from 'next/navigation'
+import { Box, Button, Link, Typography } from "@mui/material";
 
 const AfterRegisterInfo:React.FC = () => {
     const params = useSearchParams();
+    const router = useRouter();
 
     return (
     <Box sx={{
@@ -15,19 +16,20 @@ const AfterRegisterInfo:React.FC = () => {
       flexDirection: 'column',
       gap: '1rem'
     }}>
-      <Typography variant='h3' component='h1' textAlign='center'>
+      <Typography variant='h3' textAlign='center'>
         Register successful
       </Typography>
       <Typography sx={{py:5}}>
+        If email verification is enabled, verification email sent to <i>{params.get('email')}</i>
+        <br/>
+        <br/>
         Check your email and confirm your email address. Then go to the login page
       </Typography>
-      <Typography sx={{py:5}}> to the login page
-      </Typography>
-      <Typography textAlign="center" variant='h5'>
-        <Link href={'/auth/login'}  underline="hover">
+      <Button onClick={() => router.push('/auth/login')} variant="text">
+        <Link underline="hover" variant='h6'>
           Log In Here!
         </Link>
-      </Typography>
+      </Button>
     </Box>);
   }
 
