@@ -2,6 +2,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using Backend.Models;
 using Backend.Services;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
@@ -140,17 +141,22 @@ builder.Services.AddScoped<IMailService, MailService>();
 builder.Services.AddScoped<IAttachmentService, AttachmentService>();
 builder.Services.AddScoped<IOAuthCredentialsService, OAuthCredentialsService>();
 
+const string _corsPolicyName = "SAVEMAIL_CORS";
+string defined_host = Environment.GetEnvironmentVariable("HOST") ?? "127.0.0.1";
 builder.Services.AddCors(opt => 
-    opt.AddPolicy("AllowOrigin",b =>
+    opt.AddPolicy(_corsPolicyName,b =>
         {
-            b.WithOrigins("https://localhost:3000")
+            b.WithOrigins("https://localhost:3000",
+                          "https://localhost:5005",
+                          "http://localhost:3000",
+                          "http://localhost:5005",
+                          $"https://{defined_host}:3000",
+                          $"https://{defined_host}:5005",
+                          $"http://{defined_host}:3000",
+                          $"http://{defined_host}:5005",
+                          "https://accounts.google.com")
              .AllowAnyHeader()
-             .AllowAnyMethod();
-            b.WithOrigins("https://localhost:5000")
-             .AllowAnyHeader()
-             .AllowAnyMethod();
-            b.WithOrigins("https://accounts.google.com")
-             .AllowAnyHeader()
+            .AllowCredentials()
              .AllowAnyMethod();
             //todo Add cors also for hostname & port of the frond/backend given in env vars
         })
@@ -171,7 +177,7 @@ app.MapPost("/api/auth/Logout", async (SignInManager<AppUser> _signInManager) =>
 }).RequireAuthorization();
 
 //HealthCheck endpoint
-app.MapGet("/healthz", () => Results.Ok());
+app.MapGet("/healthz", [DisableCors]() => Results.Ok());
 
 //In case of 4xx error so it doesn't leak info
 app.UseStatusCodePages(async context =>
@@ -197,6 +203,7 @@ if (app.Environment.IsDevelopment())
 }
 else
 {
+    app.UseCors(_corsPolicyName);
     app.UseHttpsRedirection();
     // in case of 5xx error to avoid leaking info
     app.UseExceptionHandler(errorApp =>
