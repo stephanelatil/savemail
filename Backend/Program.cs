@@ -61,8 +61,32 @@ builder.Services.AddDbContext<ApplicationDBContext>(opt =>{
 });
 
 
-//Setup SendGrid
-builder.Services.AddTransient<IEmailSender, SendGridEmailSender>();
+// Setup Email sending service and if we require email confirmation
+bool _request_email_confimation = false;
+{
+    string require_email_conf = builder.Configuration.GetValue<string?>("RequireEmailConfirmation", "false").Trim();
+    if (!string.IsNullOrWhiteSpace(require_email_conf)){
+        if ("true".Contains(require_email_conf, StringComparison.InvariantCultureIgnoreCase) ||
+            "yes".Contains(require_email_conf, StringComparison.InvariantCultureIgnoreCase)||
+            require_email_conf == "1")
+            _request_email_confimation = true;
+    }
+}
+
+if (!string.IsNullOrWhiteSpace(builder.Configuration.GetValue<string?>("SendGrid:Key", null)) &&
+    !string.IsNullOrWhiteSpace(builder.Configuration.GetValue<string?>("SendGrid:FromEmail", null)))
+{
+    builder.Services.AddTransient<IEmailSender, SendGridEmailSender>();
+    _request_email_confimation &= true;
+}
+else if (!string.IsNullOrWhiteSpace(builder.Configuration.GetValue<string?>("Brevo:Key", null)) &&
+    !string.IsNullOrWhiteSpace(builder.Configuration.GetValue<string?>("Brevo:SenderId", null)))
+{
+    builder.Services.AddTransient<IEmailSender, BrevoEmailSender>();
+    _request_email_confimation &= true;
+}
+else
+    _request_email_confimation = false;
 builder.Services.AddSingleton<ITokenEncryptionService, TokenEncryptionService>();
 
 builder.Services.AddProblemDetails();
@@ -80,7 +104,8 @@ builder.Services.Configure<IdentityOptions>(options =>
     options.Lockout.AllowedForNewUsers=false;
     options.Lockout.MaxFailedAccessAttempts = 99999999;
     options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMilliseconds(1);
-    options.SignIn.RequireConfirmedEmail = false;
+    //only need email confirmation if email server service is present
+    options.SignIn.RequireConfirmedEmail = _request_email_confimation;
 });
 
 builder.Services.ConfigureApplicationCookie(options =>
@@ -155,9 +180,9 @@ builder.Services.AddCors(opt =>
                           $"http://{defined_host}:3000",
                           $"http://{defined_host}:5005",
                           "https://accounts.google.com")
-             .AllowAnyHeader()
+            .AllowAnyHeader()
             .AllowCredentials()
-             .AllowAnyMethod();
+            .AllowAnyMethod();
             //todo Add cors also for hostname & port of the frond/backend given in env vars
         })
 );
