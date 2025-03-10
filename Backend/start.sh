@@ -1,5 +1,6 @@
 #!/bin/bash
 
-export ASPNETCORE_URLS=http://${HOST}:${PORT}
+export ASPNETCORE_URLS="http://+:${PORT}"
+export ASPNETCORE_HTTP_PORTS="${PORT}"
 
-dotnet Backend.dll
+exec dotnet Backend.dll
