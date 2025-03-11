@@ -125,13 +125,12 @@ namespace Backend.Models
         {
             this.Id = 0;
             this.ImapReplyFromId = msg.InReplyTo;
-            this.ImapMailId = msg.MessageId;
+            this.ImapMailId = msg.MessageId ?? Guid.NewGuid().ToString();
             this.ImapMailUID = uid;
             this.Subject = msg.Subject;
-            this.Body = msg.HtmlBody;
+            this.Body = msg.HtmlBody ?? string.Join("", msg.BodyParts.Select(bp => bp is TextPart part ? part.Text : ""));
             this.MimeMessage = msg;
             this.DateSent = DateTime.SpecifyKind(msg.Date.ToUniversalTime().DateTime, DateTimeKind.Unspecified);
-
 
             MailboxAddress? from = msg.From.Count > 0 ? (MailboxAddress?) msg.From[0] : null;
             this.Sender = new EmailAddress(){FullName=from?.Name, Address=from?.Address ?? "UNKNOWN"};
