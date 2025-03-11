@@ -245,7 +245,9 @@ else
 
 app.MapControllers();
 {
-    using var context = app.Services.GetRequiredService<ApplicationDBContext>();
-    context.Database.Migrate();
+    var scope_provider = app.Services.GetRequiredService<IServiceScopeFactory>();
+    using var scope = scope_provider.CreateScope();
+    using var context = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+    context?.Database?.Migrate();
 }
 app.Run();
