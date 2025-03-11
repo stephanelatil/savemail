@@ -73,6 +73,7 @@ const EditMailboxFormBase:React.FC<{defaultValues:MailBox}> = ({defaultValues}) 
                             return <PasswordElement
                                 label="Password"
                                 name="password"
+                                control={control}
                                 required
                                 fullWidth
                             />
