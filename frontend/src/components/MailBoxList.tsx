@@ -5,7 +5,7 @@ import { MailBox } from "@/models/mailBox";
 import { Archive as ArchiveIcon, CreateNewFolder, Delete as DeleteIcon, Email as EmailIcon, ExpandLess, ExpandMore, Folder as FolderIcon, Refresh, Send as SendIcon } from "@mui/icons-material";
 import { Collapse, IconButton, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Skeleton, Stack } from "@mui/material";
 import { useParams, usePathname, useRouter } from "next/navigation";
-import { useLayoutEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 const mapFolderIcon = (name:string) =>{
     switch (name.toLowerCase()) {
@@ -60,8 +60,6 @@ const TreeItem: React.FC<TreeItemProps> = ({
     const isExpanded = expandedNodes.has(node.id);
     const hasChildren = node.children && node.children.length > 0;
     const handleSelect = (node: TreeNode) => {
-        if (isSelected)
-            return;
         setIsSelected(true);
         // Default navigation behavior
         if (node.type === 'mailbox') {
@@ -165,7 +163,7 @@ export const MailBoxList: React.FC<{loading?: boolean, mailboxes?: MailBox[]}> =
     }, [mailboxes]);
 
     // Auto-expand and select based on current route
-    useLayoutEffect(() => {
+    useEffect(() => {
         if (!treeData.length) return;
         if (isNaN(currentId)) return;
 

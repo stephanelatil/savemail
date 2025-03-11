@@ -116,25 +116,14 @@ const LoadingMailListBox: React.FC = () => {
 };
 
 const MailListPage : React.FC<{folderId:number, pageNum:number}> = ({folderId, pageNum}) => {
-    const { getMails } = useFolder();
+    const { loading, getMails } = useFolder();
     const [mailList, setMailList] = useState<PaginatedRequest<Mail>|null>(null);
-    const [loading, setLoading] = useState(true);
-
-    // TODO Add search bar up top & search page
 
     useEffect(() => {
-        async function fetchMail(page:number){
-            try{
-                setLoading(true);
-                setMailList(
-                    await getMails(folderId, page)
-                );
-            } finally{
-                setLoading(false);
-            }
-        }
-        fetchMail(pageNum);
-    });
+        const load_mails = async () => getMails(folderId, pageNum)
+                                            .then((mails) => setMailList(mails));
+        load_mails();
+    }, [folderId, pageNum])
 
     return loading ? <LoadingMailListBox />
                     : (!!mailList ? <MailListBox mails={mailList.items}
