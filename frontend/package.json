@@ -1,9 +1,9 @@
 {
   "name": "frontend",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbo --experimental-https",
+    "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
