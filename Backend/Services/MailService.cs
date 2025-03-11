@@ -107,7 +107,7 @@ public class MailService : IMailService
     /// <param name="mails">A list of mails you'd like to add</param>
     /// <returns>The Mails that don't yet exist in the DB</returns>
     internal async Task<List<Mail>> GetMailsToAdd(List<Mail> mails){
-        var uniqueHashes1 = mails.Select(m => m.UniqueHash);
+        var uniqueHashes1 = mails.Select(m => m.UniqueHash).ToList();
 
         var existingMailsDict = await this._context.Mail
             .Where(m => uniqueHashes1.Contains(m.UniqueHash))
@@ -152,7 +152,7 @@ public class MailService : IMailService
                                                     .Where(m => m.OwnerMailBoxId == mail.OwnerMailBoxId)
                                                     .SingleOrDefaultAsync(x => mail.ImapReplyFromId == x.ImapMailId, cancellationToken);
                 if (mail.RepliedFrom is not null)
-                    await this.InsertReply(mail, mail.RepliedFrom);
+                    await this.InsertReply(mail, mail.RepliedFrom);    
             }
             await this.HandleEmailAddresses(mail);
         }

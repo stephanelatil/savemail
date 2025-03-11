@@ -164,9 +164,8 @@ public class ImapMailFetchService : IImapMailFetchService
             start = MailKit.UniqueId.MinValue;
 
         UniqueIdRange range = new(start.Value, MailKit.UniqueId.MaxValue);
-        return new Queue<MailKit.UniqueId>(
-                        (await this._imapFolder.SearchAsync(
-                                    range, MailKit.Search.SearchQuery.NotDraft, cancellationToken)));
+        return new Queue<MailKit.UniqueId>(await this._imapFolder.SearchAsync(
+                                            range, MailKit.Search.SearchQuery.NotDraft, cancellationToken));
     }
 
     public async Task Prepare(MailBox mailbox, CancellationToken cancellationToken = default)
@@ -208,7 +207,7 @@ public class ImapMailFetchService : IImapMailFetchService
         if (!this.Prepared)
             throw new ArgumentException("Must prepare the service before getting emails", nameof(this.Prepared));
         if (this._uids is null || this._uids.Count == 0) //queue should not be empty
-            throw new InvalidOperationException("Now more UIDs available");
+            throw new InvalidOperationException("No more UIDs available");
 
         List<Mail> mails = new(maxFetchPerLoop);
         for (int i = 0; i < maxFetchPerLoop; ++i)
@@ -216,7 +215,7 @@ public class ImapMailFetchService : IImapMailFetchService
             if (!this._uids.TryDequeue(out MailKit.UniqueId uid))
                 break; //done if end of queue reached
             
-                if (this._folder.LastPulledUid >= uid && uid != MailKit.UniqueId.MinValue)
+            if (this._folder.LastPulledUid.HasValue && this._folder.LastPulledUid.Value >= uid)
                 continue; //skip if mail is already in DB
             
             mails.Add(new Mail(await this._imapFolder.GetMessageAsync(uid), uid));
