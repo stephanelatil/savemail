@@ -144,6 +144,7 @@ public class MailBoxController : ControllerBase
         }
 
         MailBox? mailbox = await this._mailBoxService.CreateMailBoxAsync(updateMailBox, self);
+        this._taskManager.EnqueueTask(mailbox.Id);
         return this.CreatedAtAction("GetMailBox", new { id = mailbox.Id }, new MailBoxDto(mailbox));
     }
 
@@ -230,8 +231,8 @@ public class MailBoxController : ControllerBase
         return this.NoContent();
     }
 
-    //Post: api/MailBox/{id}/search
-    [HttpPost("{id}/search")]
+    //Get: api/MailBox/{id}/search
+    [HttpGet("{id}/search")]
     [Authorize]
     public async Task<ActionResult<PaginatedList<MailDto>>> SearchMails(int id,
                                                                 [FromQuery] SearchRequestDto filters,
