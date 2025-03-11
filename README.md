@@ -104,12 +104,13 @@ Start the backend container with:
 ```bash
 docker run -p 5000:5000 -e SAVEMAIL_ConnectionStrings_Host=<DB_HOST> -e SAVEMAIL_ConnectionStrings_Username=<DB_USER> -e SAVEMAIL_ConnectionStrings_Password=<DB_PASSWORD> stephanelatil/savemail-backend
 ```
-By default it will run on `http://localhost:5000`. You can edit this by passing the HOST and PORT environment variables.
+
+By default it will run on `http://localhost:5000`. You can edit this by passing the HOSTNAME and PORT environment variables.
 
 Example: 
 
 ```bash
-docker run -p 5000:5000 -e SAVEMAIL_ConnectionStrings_Host=<DB_HOST> -e SAVEMAIL_ConnectionStrings_Username=<DB_USER> -e SAVEMAIL_ConnectionStrings_Password=<DB_PASSWORD> -e HOST=thebackend.yourdomain.com -e PORT=12345 stephanelatil/savemail-backend
+docker run -p <YOUR_PORT>:<YOUR_PORT> -e SAVEMAIL_ConnectionStrings_Host=<DB_HOST> -e SAVEMAIL_ConnectionStrings_Username=<DB_USER> -e SAVEMAIL_ConnectionStrings_Password=<DB_PASSWORD> -e HOST=<YOUR_IP> -e PORT=<YOUR_PORT> stephanelatil/savemail-backend
 ```
 
 ##### All Configuration Environment Variables
@@ -132,12 +133,13 @@ These can be set in the `appsettings.json` file or passed directly when running 
 | `SAVEMAIL__ConnectionStrings__Host` | Database host (IP or domain) | `localhost` |
 | `SAVEMAIL__ConnectionStrings__Username` | Database username | `postgres` |
 | `SAVEMAIL__ConnectionStrings__Password` | Database password | **Required** |
+| `SAVEMAIL__ConnectionStrings__Database` | Name of the postgres database | `savemaildb` |
 | `SAVEMAIL__AttachmentsPath` | The path where the attachments will be stored | `./Attachments` |
 | `SAVEMAIL__AppSecret` | A random string of characters used to generate an encryption key for OAuth tokens. Do not modify this once is is set or all access and refresh tokens will become invalid. | `ANY_RANDOM_ASSORTMENT_OF_CHARACTERS (Used to encrypt OAuth tokens in DB)` |
 | `SAVEMAIL__Logging__LogLevel__Default` | The default logging level for all namespaces, except if specifically stated with another level in another environment variable | `Information` |
 | `SAVEMAIL__Logging__LogLevel__Backend` | The logging level for all services of the Backend. If empty it will default to the default logging value of "Information" |  |
 | `SAVEMAIL__Logging__LogLevel__Microsoft.AspNetCore` | The default logging level for the host application and endpoints. Uses the "Default" namespace value if not set. | `Information` |
-| `SAVEMAIL__Logging__LogLevel__Microsoft.EntityFrameworkCore.Database.Command` | The default logging level for EF core database queries. Uses the "Default" namespace value if not set. Anything below `Warning` will make the logs VERY verbose. | `Warning` |
+| `SAVEMAIL__Logging__LogLevel__Microsoft.EntityFrameworkCore` | The default logging level for EF core database queries. Uses the "Default" namespace value if not set. Anything below `Warning` will make the logs VERY verbose. | `Warning` |
 | `SAVEMAIL__Logging__LogLevel__{Some namespace here}` | The default logging level for the namespace. Uses the "Default" namespace value if not set |  |
 
 **Added Features**
@@ -165,8 +167,8 @@ Environment variables are used to configure the frontend.
 
 | Variable                         | Description                              | Default   |
 |----------------------------------|------------------------------------------|-----------|
-| `LISTEN` | Hostname (IP or domain) where the frontend is hosted | `localhost` |
-| `HOST` | Hostname (IP or domain) where the frontend is accessible. This is useful for  | `localhost` |
+| `LISTEN` | Hostname (IP or domain) where the frontend is hosted | `0.0.0.0` |
+| `HOST` | Hostname (IP or domain) where the frontend is accessible. This is used for callbacks from Oauth ot email confirmation for example  | `localhost` |
 | `PORT` | Port to listen on | `3000` |
 | `BACKEND_PORT` | The port the Backend is listening on | `3000` |
 
